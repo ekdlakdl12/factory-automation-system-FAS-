@@ -2,7 +2,7 @@
 > **3주간의 통합 프로젝트: PLC, AMR, Vision, DB, UI의 완벽한 조화**
 
 <p align="center">
-  <img src="https://via.placeholder.com/800x400?text=All+Day+Project+FAS+Logo" alt="Project Logo" width="600">
+  <img src="https://github.com/user-attachments/assets/f189626e-73ce-4a86-95f0-37e4bd61387a" alt="Project Logo" width="600">
 </p>
 
 ---
