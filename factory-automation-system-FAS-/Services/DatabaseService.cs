@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Configuration; // 패키지 설치 후 활성화
-using MySql.Data.MySqlClient;
-using System;
-using System.Configuration;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
+using factory_automation_system_FAS_.Models;
 
 namespace factory_automation_system_FAS_.Services
 {
@@ -12,46 +13,41 @@ namespace factory_automation_system_FAS_.Services
 
         public DatabaseService()
         {
-            try
-            {
-                // 1. appsettings.json 파일을 읽기 위한 설정
-                var builder = new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
 
-                IConfiguration config = builder.Build();
-
-                // 2. ConnectionStrings 섹션에서 MariaDbConnection 값을 가져옴
-                _connStr = config.GetSection("ConnectionStrings")["MariaDbConnection"];
-
-                if (string.IsNullOrEmpty(_connStr))
-                {
-                    throw new Exception("연결 문자열을 찾을 수 없습니다.");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"설정 로드 실패: {ex.Message}");
-                // 예외 발생 시 기본값 혹은 에러 처리 로직
-            }
+            _connStr = config.GetSection("ConnectionStrings")["MariaDbConnection"];
         }
 
-        // 연결 테스트 함수
-        public bool CheckConnection()
+        // 생산 이력을 DB에서 읽어오는 핵심 함수
+        public List<ProductionHistory> GetProductionHistory()
         {
+            var list = new List<ProductionHistory>();
+
             using (var conn = new MySqlConnection(_connStr))
             {
-                try
+                conn.Open();
+                string sql = "SELECT barcode, total_qty, good_qty, defect_rate, created_at FROM production_history ORDER BY created_at DESC";
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                using (var reader = cmd.ExecuteReader())
                 {
-                    conn.Open();
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"DB 연결 에러: {ex.Message}");
-                    return false;
+                    while (reader.Read())
+                    {
+                        list.Add(new ProductionHistory
+                        {
+                            Barcode = reader["barcode"].ToString(),
+                            TotalQuantity = Convert.ToInt32(reader["total_qty"]),
+                            GoodQuantity = Convert.ToInt32(reader["good_qty"]),
+                            DefectRate = Convert.ToSingle(reader["defect_rate"]),
+                            CreatedAt = Convert.ToDateTime(reader["created_at"])
+                        });
+                    }
                 }
             }
+            return list;
         }
     }
 }
