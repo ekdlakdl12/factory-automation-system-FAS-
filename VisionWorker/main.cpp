@@ -7,7 +7,7 @@ using namespace cv;
 
 int main()
 {
-    string path = R"(C:\Users\dbsdm\Desktop\testimg\BoxTestImg.jpg)";
+    string path = R"(C:\Users\dbsdm\Desktop\TestImg\image.jpg)";
     Mat img = imread(path, IMREAD_COLOR);
     Mat hsv, mask;
 
@@ -19,22 +19,24 @@ int main()
 
     // cvtColor(img, hsv, COLOR_BGR2HSV); // 색상기반 마스크(나중에 사용할 예정)
     cvtColor(img, mask, COLOR_BGR2GRAY); // 측정용 마스크, 그레이스케일 변환
-
+    
+    mask *= 1.1; // 명암 대비 증가
+    
     // 블러 적용
     GaussianBlur(mask, mask, Size(5, 5), 0);
-
-    // Canny(mask, mask, 200, 255);
+    
+    //Canny(mask, mask, 200, 255);
 
     // 이진화 (0 or 255)
-    threshold(mask, mask, 220, 255, THRESH_BINARY);
+    threshold(mask, mask, 220, 255, THRESH_BINARY_INV);
 
-    bitwise_not(mask, mask); // 흰색 배경 / 검정 물체로 반전 필요하면 사용
+    //bitwise_not(mask, mask); // 흰색 배경 / 검정 물체로 반전 필요하면 사용
     // 모폴로지
-    Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-    morphologyEx(mask, mask, MORPH_OPEN, kernel);
+    /*Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
+    morphologyEx(mask, mask, MORPH_OPEN, kernel);*/
     // morphologyEx(mask, mask, MORPH_GRADIENT, kernel);
 
-
+	// bitwise_not(mask, mask); // 흰색 배경 / 검정 물체로 반전 필요하면 사용
 	// findContours는 입력 이미지를 내부적으로 바꿔버릴 수 있으니 clone 사용
     Mat contourInput = mask.clone();
 
