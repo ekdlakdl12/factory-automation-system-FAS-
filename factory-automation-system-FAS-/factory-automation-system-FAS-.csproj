@@ -10,10 +10,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-    <Folder Include="Utils\" />
+    <None Remove="Assets\Brand\adp_logo_from_screenshot_transparent.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Services\" />
-    <Folder Include="ViewModels\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Brand\adp_logo_from_screenshot_transparent.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

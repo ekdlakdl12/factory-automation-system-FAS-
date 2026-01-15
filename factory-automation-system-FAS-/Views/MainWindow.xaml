@@ -1,651 +1,255 @@
-﻿<Window x:Class="factory_automation_system_FAS_.Views.MainWindow"
+﻿<!-- Views/MainWindow.xaml -->
+<Window x:Class="factory_automation_system_FAS_.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:sys="clr-namespace:System;assembly=mscorlib"
-        mc:Ignorable="d"
-        Title="DT Control Center" Height="720" Width="1280"
+        xmlns:vm="clr-namespace:factory_automation_system_FAS_.ViewModels"
+        xmlns:b="clr-namespace:factory_automation_system_FAS_.Behaviors;assembly=factory_automation_system_FAS_"
+        Title="DT Control Center"
+        Width="1920" Height="1080"
         WindowStartupLocation="CenterScreen"
-        Background="#0F1115">
+        Background="#0B0F14">
 
     <Window.Resources>
+        <!-- Colors -->
+        <SolidColorBrush x:Key="Bg" Color="#0B0F14"/>
+        <SolidColorBrush x:Key="Panel" Color="#121820"/>
+        <SolidColorBrush x:Key="Card" Color="#161E27"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#26313D"/>
 
-        <!-- ===== Colors ===== -->
-        <SolidColorBrush x:Key="Bg" Color="#0F1115"/>
-        <SolidColorBrush x:Key="Surface" Color="#161A1F"/>
-        <SolidColorBrush x:Key="Surface2" Color="#1B2027"/>
-        <SolidColorBrush x:Key="Border" Color="#2A2F36"/>
-        
-        <SolidColorBrush x:Key="Text" Color="#E6E8EB"/>
-        <SolidColorBrush x:Key="SubText" Color="#A9B0B8"/>
-        <SolidColorBrush x:Key="Accent" Color="#2EE6A6"/>
+        <SolidColorBrush x:Key="Accent" Color="#33E6A2"/>
+        <SolidColorBrush x:Key="AccentSoft" Color="#2AAE8A"/>
+        <SolidColorBrush x:Key="Station" Color="#58A6FF"/>
+        <SolidColorBrush x:Key="Output" Color="#F5A524"/>
 
-        <SolidColorBrush x:Key="Ok" Color="#22C55E"/>
-        <SolidColorBrush x:Key="Warn" Color="#F59E0B"/>
-        <SolidColorBrush x:Key="Danger" Color="#EF4444"/>
+        <!-- ✅ Pen 리소스 (에러 방지) -->
+        <Pen x:Key="GridPenMajor" Brush="#1F2A36" Thickness="1"/>
+        <Pen x:Key="GridPenMinor" Brush="#18222C" Thickness="1"/>
 
-        <!-- ===== Typography ===== -->
-        <Style x:Key="H1" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Text}"/>
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-        </Style>
+        <!-- ✅ Grid Brush -->
+        <DrawingBrush x:Key="GridBrush"
+                      TileMode="Tile"
+                      Viewport="0,0,160,160"
+                      ViewportUnits="Absolute"
+                      Stretch="None">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="Transparent" Pen="{StaticResource GridPenMajor}">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,160,160"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
 
-        <Style x:Key="H2" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Text}"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Opacity" Value="0.95"/>
-        </Style>
+                    <GeometryDrawing Brush="Transparent" Pen="{StaticResource GridPenMinor}">
+                        <GeometryDrawing.Geometry>
+                            <GeometryGroup>
+                                <LineGeometry StartPoint="80,0" EndPoint="80,160"/>
+                                <LineGeometry StartPoint="0,80" EndPoint="160,80"/>
+                            </GeometryGroup>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
 
-        <Style x:Key="Body" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource SubText}"/>
-            <Setter Property="FontSize" Value="12.5"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-        </Style>
-
-        <!-- ===== Card / Panel ===== -->
-        <Style x:Key="Card" TargetType="Border">
+        <!-- Card Style -->
+        <Style x:Key="CardBox" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Card}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="14"/>
-            <Setter Property="Background" Value="{StaticResource Surface}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
-            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="14"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
         </Style>
-
-        <!-- ===== Chip ===== -->
-        <Style x:Key="Chip" TargetType="Border">
-            <Setter Property="CornerRadius" Value="999"/>
-            <Setter Property="Background" Value="{StaticResource Surface2}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="Margin" Value="0,0,8,0"/>
-        </Style>
-
-        <!-- ===== Primary Button ===== -->
-        <Style x:Key="BtnPrimary" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource Accent}"/>
-            <Setter Property="Foreground" Value="#0B1110"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12.5"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Opacity" Value="0.92"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Opacity" Value="0.80"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- ===== Secondary Button ===== -->
-        <Style x:Key="BtnGhost" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource Surface2}"/>
-            <Setter Property="Foreground" Value="{StaticResource Text}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12.5"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="12">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Opacity" Value="0.85"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- ===== TextBox ===== -->
-        <Style TargetType="TextBox">
-            <Setter Property="Foreground" Value="{StaticResource Text}"/>
-            <Setter Property="Background" Value="{StaticResource Surface2}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Border}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,8"/>
-            <Setter Property="FontSize" Value="12.5"/>
-            <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="12">
-                            <ScrollViewer x:Name="PART_ContentHost"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Sample logs (디자인용) -->
-        <x:Array x:Key="SampleLogs" Type="{x:Type sys:String}">
-            <sys:String>11:28:01  [INFO] PLC connected</sys:String>
-            <sys:String>11:28:04  [INFO] Factory I/O sync OK</sys:String>
-            <sys:String>11:28:10  [MISSION] Cart → Pickup @ 생산라인</sys:String>
-            <sys:String>11:28:19  [SENSOR] Gas 38ppm (NORMAL)</sys:String>
-            <sys:String>11:28:26  [MISSION] Cart → Drop @ 분류라인</sys:String>
-            <sys:String>11:28:32  [OK] Sort A +2, B +1</sys:String>
-            <sys:String>11:28:40  [WARN] Obstacle detected → replanning</sys:String>
-            <sys:String>11:28:53  [OK] Avoid success</sys:String>
-        </x:Array>
-
     </Window.Resources>
 
-    <Grid Margin="18">
+    <Grid Margin="14">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="340"/>
+            <ColumnDefinition Width="380"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ================= LEFT ================= -->
-        <Grid Grid.Column="0" Margin="0,0,16,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <!-- ================= CENTER MAP ================= -->
+        <Border Grid.Column="0"
+                Background="#0E141B"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                CornerRadius="18"
+                Padding="16">
 
-            <!-- Top bar -->
-            <DockPanel Grid.Row="0" Margin="0,0,0,14">
-                <TextBlock Style="{StaticResource H1}" Text="Smart Factory Digital Twin"/>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Border Style="{StaticResource Chip}">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource Ok}" Margin="0,0,8,0"/>
-                            <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="AUTO MODE"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource Chip}" Margin="0">
-                        <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="2026-01-14  11:29:00"/>
-                    </Border>
-                </StackPanel>
-            </DockPanel>
+            <!-- Zoom/Pan host -->
+            <Grid ClipToBounds="True"
+                  b:MapInputBehavior.TargetCanvas="{Binding ElementName=MapCanvas}"
+                  b:MapInputBehavior.ZoomCommand="{Binding ZoomCommand}"
+                  b:MapInputBehavior.BeginPanCommand="{Binding BeginPanCommand}"
+                  b:MapInputBehavior.PanCommand="{Binding PanCommand}"
+                  b:MapInputBehavior.EndPanCommand="{Binding EndPanCommand}">
+                  
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="320"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <!-- Map canvas -->
+                <Canvas x:Name="MapCanvas"
+                        Width="1536" Height="995"
+                        RenderTransformOrigin="0,0">
 
-                <!-- Left cards -->
-                <StackPanel Grid.Column="0">
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                    <Canvas.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}"/>
+                            <TranslateTransform X="{Binding TranslateX}" Y="{Binding TranslateY}"/>
+                        </TransformGroup>
+                    </Canvas.RenderTransform>
+
+                    <!-- Background -->
+                    <Rectangle Width="1536" Height="995" Fill="{StaticResource GridBrush}"/>
+
+                    <!-- ===== STATIONS ===== -->
+
+                    <!-- Rack A -->
+                    <Border Style="{StaticResource CardBox}"
+                            Width="320" Height="130"
+                            Canvas.Left="90" Canvas.Top="90">
                         <StackPanel>
-                            <DockPanel>
-                                <TextBlock Style="{StaticResource H2}" Text="생산라인 (Production)"/>
-                                <Border DockPanel.Dock="Right"
-                                        Background="{StaticResource Surface2}"
-                                        BorderBrush="{StaticResource Border}"
-                                        BorderThickness="1"
-                                        CornerRadius="999"
-                                        Padding="10,4">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="8" Height="8" Fill="{StaticResource Ok}" Margin="0,0,8,0"/>
-                                        <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="RUN"/>
-                                    </StackPanel>
-                                </Border>
-                            </DockPanel>
-
-                            <Grid Margin="0,12,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Border Background="{StaticResource Surface2}" CornerRadius="12"
-                                        BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                        Padding="12" Margin="0,0,10,0">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Body}" Text="버퍼 재고"/>
-                                        <TextBlock Style="{StaticResource H1}" FontSize="26" Text="12"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Column="1" Background="{StaticResource Surface2}" CornerRadius="12"
-                                        BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                        Padding="12">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Body}" Text="생산 속도"/>
-                                        <TextBlock Style="{StaticResource H1}" FontSize="26" Text="18/min"/>
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
-
-                            <TextBlock Style="{StaticResource Body}" Margin="0,12,0,0"
-                                       Text="Note: 생산은 시뮬레이션 기준 상태만 표시해도 OK."/>
+                            <TextBlock Text="진열대(랙) A" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="성형 제품 적재 구역" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{StaticResource Card}">
+                    <!-- Rack B -->
+                    <Border Style="{StaticResource CardBox}"
+                            Width="320" Height="130"
+                            Canvas.Left="520" Canvas.Top="90">
                         <StackPanel>
-                            <DockPanel>
-                                <TextBlock Style="{StaticResource H2}" Text="분류라인 (Sorting)"/>
-                                <Border DockPanel.Dock="Right"
-                                        Background="{StaticResource Surface2}"
-                                        BorderBrush="{StaticResource Border}"
-                                        BorderThickness="1"
-                                        CornerRadius="999"
-                                        Padding="10,4">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="8" Height="8" Fill="{StaticResource Warn}" Margin="0,0,8,0"/>
-                                        <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="CHECK"/>
-                                    </StackPanel>
-                                </Border>
-                            </DockPanel>
-
-                            <Grid Margin="0,12,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Border Background="{StaticResource Surface2}" CornerRadius="12"
-                                        BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                        Padding="12" Margin="0,0,10,10">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Body}" Text="A"/>
-                                        <TextBlock Style="{StaticResource H1}" FontSize="22" Text="32"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Column="1" Background="{StaticResource Surface2}" CornerRadius="12"
-                                        BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                        Padding="12" Margin="0,0,0,10">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Body}" Text="B"/>
-                                        <TextBlock Style="{StaticResource H1}" FontSize="22" Text="21"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="1" Background="{StaticResource Surface2}" CornerRadius="12"
-                                        BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                        Padding="12" Margin="0,0,10,0">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Body}" Text="C"/>
-                                        <TextBlock Style="{StaticResource H1}" FontSize="22" Text="14"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Grid.Row="1" Grid.Column="1" Background="{StaticResource Surface2}" CornerRadius="12"
-                                        BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                        Padding="12">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource Body}" Text="불량"/>
-                                        <TextBlock Style="{StaticResource H1}" FontSize="22" Text="3"/>
-                                    </StackPanel>
-                                </Border>
-                            </Grid>
+                            <TextBlock Text="진열대(랙) B" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="성형 제품 적재 구역" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
-                </StackPanel>
 
-                <!-- Map -->
-                <Border Grid.Column="1" Style="{StaticResource Card}">
-                    <Grid>
-
-                        <!-- Map header -->
-                        <DockPanel VerticalAlignment="Top" Margin="0,0,0,12">
-                            <TextBlock Style="{StaticResource H2}" Text="Digital Twin Map"/>
-                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                                <Border Style="{StaticResource Chip}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="8" Height="8" Fill="{StaticResource Ok}" Margin="0,0,8,0"/>
-                                        <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="SYNC OK"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Style="{StaticResource Chip}" Margin="0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="8" Height="8" Fill="{StaticResource Accent}" Margin="0,0,8,0"/>
-                                        <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="CART ONLINE"/>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </DockPanel>
-
-                        <!-- subtle grid background -->
-                        <Canvas Margin="0,38,0,0" IsHitTestVisible="False">
-                            <Line X1="0" Y1="60" X2="2000" Y2="60" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="0" Y1="120" X2="2000" Y2="120" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="0" Y1="180" X2="2000" Y2="180" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="0" Y1="240" X2="2000" Y2="240" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="0" Y1="300" X2="2000" Y2="300" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="0" Y1="360" X2="2000" Y2="360" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="0" Y1="420" X2="2000" Y2="420" Stroke="#1E242C" StrokeThickness="1"/>
-
-                            <Line X1="80" Y1="0" X2="80" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="160" Y1="0" X2="160" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="240" Y1="0" X2="240" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="320" Y1="0" X2="320" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="400" Y1="0" X2="400" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="480" Y1="0" X2="480" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                            <Line X1="560" Y1="0" X2="560" Y2="2000" Stroke="#1E242C" StrokeThickness="1"/>
-                        </Canvas>
-
-                        <!-- Objects -->
-                        <Canvas Margin="0,38,0,0">
-
-                            <!-- Production station -->
-                            <Border Width="160" Height="120"
-                                    Canvas.Left="40" Canvas.Top="70"
-                                    Background="#12161C"
-                                    BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                    CornerRadius="14">
-                                <StackPanel Margin="12">
-                                    <TextBlock Style="{StaticResource H2}" Text="생산라인"/>
-                                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0" Text="Buffer: 12"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Sorting station -->
-                            <Border Width="160" Height="120"
-                                    Canvas.Left="40" Canvas.Top="330"
-                                    Background="#12161C"
-                                    BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                    CornerRadius="14">
-                                <StackPanel Margin="12">
-                                    <TextBlock Style="{StaticResource H2}" Text="분류라인"/>
-                                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0" Text="OK: 67 / NG: 3"/>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- Path -->
-                            <Path Canvas.Left="0" Canvas.Top="0"
-                                  Stroke="{StaticResource Accent}" StrokeThickness="3" Opacity="0.35"
-                                  Data="M 220 130 C 340 120, 420 160, 520 170
-                                        C 650 185, 700 260, 640 340
-                                        C 600 410, 470 430, 300 390"/>
-
-                            <!-- Cart -->
-                            <Border Width="170" Height="64"
-                                    Canvas.Left="440" Canvas.Top="210"
-                                    Background="#121B18"
-                                    BorderBrush="{StaticResource Accent}"
-                                    BorderThickness="1"
-                                    CornerRadius="14">
-                                <Grid Margin="12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <Ellipse Width="12" Height="12" Fill="{StaticResource Accent}" VerticalAlignment="Center"/>
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                        <TextBlock Style="{StaticResource H2}" Text="이송 카트 (AMR)"/>
-                                        <TextBlock Style="{StaticResource Body}" Text="Mission: Pickup → Drop"/>
-                                    </StackPanel>
-                                    <Border Grid.Column="2" Background="#0F1115" BorderBrush="{StaticResource Border}"
-                                            BorderThickness="1" CornerRadius="10" Padding="8,4" VerticalAlignment="Center">
-                                        <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="Load 3"/>
-                                    </Border>
-                                </Grid>
-                            </Border>
-
-                            <!-- Obstacle -->
-                            <Border Width="120" Height="44"
-                                    Canvas.Left="560" Canvas.Top="310"
-                                    Background="#1A1414"
-                                    BorderBrush="{StaticResource Danger}" BorderThickness="1"
-                                    CornerRadius="12" Opacity="0.9">
-                                <StackPanel Orientation="Horizontal" Margin="10,8">
-                                    <Ellipse Width="10" Height="10" Fill="{StaticResource Danger}" Margin="0,2,8,0"/>
-                                    <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="Obstacle"/>
-                                </StackPanel>
-                            </Border>
-
-                        </Canvas>
-
-                        <!-- legend -->
-                        <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
-                            <Border Style="{StaticResource Chip}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Rectangle Width="10" Height="10" Fill="{StaticResource Accent}" RadiusX="2" RadiusY="2" Margin="0,0,8,0"/>
-                                    <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="AMR / Path"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{StaticResource Chip}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Rectangle Width="10" Height="10" Fill="{StaticResource Ok}" RadiusX="2" RadiusY="2" Margin="0,0,8,0"/>
-                                    <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="Normal"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Style="{StaticResource Chip}" Margin="0">
-                                <StackPanel Orientation="Horizontal">
-                                    <Rectangle Width="10" Height="10" Fill="{StaticResource Warn}" RadiusX="2" RadiusY="2" Margin="0,0,8,0"/>
-                                    <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="Warning"/>
-                                </StackPanel>
-                            </Border>
+                    <!-- Forming 1 -->
+                    <Border Style="{StaticResource CardBox}"
+                            Width="300" Height="170"
+                            Canvas.Left="310" Canvas.Top="360">
+                        <StackPanel>
+                            <TextBlock Text="성형 1" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="Forming Station #1" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
+                    </Border>
 
-                    </Grid>
-                </Border>
+                    <!-- Forming 2 -->
+                    <Border Style="{StaticResource CardBox}"
+                            Width="300" Height="170"
+                            Canvas.Left="670" Canvas.Top="360">
+                        <StackPanel>
+                            <TextBlock Text="성형 2" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="Forming Station #2" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
 
+                    <!-- Output -->
+                    <Border Style="{StaticResource CardBox}"
+                            Width="380" Height="190"
+                            Canvas.Left="820" Canvas.Top="650">
+                        <StackPanel>
+                            <TextBlock Text="생산 출구" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="생산 → AMR 픽업 지점" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ===== AMR ROUTES (STRAIGHT ONLY) ===== -->
+                    <Polyline Points="1010,760 1010,570 470,570 470,440 250,440 250,155"
+                              Stroke="{StaticResource Accent}"
+                              StrokeThickness="4"
+                              Opacity="0.38"
+                              StrokeLineJoin="Miter"/>
+
+                    <Polyline Points="1010,760 1010,570 790,570 790,440 650,440 650,155"
+                              Stroke="{StaticResource AccentSoft}"
+                              StrokeThickness="3"
+                              Opacity="0.7"
+                              StrokeDashArray="8 6"
+                              StrokeLineJoin="Miter"/>
+
+                    <Ellipse Width="12" Height="12" Fill="{StaticResource Output}" Canvas.Left="1004" Canvas.Top="754"/>
+                    <Ellipse Width="12" Height="12" Fill="{StaticResource Station}" Canvas.Left="464" Canvas.Top="434"/>
+                    <Ellipse Width="12" Height="12" Fill="{StaticResource Station}" Canvas.Left="644" Canvas.Top="434"/>
+                </Canvas>
             </Grid>
-        </Grid>
+        </Border>
 
-        <!-- ================= RIGHT ================= -->
-        <Border Grid.Column="1" Style="{StaticResource Card}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+        <!-- ================= RIGHT PANEL ================= -->
+        <Border Grid.Column="1"
+                Margin="14,0,0,0"
+                Background="{StaticResource Panel}"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                CornerRadius="18"
+                Padding="18">
 
-                <!-- Header / Logo -->
-                <StackPanel Grid.Row="0">
-                    <DockPanel>
-                        <Grid Width="40" Height="40" Margin="0,0,10,0">
-                            <Ellipse Stroke="{StaticResource Accent}" StrokeThickness="2" Opacity="0.9"/>
-                            <Ellipse Stroke="{StaticResource Accent}" StrokeThickness="2" Opacity="0.65" Margin="10,0,0,0"/>
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource Accent}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0"/>
-                            <Ellipse Width="8" Height="8" Fill="{StaticResource Accent}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <DockPanel LastChildFill="True">
+
+                <!-- Bottom Environment -->
+                <Border DockPanel.Dock="Bottom"
+                        Background="{StaticResource Card}"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="14">
+
+                    <StackPanel>
+                        <TextBlock Text="Factory Environment"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,10"/>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Gas" Foreground="#B8C2CC" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="— ppm" Foreground="#B8C2CC"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Temperature" Foreground="#B8C2CC" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="— °C" Foreground="#B8C2CC"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Humidity" Foreground="#B8C2CC" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="— %" Foreground="#B8C2CC"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="IP" Foreground="#B8C2CC" Margin="0,0,16,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="—" Foreground="#B8C2CC"/>
                         </Grid>
 
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource H1}" Text="DT Control Center"/>
-                            <TextBlock Style="{StaticResource Body}" Text="PLC · Factory I/O · AMR Sync"/>
-                        </StackPanel>
-                    </DockPanel>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                        <Border Style="{StaticResource Chip}">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="{StaticResource Ok}" Margin="0,0,8,0"/>
-                                <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="PLC"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource Chip}">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="{StaticResource Ok}" Margin="0,0,8,0"/>
-                                <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="Factory I/O"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Style="{StaticResource Chip}" Margin="0">
-                            <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="8" Height="8" Fill="{StaticResource Accent}" Margin="0,0,8,0"/>
-                                <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="Cart"/>
-                            </StackPanel>
-                        </Border>
+                        <TextBlock Text="No data connected (UI placeholder)"
+                                   Foreground="#6B7785"
+                                   FontSize="11"
+                                   Margin="0,10,0,0"/>
                     </StackPanel>
+                </Border>
+
+                <!-- Top -->
+                <StackPanel DockPanel.Dock="Top">
+                    <!-- ✅ 로고 유지 -->
+                    <Image Source="pack://application:,,,/Assets/Brand/adp_logo_from_screenshot_transparent.png"
+                           Height="110"
+                           Stretch="Uniform"
+                           Margin="0,0,0,12"/>
+
+                    <Button Content="생산조회"
+                            Height="50"
+                            Background="{StaticResource Accent}"
+                            Foreground="Black"
+                            FontWeight="Bold"
+                            BorderThickness="0"
+                            Margin="0,0,0,16"/>
+
+                    <Border Height="1" Background="#1F2A36" Margin="0,6,0,0"/>
                 </StackPanel>
 
-                <!-- KPIs -->
-                <Grid Grid.Row="1" Margin="0,16,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <Border Background="{StaticResource Surface2}" CornerRadius="12"
-                            BorderBrush="{StaticResource Border}" BorderThickness="1"
-                            Padding="12" Margin="0,0,10,10">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource Body}" Text="총 처리량"/>
-                            <TextBlock Style="{StaticResource H1}" FontSize="24" Text="70"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Column="1" Background="{StaticResource Surface2}" CornerRadius="12"
-                            BorderBrush="{StaticResource Border}" BorderThickness="1"
-                            Padding="12" Margin="0,0,0,10">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource Body}" Text="불량률"/>
-                            <TextBlock Style="{StaticResource H1}" FontSize="24" Text="4.1%"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="1" Grid.ColumnSpan="2"
-                            Background="{StaticResource Surface2}" CornerRadius="12"
-                            BorderBrush="{StaticResource Border}" BorderThickness="1"
-                            Padding="12">
-                        <DockPanel>
-                            <StackPanel>
-                                <TextBlock Style="{StaticResource Body}" Text="환경 센서"/>
-                                <TextBlock Style="{StaticResource Body}" Text="Temp 24°C · Hum 41% · Gas 38ppm"/>
-                            </StackPanel>
-                            <Border DockPanel.Dock="Right" Background="#0F1115" BorderBrush="{StaticResource Border}" BorderThickness="1"
-                                    CornerRadius="999" Padding="10,4" VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="8" Height="8" Fill="{StaticResource Ok}" Margin="0,0,8,0"/>
-                                    <TextBlock Style="{StaticResource Body}" Foreground="{StaticResource Text}" Text="NORMAL"/>
-                                </StackPanel>
-                            </Border>
-                        </DockPanel>
-                    </Border>
-                </Grid>
-
-                <!-- Search -->
-                <StackPanel Grid.Row="2" Margin="0,16,0,0">
-                    <TextBlock Style="{StaticResource H2}" Text="Search / Filter"/>
-                    <DockPanel Margin="0,10,0,0">
-                        <TextBox Width="240" Text="mission, alarm, plc..."/>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource BtnGhost}" Content="검색" Margin="10,0,0,0"/>
-                    </DockPanel>
-                </StackPanel>
-
-                <!-- Logs -->
-                <StackPanel Grid.Row="3" Margin="0,16,0,0">
-                    <DockPanel>
-                        <TextBlock Style="{StaticResource H2}" Text="Event Log"/>
-                        <Button DockPanel.Dock="Right" Style="{StaticResource BtnGhost}" Content="로그 보기" Padding="10,8"/>
-                    </DockPanel>
-
-                    <Border Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="1"
-                            CornerRadius="12" Margin="0,10,0,0" Padding="8">
-                        <ListBox ItemsSource="{StaticResource SampleLogs}" BorderThickness="0"
-                                 Background="Transparent" Foreground="{StaticResource Text}"
-                                 FontSize="12.5" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Padding" Value="8,6"/>
-                                    <Setter Property="Margin" Value="0,0,0,2"/>
-                                    <Setter Property="Foreground" Value="{StaticResource Text}"/>
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="ListBoxItem">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                                    <ContentPresenter/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#1F262E"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Background" Value="#222C33"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </ListBox.ItemContainerStyle>
-                        </ListBox>
-                    </Border>
-                </StackPanel>
-
-                <!-- Control Buttons -->
-                <Grid Grid.Row="4" Margin="0,16,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource BtnPrimary}" Content="START" Margin="0,0,10,0"/>
-                    <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource BtnGhost}" Content="STOP"/>
-
-                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <Button Grid.Column="0" Style="{StaticResource BtnGhost}" Content="RESET"/>
-                        <Button Grid.Column="1" Style="{StaticResource BtnGhost}" Content="SYNC"/>
-                        <Button Grid.Column="2" Style="{StaticResource BtnGhost}" Content="ACK"/>
-                    </Grid>
-                </Grid>
-
-            </Grid>
+                <Grid/>
+            </DockPanel>
         </Border>
 
     </Grid>
