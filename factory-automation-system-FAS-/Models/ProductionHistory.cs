@@ -1,14 +1,14 @@
-﻿// ProductionHistory.cs (생산 이력)
-using System;
+﻿using System;
 
 namespace factory_automation_system_FAS_.Models
 {
     public class ProductionHistory
     {
-        public string Barcode { get; set; } // Primary Key
-        public int TotalQuantity { get; set; }
-        public int GoodQuantity { get; set; }
-        public float DefectRate { get; set; }
-        public DateTime CreatedAt { get; set; }
+        // 팩트체크: DB 컬럼명과 100% 일치해야 매핑 오류가 없습니다.
+        public string barcode { get; set; }
+        public int total_quantity { get; set; }
+        public int good_quantity { get; set; }
+        public float defect_rate { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

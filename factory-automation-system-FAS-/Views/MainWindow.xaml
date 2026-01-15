@@ -1,12 +1,30 @@
 ﻿<Window x:Class="factory_automation_system_FAS_.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:factory_automation_system_FAS_.Views"
-        mc:Ignorable="d"
-        Title="Smart Factory System" Height="450" Width="800">
-    <Grid>
+        Title="Smart Factory System - DB Test" Height="500" Width="900">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
+                <TextBlock Text="{Binding DbStatus}" VerticalAlignment="Center" Margin="0,0,20,0" FontWeight="Bold" FontSize="14"/>
+                <Button Content="데이터 새로고침" Width="150" Height="30" Click="OnTestButtonClick"/>
+            </StackPanel>
+
+            <TextBlock x:Name="ResultText" Text="대기 중..." HorizontalAlignment="Center" Foreground="Gray"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" x:Name="HistoryGrid" AutoGenerateColumns="False" IsReadOnly="True" VerticalScrollBarVisibility="Auto">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="바코드" Binding="{Binding barcode}" Width="*"/>
+                <DataGridTextColumn Header="전체수량" Binding="{Binding total_quantity}" Width="100"/>
+                <DataGridTextColumn Header="양품수" Binding="{Binding good_quantity}" Width="100"/>
+                <DataGridTextColumn Header="불량률" Binding="{Binding defect_rate, StringFormat={}{0:P1}}" Width="100"/>
+                <DataGridTextColumn Header="생산시간" Binding="{Binding created_at, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="180"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>

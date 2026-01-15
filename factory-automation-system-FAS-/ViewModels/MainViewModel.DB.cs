@@ -1,8 +1,9 @@
-﻿using factory_automation_system_FAS_.Services; // DatabaseService 위치 확인
+﻿using System.Collections.Generic;
+using factory_automation_system_FAS_.Services;
+using factory_automation_system_FAS_.Models; // 팩트체크: 이 using이 없으면 GetHistoryList에서 오류남
 
 namespace factory_automation_system_FAS_.ViewModels
 {
-    // 팩트체크: 파일 1과 네임스페이스 및 클래스명이 완벽히 일치해야 함
     public partial class MainViewModel
     {
         private readonly DatabaseService _dbService = new DatabaseService();
@@ -11,24 +12,18 @@ namespace factory_automation_system_FAS_.ViewModels
         public string DbStatus
         {
             get => _dbStatus;
-            set
-            {
-                _dbStatus = value;
-                OnPropertyChanged(); // BaseViewModel에서 상속받은 메서드
-            }
+            set { _dbStatus = value; OnPropertyChanged(); }
         }
 
-        // DB 초기화 로직
         private void InitializeDatabase()
         {
-            if (_dbService.CheckConnection())
-            {
-                DbStatus = "라즈베리파이 DB 연결 성공!";
-            }
-            else
-            {
-                DbStatus = "DB 연결 실패 (네트워크 확인 필요)";
-            }
+            if (CheckDbConnection()) DbStatus = "라즈베리파이 DB 연결 성공!";
+            else DbStatus = "DB 연결 실패";
         }
+
+        // MainWindow.xaml.cs에서 호출하는 메서드들
+        public bool CheckDbConnection() => _dbService.CheckConnection();
+
+        public List<ProductionHistory> GetHistoryList() => _dbService.GetProductionHistory();
     }
 }
