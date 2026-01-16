@@ -3,7 +3,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:factory_automation_system_FAS_.ViewModels"
-        xmlns:b="clr-namespace:factory_automation_system_FAS_.Behaviors;assembly=factory_automation_system_FAS_"
+        xmlns:b="clr-namespace:factory_automation_system_FAS_.Behaviors"
         Title="DT Control Center"
         Width="1920" Height="1080"
         WindowStartupLocation="CenterScreen"
@@ -74,6 +74,7 @@
                 BorderThickness="1"
                 CornerRadius="18"
                 Padding="16">
+            
 
             <!-- Zoom/Pan host -->
             <Grid ClipToBounds="True"
@@ -91,8 +92,8 @@
 
                     <Canvas.RenderTransform>
                         <TransformGroup>
-                            <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}"/>
-                            <TranslateTransform X="{Binding TranslateX}" Y="{Binding TranslateY}"/>
+                            <ScaleTransform ScaleX="{Binding Viewport.Scale}" ScaleY="{Binding Viewport.Scale}"/>
+                            <TranslateTransform X="{Binding Viewport.TranslateX}" Y="{Binding Viewport.TranslateY}"/>
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
@@ -164,10 +165,31 @@
                               Opacity="0.7"
                               StrokeDashArray="8 6"
                               StrokeLineJoin="Miter"/>
+                    <!-- ===== Products (Red dots) ===== -->
+                    <ItemsControl ItemsSource="{Binding ProductDots}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
 
-                    <Ellipse Width="12" Height="12" Fill="{StaticResource Output}" Canvas.Left="1004" Canvas.Top="754"/>
-                    <Ellipse Width="12" Height="12" Fill="{StaticResource Station}" Canvas.Left="464" Canvas.Top="434"/>
-                    <Ellipse Width="12" Height="12" Fill="{StaticResource Station}" Canvas.Left="644" Canvas.Top="434"/>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="26" Height="26"
+                     Fill="#E11919"
+                     Canvas.Left="{Binding X}"
+                     Canvas.Top="{Binding Y}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- ===== Cart (Blue square) ===== -->
+                    <Rectangle Width="70" Height="70"
+                               Fill="#0A62FF"
+                               RadiusX="6" RadiusY="6"
+                               Canvas.Left="{Binding CartX}"
+                               Canvas.Top="{Binding CartY}"/>
+
                 </Canvas>
             </Grid>
         </Border>
@@ -232,7 +254,7 @@
                 <!-- Top -->
                 <StackPanel DockPanel.Dock="Top">
                     <!-- ✅ 로고 유지 -->
-                    <Image Source="pack://application:,,,/Assets/Brand/adp_logo_from_screenshot_transparent.png"
+                    <Image Source="/Assets/Brand/adp_logo_from_screenshot_transparent.png"
                            Height="110"
                            Stretch="Uniform"
                            Margin="0,0,0,12"/>

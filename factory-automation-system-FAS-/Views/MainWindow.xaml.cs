@@ -10,7 +10,7 @@ namespace factory_automation_system_FAS_.Views
         {
             InitializeComponent();
 
-            // XAML에서 DataContext를 만들었다면 이 줄은 제거해도 됨.
+           
             DataContext = new MainViewModel();
         }
     }
