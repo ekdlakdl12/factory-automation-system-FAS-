@@ -23,6 +23,8 @@ namespace factory_automation_system_FAS_.ViewModels
         public ICommand PanCommand { get; }
         public ICommand EndPanCommand { get; }
         public ICommand ResetViewCommand { get; }
+        public ICommand AddStockCommand { get; }
+
 
         // ===== 새로: Simulation =====
         private readonly SimulationEngine _sim = new();
@@ -31,13 +33,47 @@ namespace factory_automation_system_FAS_.ViewModels
 
         // 카트 표시용 (Canvas.Left/Top 바인딩)
         private double _cartX;
-        public double CartX { get => _cartX; private set { _cartX = value; OnPropertyChanged(); } }
+        public double CartX
+        {
+            get => _cartX;
+            private set
+            {
+                _cartX = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CartLoadX));
+            }
+        }
 
         private double _cartY;
-        public double CartY { get => _cartY; private set { _cartY = value; OnPropertyChanged(); } }
+        public double CartY
+        {
+            get => _cartY;
+            private set
+            {
+                _cartY = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CartLoadY));
+            }
+        }
 
         private bool _cartHasLoad;
-        public bool CartHasLoad { get => _cartHasLoad; private set { _cartHasLoad = value; OnPropertyChanged(); } }
+        // 카트 위에 제품 점을 올릴 위치(카트 중앙쯤)
+        public double CartLoadX => CartX + 22;
+        public double CartLoadY => CartY + 22;
+
+        public bool CartHasLoad
+        {
+            get => _cartHasLoad;
+            private set
+            {
+                _cartHasLoad = value;
+                OnPropertyChanged();
+                // (CartLoadX/Y는 위치지만, load 켜질 때도 다시 그리게 안전빵)
+                OnPropertyChanged(nameof(CartLoadX));
+                OnPropertyChanged(nameof(CartLoadY));
+            }
+        }
+
 
         // 제품 점들(빨간 원) 표시용
         public ObservableCollection<ProductDotVm> ProductDots { get; } = new();
@@ -59,6 +95,14 @@ namespace factory_automation_system_FAS_.ViewModels
             PanCommand = new RelayCommand<PanArgs>(a => Viewport.PanTo(a.MousePosOnHost));
             EndPanCommand = new RelayCommand(() => Viewport.EndPan());
             ResetViewCommand = new RelayCommand(() => Viewport.Reset());
+            AddStockCommand = new RelayCommand<StationId>(id =>
+            {
+                MessageBox.Show($"AddStockCommand 들어옴: {id}");
+                _sim.AddStock(id, 1);
+                MessageBox.Show($"추가 후 OutputStock={_sim.Output.Stock}");
+                SyncFromSim();
+            });
+
 
             // ===== Simulation timer =====
             _timer.Interval = TimeSpan.FromMilliseconds(16); // ~60fps 느낌

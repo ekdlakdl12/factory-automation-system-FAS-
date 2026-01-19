@@ -4,6 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:factory_automation_system_FAS_.ViewModels"
         xmlns:b="clr-namespace:factory_automation_system_FAS_.Behaviors"
+        xmlns:m="clr-namespace:factory_automation_system_FAS_.Models"
         Title="DT Control Center"
         Width="1920" Height="1080"
         WindowStartupLocation="CenterScreen"
@@ -165,23 +166,7 @@
                               Opacity="0.7"
                               StrokeDashArray="8 6"
                               StrokeLineJoin="Miter"/>
-                    <!-- ===== Products (Red dots) ===== -->
-                    <ItemsControl ItemsSource="{Binding ProductDots}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <Canvas/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
 
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Ellipse Width="26" Height="26"
-                     Fill="#E11919"
-                     Canvas.Left="{Binding X}"
-                     Canvas.Top="{Binding Y}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
 
                     <!-- ===== Cart (Blue square) ===== -->
                     <Rectangle Width="70" Height="70"
@@ -189,6 +174,23 @@
                                RadiusX="6" RadiusY="6"
                                Canvas.Left="{Binding CartX}"
                                Canvas.Top="{Binding CartY}"/>
+                    <!-- ===== Cart Load (Red dot on cart) ===== -->
+                        <Ellipse Width="26" Height="26"
+                                 Fill="#E11919"
+                                 Canvas.Left="{Binding CartLoadX}"
+                                 Canvas.Top="{Binding CartLoadY}">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CartHasLoad}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+
 
                 </Canvas>
             </Grid>
@@ -266,6 +268,16 @@
                             FontWeight="Bold"
                             BorderThickness="0"
                             Margin="0,0,0,16"/>
+                    <Button Content="제품 +1 (Output)"
+                            Height="50"
+                            Margin="0,0,0,16"
+                            Background="#E11919"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            BorderThickness="0"
+                            Command="{Binding AddStockCommand}"
+                            CommandParameter="{x:Static m:StationId.Output}"/>
+
 
                     <Border Height="1" Background="#1F2A36" Margin="0,6,0,0"/>
                 </StackPanel>

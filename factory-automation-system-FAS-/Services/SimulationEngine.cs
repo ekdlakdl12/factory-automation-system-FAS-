@@ -72,25 +72,51 @@ namespace factory_automation_system_FAS_.Services
 
             SetRoute(Route.BackFromRackA);
         }
+        public void AddStock(StationId id, int count = 1)
+        {
+            if (count <= 0) return;
+
+            switch (id)
+            {
+                case StationId.Output:
+                    Output.Stock += count;
+                    break;
+
+                case StationId.RackA:
+                    RackA.Stock += count;
+                    break;
+
+                case StationId.RackB:
+                    RackB.Stock += count;
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(id), id, "Unknown StationId");
+            }
+        }
+
 
         public void Tick(double dtSeconds)
         {
-            // 1) Output 랜덤 생성
-            if (_rng.NextDouble() < SpawnProbabilityPerTick)
-                Output.Stock++;
+            // 1) Output 랜덤 생성 제거
+         /*   if (_rng.NextDouble() < SpawnProbabilityPerTick)
+                Output.Stock++;*/
 
             // 2) 카트 상태머신
             switch (Cart.State)
             {
                 case CartState.ToOutput:
-                    // Output로 가는 길은 "현재 위치"에 따라 RackA/B 복귀 루트를 선택
-                    // (MVP라 간단히: 마지막 Target 기준으로 복귀 루트 잡자)
-                    StepMove(dtSeconds);
+                               //  먼저 도착했는지 확인 (도착이면 이동하지 말고 바로 Loading)
                     if (IsArrived(Cart.Position, Output.Anchor))
                     {
                         Cart.State = CartState.Loading;
+                        break;
                     }
+
+                              // 아직 Output이 아니면 이동
+                    StepMove(dtSeconds);
                     break;
+
 
                 case CartState.Loading:
                     // Output에 재고가 있으면 1개 싣고 목적지를 랜덤 선택
@@ -122,19 +148,33 @@ namespace factory_automation_system_FAS_.Services
                     break;
 
                 case CartState.Unloading:
-                    if (Cart.HasLoad)
                     {
-                        if (Cart.Target == StationId.RackA) RackA.Stock++;
-                        else RackB.Stock++;
+                        // ✅ 방금 도착했던 랙 기억
+                        var deliveredTo = Cart.Target; // RackA or RackB 여야 함
 
-                        Cart.HasLoad = false;
+                        if (Cart.HasLoad)
+                        {
+                            if (deliveredTo == StationId.RackA) RackA.Stock++;
+                            else if (deliveredTo == StationId.RackB) RackB.Stock++;
+
+                            Cart.HasLoad = false;
+                        }
+
+                        // 다시 Output로 복귀
+                        var lastRack = Cart.Target;   // ⭐️ unloading 직전의 랙 기억
+
+                        Cart.State = CartState.ToOutput;
+                        Cart.Target = StationId.Output;
+
+                        if (lastRack == StationId.RackA)
+                            SetRoute(Route.BackFromRackA);
+                        else
+                            SetRoute(Route.BackFromRackB);
+
+
+                        break;
                     }
 
-                    // 다시 Output로 복귀
-                    Cart.State = CartState.ToOutput;
-                    if (Cart.Target == StationId.RackA) SetRoute(Route.BackFromRackA);
-                    else SetRoute(Route.BackFromRackB);
-                    break;
             }
         }
 
