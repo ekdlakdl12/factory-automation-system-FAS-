@@ -1,0 +1,11 @@
+%YAML:1.0
+---
+mmPerPx: 0.13039042290278266
+realMm: 60.
+imageWidth: 2400
+imageHeight: 1344
+roiX: 780
+roiY: 180
+roiW: 850
+roiH: 1010
+note: manual 2-point scale
