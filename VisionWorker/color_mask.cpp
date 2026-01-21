@@ -17,7 +17,7 @@ Mat MakeMaskHSV(
         if (blurK % 2 == 0) blurK++; // È¦¼ö º¸Á¤
         GaussianBlur(hsv, hsv, Size(blurK, blurK), blurSigma);
     }
-
+	
     Mat mask, maskBrown, maskWhite;
     inRange(hsv, range.brownL, range.brownU, maskBrown);
     inRange(hsv, range.whiteL, range.whiteU, maskWhite);

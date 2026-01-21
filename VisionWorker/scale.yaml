@@ -1,11 +1,12 @@
 %YAML:1.0
 ---
-mmPerPx: 0.13039042290278266
-realMm: 60.
-imageWidth: 2400
-imageHeight: 1344
-roiX: 780
-roiY: 180
-roiW: 850
-roiH: 1010
-note: manual 2-point scale
+mmPerPx: 0.18867790190651321
+realMm: 50.
+samples: 5
+method: median
+mmPerPx_list:
+   - 0.18794867566830267
+   - 0.18896873921955518
+   - 0.18867790190651321
+   - 0.18745006878022283
+   - 0.18867924528301888
