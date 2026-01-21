@@ -1,0 +1,1234 @@
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/ViewModels/MainViewModel.cs /mnt/data/repo/factory-automation-system-FAS-/ViewModels/MainViewModel.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/ViewModels/MainViewModel.cs	2026-01-19 04:04:02.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/ViewModels/MainViewModel.cs	2026-01-20 04:29:05.085474612 +0000
+@@ -1,214 +1,330 @@
+-﻿// ViewModels/MainViewModel.cs
+-using factory_automation_system_FAS_.Models;
+-using factory_automation_system_FAS_.Services;
+-using factory_automation_system_FAS_.Utils;
+-using System;
+-using System.Collections.ObjectModel;
+-using System.ComponentModel;
+-using System.Diagnostics;
+-using System.Runtime.CompilerServices;
+-using System.Windows;
+-using System.Windows.Input;
+-using System.Windows.Threading;
+-
+-namespace factory_automation_system_FAS_.ViewModels
+-{
+-    public sealed class MainViewModel : INotifyPropertyChanged
+-    {
+-        // ===== 기존: Zoom/Pan =====
+-        public MapViewportModel Viewport { get; } = new();
+-
+-        public ICommand ZoomCommand { get; }
+-        public ICommand BeginPanCommand { get; }
+-        public ICommand PanCommand { get; }
+-        public ICommand EndPanCommand { get; }
+-        public ICommand ResetViewCommand { get; }
+-        public ICommand AddStockCommand { get; }
+-
+-
+-        // ===== 새로: Simulation =====
+-        private readonly SimulationEngine _sim = new();
+-        private readonly DispatcherTimer _timer = new();
+-        private readonly Stopwatch _sw = new();
+-
+-        // 카트 표시용 (Canvas.Left/Top 바인딩)
+-        private double _cartX;
+-        public double CartX
+-        {
+-            get => _cartX;
+-            private set
+-            {
+-                _cartX = value;
+-                OnPropertyChanged();
+-                OnPropertyChanged(nameof(CartLoadX));
+-            }
+-        }
+-
+-        private double _cartY;
+-        public double CartY
+-        {
+-            get => _cartY;
+-            private set
+-            {
+-                _cartY = value;
+-                OnPropertyChanged();
+-                OnPropertyChanged(nameof(CartLoadY));
+-            }
+-        }
+-
+-        private bool _cartHasLoad;
+-        // 카트 위에 제품 점을 올릴 위치(카트 중앙쯤)
+-        public double CartLoadX => CartX + 22;
+-        public double CartLoadY => CartY + 22;
+-
+-        public bool CartHasLoad
+-        {
+-            get => _cartHasLoad;
+-            private set
+-            {
+-                _cartHasLoad = value;
+-                OnPropertyChanged();
+-                // (CartLoadX/Y는 위치지만, load 켜질 때도 다시 그리게 안전빵)
+-                OnPropertyChanged(nameof(CartLoadX));
+-                OnPropertyChanged(nameof(CartLoadY));
+-            }
+-        }
+-
+-
+-        // 제품 점들(빨간 원) 표시용
+-        public ObservableCollection<ProductDotVm> ProductDots { get; } = new();
+-
+-        // (옵션) 우측 패널 등에서 텍스트 표시용
+-        private int _outputStock;
+-        public int OutputStock { get => _outputStock; private set { _outputStock = value; OnPropertyChanged(); } }
+-
+-        private int _rackAStock;
+-        public int RackAStock { get => _rackAStock; private set { _rackAStock = value; OnPropertyChanged(); } }
+-
+-        private int _rackBStock;
+-        public int RackBStock { get => _rackBStock; private set { _rackBStock = value; OnPropertyChanged(); } }
+-
+-        public MainViewModel()
+-        {
+-            ZoomCommand = new RelayCommand<ZoomArgs>(a => Viewport.ZoomAt(a.Delta, a.MousePosOnCanvas));
+-            BeginPanCommand = new RelayCommand<PanArgs>(a => Viewport.BeginPan(a.MousePosOnHost));
+-            PanCommand = new RelayCommand<PanArgs>(a => Viewport.PanTo(a.MousePosOnHost));
+-            EndPanCommand = new RelayCommand(() => Viewport.EndPan());
+-            ResetViewCommand = new RelayCommand(() => Viewport.Reset());
+-            AddStockCommand = new RelayCommand<StationId>(id =>
+-            {
+-                MessageBox.Show($"AddStockCommand 들어옴: {id}");
+-                _sim.AddStock(id, 1);
+-                MessageBox.Show($"추가 후 OutputStock={_sim.Output.Stock}");
+-                SyncFromSim();
+-            });
+-
+-
+-            // ===== Simulation timer =====
+-            _timer.Interval = TimeSpan.FromMilliseconds(16); // ~60fps 느낌
+-            _timer.Tick += (_, __) => OnTick();
+-
+-            _sw.Start();
+-            _timer.Start();
+-
+-            // 최초 1회 렌더 동기화
+-            SyncFromSim();
+-        }
+-
+-        private void OnTick()
+-        {
+-            double dt = _sw.Elapsed.TotalSeconds;
+-            _sw.Restart();
+-
+-            // dt가 비정상적으로 큰 경우(디버깅 중 멈춤) 클램프
+-            if (dt > 0.1) dt = 0.1;
+-
+-            _sim.Tick(dt);
+-            SyncFromSim();
+-        }
+-
+-        private void SyncFromSim()
+-        {
+-            // 1) 카트
+-            // 카트 사각형을 "중심 기준"으로 두면 보기 좋으니,
+-            // 여기서 top-left로 변환해서 바인딩해도 됨.
+-            const double cartSize = 70;
+-            CartX = _sim.Cart.Position.X - (cartSize / 2);
+-            CartY = _sim.Cart.Position.Y - (cartSize / 2);
+-            CartHasLoad = _sim.Cart.HasLoad;
+-
+-            // 2) 재고 카운트(옵션)
+-            OutputStock = _sim.Output.Stock;
+-            RackAStock = _sim.RackA.Stock;
+-            RackBStock = _sim.RackB.Stock;
+-
+-            // 3) “렌더링용 제품 점” 좌표 재생성
+-            RebuildProductDots();
+-        }
+-
+-        private void RebuildProductDots()
+-        {
+-            ProductDots.Clear();
+-
+-            // ✅ 각 스테이션 “표시 영역(사각형)”을 XAML의 Border 위치/크기와 맞춤
+-            // RackA : Left=90,  Top=90,  W=320, H=130
+-            // RackB : Left=520, Top=90,  W=320, H=130
+-            // Output: Left=820, Top=650, W=380, H=190
+-
+-            AddStockDots(StationId.RackA, _sim.RackA.Stock, left: 90, top: 90, width: 320, height: 130);
+-            AddStockDots(StationId.RackB, _sim.RackB.Stock, left: 520, top: 90, width: 320, height: 130);
+-            AddStockDots(StationId.Output, _sim.Output.Stock, left: 820, top: 650, width: 380, height: 190);
+-
+-            // 카트가 들고 있는 제품 1개(카트 위에 표시)
+-            if (CartHasLoad)
+-            {
+-                ProductDots.Add(new ProductDotVm
+-                {
+-                    X = CartX + 22, // 카트 내부 적당한 위치
+-                    Y = CartY + 22
+-                });
+-            }
+-        }
+-
+-        private void AddStockDots(StationId id, int stock, double left, double top, double width, double height)
+-        {
+-            // 점 크기/간격
+-            const double dot = 26;
+-            const double gap = 8;
+-
+-            // 스테이션 안쪽 여백(카드 안에서 아래쪽에 쌓이게)
+-            double paddingL = 18;
+-            double paddingT = 56; // 텍스트 영역 피해서 아래쪽
+-            double paddingB = 14;
+-
+-            double startX = left + paddingL;
+-            double startY = top + paddingT;
+-
+-            double usableW = Math.Max(0, width - paddingL * 2);
+-            double usableH = Math.Max(0, height - paddingT - paddingB);
+-
+-            int cols = (int)Math.Max(1, Math.Floor((usableW + gap) / (dot + gap)));
+-            int rows = (int)Math.Max(1, Math.Floor((usableH + gap) / (dot + gap)));
+-            int max = cols * rows;
+-
+-            // 너무 많이 쌓이면 UI가 터지니까 MVP에서는 상한(예: 30)
+-            int count = Math.Min(stock, Math.Min(max, 30));
+-
+-            for (int i = 0; i < count; i++)
+-            {
+-                int col = i % cols;
+-                int row = i / cols;
+-
+-                double x = startX + col * (dot + gap);
+-                double y = startY + row * (dot + gap);
+-
+-                ProductDots.Add(new ProductDotVm { X = x, Y = y });
+-            }
+-        }
+-
+-        // ===== INotifyPropertyChanged =====
+-        public event PropertyChangedEventHandler? PropertyChanged;
+-        private void OnPropertyChanged([CallerMemberName] string? name = null)
+-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+-    }
+-}
++﻿// ViewModels/MainViewModel.cs
++using factory_automation_system_FAS_.Models;
++using factory_automation_system_FAS_.Services;
++using factory_automation_system_FAS_.Utils;
++using System;
++using System.Collections.ObjectModel;
++using System.ComponentModel;
++using System.Diagnostics;
++using System.Runtime.CompilerServices;
++using System.Windows.Input;
++using System.Windows.Threading;
++
++namespace factory_automation_system_FAS_.ViewModels
++{
++    public sealed class MainViewModel : INotifyPropertyChanged
++    {
++        // ===== 기존: Zoom/Pan =====
++        public MapViewportModel Viewport { get; } = new();
++
++        public ICommand ZoomCommand { get; }
++        public ICommand BeginPanCommand { get; }
++        public ICommand PanCommand { get; }
++        public ICommand EndPanCommand { get; }
++        public ICommand ResetViewCommand { get; }
++        public ICommand AddStockCommand { get; }
++
++        // ===== 새로: 우측 패널(상태/로그) =====
++        public ObservableCollection<UiLogItem> UiLogs { get; } = new();
++
++        private string _cartStateText = "-";
++        public string CartStateText { get => _cartStateText; private set { _cartStateText = value; OnPropertyChanged(); } }
++
++        private string _cartTargetText = "-";
++        public string CartTargetText { get => _cartTargetText; private set { _cartTargetText = value; OnPropertyChanged(); } }
++
++        private string _lastUiEventText = "시뮬 시작";
++        public string LastUiEventText { get => _lastUiEventText; private set { _lastUiEventText = value; OnPropertyChanged(); } }
++
++
++        // ===== 새로: Simulation =====
++        private readonly SimulationEngine _sim = new();
++        private readonly DispatcherTimer _timer = new();
++        private readonly Stopwatch _sw = new();
++
++        // 카트 표시용 (Canvas.Left/Top 바인딩)
++        private double _cartX;
++        public double CartX
++        {
++            get => _cartX;
++            private set
++            {
++                _cartX = value;
++                OnPropertyChanged();
++                OnPropertyChanged(nameof(CartLoadX));
++            }
++        }
++
++        private double _cartY;
++        public double CartY
++        {
++            get => _cartY;
++            private set
++            {
++                _cartY = value;
++                OnPropertyChanged();
++                OnPropertyChanged(nameof(CartLoadY));
++            }
++        }
++
++        private bool _cartHasLoad;
++        // 카트 위에 제품 점을 올릴 위치(카트 중앙쯤)
++        public double CartLoadX => CartX + 22;
++        public double CartLoadY => CartY + 22;
++
++        public bool CartHasLoad
++        {
++            get => _cartHasLoad;
++            private set
++            {
++                _cartHasLoad = value;
++                OnPropertyChanged();
++                // (CartLoadX/Y는 위치지만, load 켜질 때도 다시 그리게 안전빵)
++                OnPropertyChanged(nameof(CartLoadX));
++                OnPropertyChanged(nameof(CartLoadY));
++            }
++        }
++
++
++        // 제품 점들(빨간 원) 표시용
++        public ObservableCollection<ProductDotVm> ProductDots { get; } = new();
++
++        // (옵션) 우측 패널 등에서 텍스트 표시용
++        private int _outputStock;
++        public int OutputStock { get => _outputStock; private set { _outputStock = value; OnPropertyChanged(); } }
++
++        private int _rackAStock;
++        public int RackAStock { get => _rackAStock; private set { _rackAStock = value; OnPropertyChanged(); } }
++
++        private int _rackBStock;
++        public int RackBStock { get => _rackBStock; private set { _rackBStock = value; OnPropertyChanged(); } }
++
++        // 변화 감지용 이전 스냅샷
++        private int _prevOutput;
++        private int _prevRackA;
++        private int _prevRackB;
++        private bool _prevHasLoad;
++        private CartState _prevCartState;
++        private StationId _prevCartTarget;
++
++        public MainViewModel()
++        {
++            ZoomCommand = new RelayCommand<ZoomArgs>(a => Viewport.ZoomAt(a.Delta, a.MousePosOnCanvas));
++            BeginPanCommand = new RelayCommand<PanArgs>(a => Viewport.BeginPan(a.MousePosOnHost));
++            PanCommand = new RelayCommand<PanArgs>(a => Viewport.PanTo(a.MousePosOnHost));
++            EndPanCommand = new RelayCommand(() => Viewport.EndPan());
++            ResetViewCommand = new RelayCommand(() => Viewport.Reset());
++            AddStockCommand = new RelayCommand<StationId>(id =>
++            {
++                _sim.AddStock(id, 1);
++                AddUiLog("INFO", $"재고 +1 (manual): {id}");
++                SyncFromSim();
++            });
++
++
++            // ===== Simulation timer =====
++            _timer.Interval = TimeSpan.FromMilliseconds(16); // ~60fps 느낌
++            _timer.Tick += (_, __) => OnTick();
++
++            _sw.Start();
++            _timer.Start();
++
++            // 최초 1회 렌더 동기화
++            SyncFromSim();
++
++            // 초기 스냅샷
++            _prevOutput = _sim.Output.Stock;
++            _prevRackA = _sim.RackA.Stock;
++            _prevRackB = _sim.RackB.Stock;
++            _prevHasLoad = _sim.Cart.HasLoad;
++            _prevCartState = _sim.Cart.State;
++            _prevCartTarget = _sim.Cart.Target;
++        }
++
++        private void OnTick()
++        {
++            double dt = _sw.Elapsed.TotalSeconds;
++            _sw.Restart();
++
++            // dt가 비정상적으로 큰 경우(디버깅 중 멈춤) 클램프
++            if (dt > 0.1) dt = 0.1;
++
++            _sim.Tick(dt);
++            SyncFromSim();
++        }
++
++        private void SyncFromSim()
++        {
++            // 1) 카트
++            // 카트 사각형을 "중심 기준"으로 두면 보기 좋으니,
++            // 여기서 top-left로 변환해서 바인딩해도 됨.
++            const double cartSize = 70;
++            CartX = _sim.Cart.Position.X - (cartSize / 2);
++            CartY = _sim.Cart.Position.Y - (cartSize / 2);
++            CartHasLoad = _sim.Cart.HasLoad;
++
++            // 2) 재고 카운트(옵션)
++            OutputStock = _sim.Output.Stock;
++            RackAStock = _sim.RackA.Stock;
++            RackBStock = _sim.RackB.Stock;
++
++            // 2.5) 상태 텍스트
++            CartStateText = ToKorean(_sim.Cart.State);
++            CartTargetText = ToKorean(_sim.Cart.Target);
++
++            // 2.6) 변화 감지 로그(확실한 것만)
++            DetectAndLogChanges();
++
++            // 3) “렌더링용 제품 점” 좌표 재생성
++            RebuildProductDots();
++        }
++
++        private void DetectAndLogChanges()
++        {
++            // 재고 변화(정량적이라 확실함)
++            if (OutputStock != _prevOutput)
++                AddUiLog("INFO", $"출구 재고: {_prevOutput} → {OutputStock}");
++            if (RackAStock != _prevRackA)
++                AddUiLog("INFO", $"랙A 재고: {_prevRackA} → {RackAStock}");
++            if (RackBStock != _prevRackB)
++                AddUiLog("INFO", $"랙B 재고: {_prevRackB} → {RackBStock}");
++
++            // 카트 적재 변화(픽업/드롭을 매우 확실하게 표현 가능)
++            if (CartHasLoad && !_prevHasLoad)
++            {
++                AddUiLog("EVENT", "카트: 제품 픽업");
++                LastUiEventText = "카트가 제품을 픽업했습니다.";
++            }
++            else if (!CartHasLoad && _prevHasLoad)
++            {
++                AddUiLog("EVENT", "카트: 제품 드롭");
++                LastUiEventText = "카트가 제품을 내려놨습니다.";
++            }
++
++            // 상태/타겟 변화(시뮬 로직 기준으로 확실)
++            if (_sim.Cart.State != _prevCartState)
++                AddUiLog("STATE", $"카트 상태: {ToKorean(_prevCartState)} → {ToKorean(_sim.Cart.State)}");
++            if (_sim.Cart.Target != _prevCartTarget)
++                AddUiLog("STATE", $"카트 목적지: {ToKorean(_prevCartTarget)} → {ToKorean(_sim.Cart.Target)}");
++
++            // 스냅샷 갱신
++            _prevOutput = OutputStock;
++            _prevRackA = RackAStock;
++            _prevRackB = RackBStock;
++            _prevHasLoad = CartHasLoad;
++            _prevCartState = _sim.Cart.State;
++            _prevCartTarget = _sim.Cart.Target;
++        }
++
++        private void AddUiLog(string level, string message)
++        {
++            var item = new UiLogItem(DateTime.Now, level, message);
++            UiLogs.Insert(0, item);
++
++            // 너무 길어지면 UI/메모리 부담이니 상한
++            while (UiLogs.Count > 120) UiLogs.RemoveAt(UiLogs.Count - 1);
++        }
++
++        private static string ToKorean(StationId id) => id switch
++        {
++            StationId.Output => "출구",
++            StationId.RackA => "랙A",
++            StationId.RackB => "랙B",
++            _ => id.ToString()
++        };
++
++        private static string ToKorean(CartState s) => s switch
++        {
++            CartState.ToOutput => "출구로 이동",
++            CartState.Loading => "픽업 중",
++            CartState.ToRack => "랙으로 이동",
++            CartState.Unloading => "드롭 중",
++            _ => s.ToString()
++        };
++
++        private void RebuildProductDots()
++        {
++            ProductDots.Clear();
++
++            // ✅ 각 스테이션 “표시 영역(사각형)”을 XAML의 Border 위치/크기와 맞춤
++            // RackA : Left=90,  Top=90,  W=320, H=130
++            // RackB : Left=520, Top=90,  W=320, H=130
++            // Output: Left=820, Top=650, W=380, H=190
++
++            AddStockDots(StationId.RackA, _sim.RackA.Stock, left: 90, top: 90, width: 320, height: 130);
++            AddStockDots(StationId.RackB, _sim.RackB.Stock, left: 520, top: 90, width: 320, height: 130);
++            AddStockDots(StationId.Output, _sim.Output.Stock, left: 820, top: 650, width: 380, height: 190);
++
++            // 카트가 들고 있는 제품 1개(카트 위에 표시)
++            if (CartHasLoad)
++            {
++                ProductDots.Add(new ProductDotVm
++                {
++                    X = CartX + 22, // 카트 내부 적당한 위치
++                    Y = CartY + 22
++                });
++            }
++        }
++
++        private void AddStockDots(StationId id, int stock, double left, double top, double width, double height)
++        {
++            // 점 크기/간격
++            const double dot = 26;
++            const double gap = 8;
++
++            // 스테이션 안쪽 여백(카드 안에서 아래쪽에 쌓이게)
++            double paddingL = 18;
++            double paddingT = 56; // 텍스트 영역 피해서 아래쪽
++            double paddingB = 14;
++
++            double startX = left + paddingL;
++            double startY = top + paddingT;
++
++            double usableW = Math.Max(0, width - paddingL * 2);
++            double usableH = Math.Max(0, height - paddingT - paddingB);
++
++            int cols = (int)Math.Max(1, Math.Floor((usableW + gap) / (dot + gap)));
++            int rows = (int)Math.Max(1, Math.Floor((usableH + gap) / (dot + gap)));
++            int max = cols * rows;
++
++            // 너무 많이 쌓이면 UI가 터지니까 MVP에서는 상한(예: 30)
++            int count = Math.Min(stock, Math.Min(max, 30));
++
++            for (int i = 0; i < count; i++)
++            {
++                int col = i % cols;
++                int row = i / cols;
++
++                double x = startX + col * (dot + gap);
++                double y = startY + row * (dot + gap);
++
++                ProductDots.Add(new ProductDotVm { X = x, Y = y });
++            }
++        }
++
++        // ===== INotifyPropertyChanged =====
++        public event PropertyChangedEventHandler? PropertyChanged;
++        private void OnPropertyChanged([CallerMemberName] string? name = null)
++            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
++    }
++
++    public sealed class UiLogItem
++    {
++        public DateTime Ts { get; }
++        public string Level { get; }
++        public string Message { get; }
++
++        public string TimeText => Ts.ToString("HH:mm:ss");
++
++        // UI 편의용(리스트 표시)
++        public string Line1 => $"{TimeText}  {Message}";
++        public string Line2 => Level;
++
++        public UiLogItem(DateTime ts, string level, string message)
++        {
++            Ts = ts;
++            Level = level;
++            Message = message;
++        }
++    }
++}
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/ViewModels/ProductionQueryViewModel.cs /mnt/data/repo/factory-automation-system-FAS-/ViewModels/ProductionQueryViewModel.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/ViewModels/ProductionQueryViewModel.cs	2026-01-20 02:08:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/ViewModels/ProductionQueryViewModel.cs	2026-01-20 04:25:30.706112127 +0000
+@@ -9,51 +9,135 @@
+ 
+ namespace factory_automation_system_FAS_.ViewModels
+ {
++    /// <summary>
++    /// DB 연동 전 단계(MVP):
++    /// - "스키마(컬럼)부터" UI에 박아두고
++    /// - 실제 데이터는 나중에 DB/서버 연결되면 채우는 방식
++    /// </summary>
+     public sealed class ProductionQueryViewModel : INotifyPropertyChanged
+     {
+-        public DataTable Table { get; }
+-        public DataView TableView => Table.DefaultView;
++        public DataTable WorkOrderTable { get; }
++        public DataTable VisionEventTable { get; }
++        public DataTable TraceLogTable { get; }
++        public DataTable InventoryTable { get; }
+ 
+-        public bool HasRows => Table.Rows.Count > 0;
++        private int _selectedTabIndex;
++        public int SelectedTabIndex
++        {
++            get => _selectedTabIndex;
++            set
++            {
++                if (_selectedTabIndex == value) return;
++                _selectedTabIndex = value;
++                OnPropertyChanged();
++                OnPropertyChanged(nameof(ActiveTable));
++                OnPropertyChanged(nameof(ActiveTableView));
++                OnPropertyChanged(nameof(ActiveHasRows));
++            }
++        }
++
++        public DataTable ActiveTable => SelectedTabIndex switch
++        {
++            0 => WorkOrderTable,
++            1 => VisionEventTable,
++            2 => TraceLogTable,
++            3 => InventoryTable,
++            _ => WorkOrderTable
++        };
++
++        public DataView ActiveTableView => ActiveTable.DefaultView;
++        public bool ActiveHasRows => ActiveTable.Rows.Count > 0;
+ 
+         public ICommand ExportCsvCommand { get; }
+ 
+         public ProductionQueryViewModel()
+         {
+-            Table = CreateDefaultTable();
++            WorkOrderTable = CreateWorkOrderSchema();
++            VisionEventTable = CreateVisionEventSchema();
++            TraceLogTable = CreateTraceLogSchema();
++            InventoryTable = CreateInventorySchema();
++
+             ExportCsvCommand = new RelayCommand(ExportCsv);
++            SelectedTabIndex = 0;
++        }
++
++        // =====================
++        // Schema (DB 테이블과 1:1 매핑)
++        // =====================
++
++        private static DataTable CreateWorkOrderSchema()
++        {
++            // Product_WorkOrder
++            var dt = new DataTable("Product_WorkOrder");
++            dt.Columns.Add("product_id", typeof(int));
++            dt.Columns.Add("wo_id", typeof(string));
++            dt.Columns.Add("raw_id", typeof(int));
++            dt.Columns.Add("start_time", typeof(string));
++            dt.Columns.Add("end_time", typeof(string));
++            dt.Columns.Add("status", typeof(string));
++            return dt;
+         }
+ 
+-        private static DataTable CreateDefaultTable()
++        private static DataTable CreateVisionEventSchema()
+         {
+-            var dt = new DataTable();
++            // VisionEvent
++            var dt = new DataTable("VisionEvent");
++            dt.Columns.Add("event_id", typeof(int));
++            dt.Columns.Add("conv_id", typeof(int));
++            dt.Columns.Add("image_ref", typeof(string));
++            dt.Columns.Add("detected_class", typeof(string));
++            dt.Columns.Add("confidence", typeof(double));
++            dt.Columns.Add("ts", typeof(string));
++            dt.Columns.Add("meta", typeof(string)); // JSON string
++            return dt;
++        }
+ 
+-            // ✅ 아직 컬럼 정의가 없으니, "일단" 참고용 기본 컬럼만 넣어둠.
+-            // 나중에 너가 원하는 열로 갈아끼우면 DataGrid/CSV가 자동으로 따라감.
+-            dt.Columns.Add("Time", typeof(string));
+-            dt.Columns.Add("ProductId", typeof(string));
+-            dt.Columns.Add("From", typeof(string));
+-            dt.Columns.Add("To", typeof(string));
+-            dt.Columns.Add("Note", typeof(string));
++        private static DataTable CreateTraceLogSchema()
++        {
++            // TraceLog
++            var dt = new DataTable("TraceLog");
++            dt.Columns.Add("trace_id", typeof(int));
++            dt.Columns.Add("entity_type", typeof(string));
++            dt.Columns.Add("entity_id", typeof(int));
++            dt.Columns.Add("action", typeof(string));
++            dt.Columns.Add("ts", typeof(string));
++            dt.Columns.Add("user_id", typeof(string));
++            dt.Columns.Add("detail", typeof(string)); // JSON string
++            return dt;
++        }
+ 
++        private static DataTable CreateInventorySchema()
++        {
++            // Inventory
++            var dt = new DataTable("Inventory");
++            dt.Columns.Add("inv_id", typeof(int));
++            dt.Columns.Add("material_id", typeof(int));
++            dt.Columns.Add("qty", typeof(int));
++            dt.Columns.Add("location", typeof(string));
++            dt.Columns.Add("updated_at", typeof(string));
+             return dt;
+         }
+ 
++        // =====================
++        // Export
++        // =====================
++
+         private void ExportCsv()
+         {
+             try
+             {
++                var name = ActiveTable.TableName;
+                 var dlg = new SaveFileDialog
+                 {
+-                    Title = "생산조회 CSV 저장",
++                    Title = $"{name} CSV 저장",
+                     Filter = "CSV (*.csv)|*.csv",
+-                    FileName = $"production_query_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
++                    FileName = $"{name}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                 };
+ 
+                 if (dlg.ShowDialog() != true)
+                     return;
+ 
+-                CsvUtil.WriteDataTableToCsv(Table, dlg.FileName);
++                CsvUtil.WriteDataTableToCsv(ActiveTable, dlg.FileName);
+                 MessageBox.Show("CSV 저장 완료!", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+             }
+             catch (Exception ex)
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/Views/MainWindow.xaml /mnt/data/repo/factory-automation-system-FAS-/Views/MainWindow.xaml
+--- /mnt/data/base2/factory-automation-system-FAS-/Views/MainWindow.xaml	2026-01-20 02:05:04.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/Views/MainWindow.xaml	2026-01-20 04:28:16.069387668 +0000
+@@ -283,7 +283,61 @@
+                     <Border Height="1" Background="#1F2A36" Margin="0,6,0,0"/>
+                 </StackPanel>
+ 
+-                <Grid/>
++                <StackPanel>
++                    <!-- Realtime status (schema-ready, DB 연동 전) -->
++                    <Border Background="{StaticResource Card}" BorderBrush="{StaticResource BorderSoft}" BorderThickness="1" CornerRadius="14" Padding="14" Margin="0,14,0,12">
++                        <StackPanel>
++                            <TextBlock Text="Realtime Status" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,10"/>
++
++                            <Grid>
++                                <Grid.RowDefinitions>
++                                    <RowDefinition Height="Auto"/>
++                                    <RowDefinition Height="Auto"/>
++                                    <RowDefinition Height="Auto"/>
++                                    <RowDefinition Height="Auto"/>
++                                </Grid.RowDefinitions>
++                                <Grid.ColumnDefinitions>
++                                    <ColumnDefinition Width="Auto"/>
++                                    <ColumnDefinition Width="*"/>
++                                </Grid.ColumnDefinitions>
++
++                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Output" Foreground="#B8C2CC" Margin="0,0,16,6"/>
++                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding OutputStock, StringFormat=\{0\} ea}" Foreground="#B8C2CC"/>
++
++                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Rack A" Foreground="#B8C2CC" Margin="0,0,16,6"/>
++                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RackAStock, StringFormat=\{0\} ea}" Foreground="#B8C2CC"/>
++
++                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Rack B" Foreground="#B8C2CC" Margin="0,0,16,6"/>
++                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding RackBStock, StringFormat=\{0\} ea}" Foreground="#B8C2CC"/>
++
++                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Cart" Foreground="#B8C2CC" Margin="0,0,16,0"/>
++                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CartStateText}" Foreground="#B8C2CC"/>
++                            </Grid>
++
++                            <TextBlock Text="※ DB 연결 후 Inventory/AMRTask/TraceLog로 치환될 영역" Foreground="#6B7785" FontSize="11" Margin="0,10,0,0"/>
++                        </StackPanel>
++                    </Border>
++
++                    <!-- Recent log (TraceLog UI placeholder) -->
++                    <Border Background="{StaticResource Card}" BorderBrush="{StaticResource BorderSoft}" BorderThickness="1" CornerRadius="14" Padding="14">
++                        <StackPanel>
++                            <TextBlock Text="Recent Events" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,8"/>
++
++                            <ListBox ItemsSource="{Binding UiLog}" BorderThickness="0" Background="Transparent" MaxHeight="220">
++                                <ListBox.ItemTemplate>
++                                    <DataTemplate>
++                                        <StackPanel Margin="0,0,0,8">
++                                            <TextBlock Text="{Binding Line1}" Foreground="#B8C2CC" FontSize="12"/>
++                                            <TextBlock Text="{Binding Line2}" Foreground="#6B7785" FontSize="11"/>
++                                        </StackPanel>
++                                    </DataTemplate>
++                                </ListBox.ItemTemplate>
++                            </ListBox>
++
++                            <TextBlock Text="※ 추후 TraceLog/VisionEvent 테이블 조회로 대체" Foreground="#6B7785" FontSize="11" Margin="0,6,0,0"/>
++                        </StackPanel>
++                    </Border>
++                </StackPanel>
+             </DockPanel>
+         </Border>
+ 
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/Views/ProductionQueryWindow.xaml /mnt/data/repo/factory-automation-system-FAS-/Views/ProductionQueryWindow.xaml
+--- /mnt/data/base2/factory-automation-system-FAS-/Views/ProductionQueryWindow.xaml	2026-01-20 02:06:37.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/Views/ProductionQueryWindow.xaml	2026-01-20 04:23:52.896668043 +0000
+@@ -44,7 +44,7 @@
+         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,14">
+             <StackPanel DockPanel.Dock="Left">
+                 <TextBlock Text="생산조회" FontSize="22" FontWeight="Bold" Foreground="White"/>
+-                <TextBlock Text="(MVP) 아직 열 정의가 없어서, 일단 빈 테이블/CSV 내보내기만 붙여둠" Foreground="#8FA0B0" FontSize="12" Margin="0,6,0,0"/>
++                <TextBlock Text="(MVP) DB 연동 전: 스키마 기반 탭/컬럼만 선구현 (데이터는 비어있을 수 있음)" Foreground="#8FA0B0" FontSize="12" Margin="0,6,0,0"/>
+             </StackPanel>
+ 
+             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+@@ -57,23 +57,47 @@
+         <!-- Body -->
+         <Border Grid.Row="1" Background="{StaticResource Card}" BorderBrush="{StaticResource BorderSoft}" BorderThickness="1" CornerRadius="14" Padding="14">
+             <Grid>
+-                <DataGrid ItemsSource="{Binding TableView}"/>
++                <Grid.RowDefinitions>
++                    <RowDefinition Height="Auto"/>
++                    <RowDefinition Height="*"/>
++                </Grid.RowDefinitions>
+ 
+-                <!-- Empty hint -->
+-                <TextBlock Text="현재는 조회 로직/컬럼 정의 전이라 데이터가 비어있습니다.\nCSV로 받기 버튼은 현재 테이블 상태(헤더 포함)를 그대로 내보냅니다." 
+-                           Foreground="#8FA0B0" FontSize="13" TextAlignment="Center"
+-                           VerticalAlignment="Center" HorizontalAlignment="Center">
+-                    <TextBlock.Style>
+-                        <Style TargetType="TextBlock">
+-                            <Setter Property="Visibility" Value="Collapsed"/>
+-                            <Style.Triggers>
+-                                <DataTrigger Binding="{Binding HasRows}" Value="False">
+-                                    <Setter Property="Visibility" Value="Visible"/>
+-                                </DataTrigger>
+-                            </Style.Triggers>
+-                        </Style>
+-                    </TextBlock.Style>
+-                </TextBlock>
++                <!-- Tabs (schema-first) -->
++                <TabControl Grid.Row="0" SelectedIndex="{Binding SelectedTabIndex}" Background="Transparent" BorderThickness="0" Margin="0,0,0,10">
++                    <TabItem Header="Product WorkOrder">
++                        <TextBlock Text="제품 작업지시(Production) - Product_WorkOrder" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
++                    </TabItem>
++                    <TabItem Header="Vision Event">
++                        <TextBlock Text="비전 이벤트 - VisionEvent (카메라/컨베이어 감지 로그)" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
++                    </TabItem>
++                    <TabItem Header="Trace Log">
++                        <TextBlock Text="통합 이력 로그 - TraceLog (누가/무엇을/언제)" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
++                    </TabItem>
++                    <TabItem Header="Inventory">
++                        <TextBlock Text="재고/위치 - Inventory" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
++                    </TabItem>
++                </TabControl>
++
++                <!-- Table -->
++                <Grid Grid.Row="1">
++                    <DataGrid ItemsSource="{Binding ActiveTableView}"/>
++
++                    <!-- Empty hint -->
++                    <TextBlock Text="현재는 DB/조회 로직 연결 전이라 데이터가 비어있을 수 있습니다.\nCSV로 받기는 '현재 탭'의 테이블(헤더 포함)을 그대로 내보냅니다." 
++                               Foreground="#8FA0B0" FontSize="13" TextAlignment="Center"
++                               VerticalAlignment="Center" HorizontalAlignment="Center">
++                        <TextBlock.Style>
++                            <Style TargetType="TextBlock">
++                                <Setter Property="Visibility" Value="Collapsed"/>
++                                <Style.Triggers>
++                                    <DataTrigger Binding="{Binding ActiveHasRows}" Value="False">
++                                        <Setter Property="Visibility" Value="Visible"/>
++                                    </DataTrigger>
++                                </Style.Triggers>
++                            </Style>
++                        </TextBlock.Style>
++                    </TextBlock>
++                </Grid>
+             </Grid>
+         </Border>
+     </Grid>
+Binary files /mnt/data/base2/factory-automation-system-FAS-/bin/Debug/net8.0-windows/factory-automation-system-FAS-.dll and /mnt/data/repo/factory-automation-system-FAS-/bin/Debug/net8.0-windows/factory-automation-system-FAS-.dll differ
+Binary files /mnt/data/base2/factory-automation-system-FAS-/bin/Debug/net8.0-windows/factory-automation-system-FAS-.exe and /mnt/data/repo/factory-automation-system-FAS-/bin/Debug/net8.0-windows/factory-automation-system-FAS-.exe differ
+Binary files /mnt/data/base2/factory-automation-system-FAS-/bin/Debug/net8.0-windows/factory-automation-system-FAS-.pdb and /mnt/data/repo/factory-automation-system-FAS-/bin/Debug/net8.0-windows/factory-automation-system-FAS-.pdb differ
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.baml and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.baml differ
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.cs	2026-01-19 04:14:15.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.cs	2026-01-20 02:22:33.000000000 +0000
+@@ -1,4 +1,4 @@
+-﻿#pragma checksum "..\..\..\..\Views\MainWindow.xaml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "D575B149C67D3EA83DFDD8EEDFDF863723B3DAF8"
++﻿#pragma checksum "..\..\..\..\Views\MainWindow.xaml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "2B58CE88915F670C6179178A6E0E6BA1990FBA51"
+ //------------------------------------------------------------------------------
+ // <auto-generated>
+ //     이 코드는 도구를 사용하여 생성되었습니다.
+@@ -91,6 +91,14 @@
+             case 1:
+             this.MapCanvas = ((System.Windows.Controls.Canvas)(target));
+             return;
++            case 2:
++            
++            #line 271 "..\..\..\..\Views\MainWindow.xaml"
++            ((System.Windows.Controls.Button)(target)).Click += new System.Windows.RoutedEventHandler(this.OpenProductionQuery_Click);
++            
++            #line default
++            #line hidden
++            return;
+             }
+             this._contentLoaded = true;
+         }
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.i.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.i.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.i.cs	2026-01-19 04:14:15.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/MainWindow.g.i.cs	2026-01-20 02:22:33.000000000 +0000
+@@ -1,4 +1,4 @@
+-﻿#pragma checksum "..\..\..\..\Views\MainWindow.xaml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "D575B149C67D3EA83DFDD8EEDFDF863723B3DAF8"
++﻿#pragma checksum "..\..\..\..\Views\MainWindow.xaml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "2B58CE88915F670C6179178A6E0E6BA1990FBA51"
+ //------------------------------------------------------------------------------
+ // <auto-generated>
+ //     이 코드는 도구를 사용하여 생성되었습니다.
+@@ -91,6 +91,14 @@
+             case 1:
+             this.MapCanvas = ((System.Windows.Controls.Canvas)(target));
+             return;
++            case 2:
++            
++            #line 271 "..\..\..\..\Views\MainWindow.xaml"
++            ((System.Windows.Controls.Button)(target)).Click += new System.Windows.RoutedEventHandler(this.OpenProductionQuery_Click);
++            
++            #line default
++            #line hidden
++            return;
+             }
+             this._contentLoaded = true;
+         }
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.baml and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.baml differ
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.cs	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.cs	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1,86 @@
++﻿#pragma checksum "..\..\..\..\Views\ProductionQueryWindow.xaml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "1D8F692927CA4CAAD4B1C1EAD2EE7BEA38FAFC5A"
++//------------------------------------------------------------------------------
++// <auto-generated>
++//     이 코드는 도구를 사용하여 생성되었습니다.
++//     런타임 버전:4.0.30319.42000
++//
++//     파일 내용을 변경하면 잘못된 동작이 발생할 수 있으며, 코드를 다시 생성하면
++//     이러한 변경 내용이 손실됩니다.
++// </auto-generated>
++//------------------------------------------------------------------------------
++
++using System;
++using System.Diagnostics;
++using System.Windows;
++using System.Windows.Automation;
++using System.Windows.Controls;
++using System.Windows.Controls.Primitives;
++using System.Windows.Controls.Ribbon;
++using System.Windows.Data;
++using System.Windows.Documents;
++using System.Windows.Ink;
++using System.Windows.Input;
++using System.Windows.Markup;
++using System.Windows.Media;
++using System.Windows.Media.Animation;
++using System.Windows.Media.Effects;
++using System.Windows.Media.Imaging;
++using System.Windows.Media.Media3D;
++using System.Windows.Media.TextFormatting;
++using System.Windows.Navigation;
++using System.Windows.Shapes;
++using System.Windows.Shell;
++
++
++namespace factory_automation_system_FAS_.Views {
++    
++    
++    /// <summary>
++    /// ProductionQueryWindow
++    /// </summary>
++    public partial class ProductionQueryWindow : System.Windows.Window, System.Windows.Markup.IComponentConnector {
++        
++        private bool _contentLoaded;
++        
++        /// <summary>
++        /// InitializeComponent
++        /// </summary>
++        [System.Diagnostics.DebuggerNonUserCodeAttribute()]
++        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.0.0")]
++        public void InitializeComponent() {
++            if (_contentLoaded) {
++                return;
++            }
++            _contentLoaded = true;
++            System.Uri resourceLocater = new System.Uri("/factory-automation-system-FAS-;component/views/productionquerywindow.xaml", System.UriKind.Relative);
++            
++            #line 1 "..\..\..\..\Views\ProductionQueryWindow.xaml"
++            System.Windows.Application.LoadComponent(this, resourceLocater);
++            
++            #line default
++            #line hidden
++        }
++        
++        [System.Diagnostics.DebuggerNonUserCodeAttribute()]
++        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.0.0")]
++        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
++        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes")]
++        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
++        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
++        void System.Windows.Markup.IComponentConnector.Connect(int connectionId, object target) {
++            switch (connectionId)
++            {
++            case 1:
++            
++            #line 53 "..\..\..\..\Views\ProductionQueryWindow.xaml"
++            ((System.Windows.Controls.Button)(target)).Click += new System.Windows.RoutedEventHandler(this.Close_Click);
++            
++            #line default
++            #line hidden
++            return;
++            }
++            this._contentLoaded = true;
++        }
++    }
++}
++
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.i.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.i.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.i.cs	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/Views/ProductionQueryWindow.g.i.cs	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1,86 @@
++﻿#pragma checksum "..\..\..\..\Views\ProductionQueryWindow.xaml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "1D8F692927CA4CAAD4B1C1EAD2EE7BEA38FAFC5A"
++//------------------------------------------------------------------------------
++// <auto-generated>
++//     이 코드는 도구를 사용하여 생성되었습니다.
++//     런타임 버전:4.0.30319.42000
++//
++//     파일 내용을 변경하면 잘못된 동작이 발생할 수 있으며, 코드를 다시 생성하면
++//     이러한 변경 내용이 손실됩니다.
++// </auto-generated>
++//------------------------------------------------------------------------------
++
++using System;
++using System.Diagnostics;
++using System.Windows;
++using System.Windows.Automation;
++using System.Windows.Controls;
++using System.Windows.Controls.Primitives;
++using System.Windows.Controls.Ribbon;
++using System.Windows.Data;
++using System.Windows.Documents;
++using System.Windows.Ink;
++using System.Windows.Input;
++using System.Windows.Markup;
++using System.Windows.Media;
++using System.Windows.Media.Animation;
++using System.Windows.Media.Effects;
++using System.Windows.Media.Imaging;
++using System.Windows.Media.Media3D;
++using System.Windows.Media.TextFormatting;
++using System.Windows.Navigation;
++using System.Windows.Shapes;
++using System.Windows.Shell;
++
++
++namespace factory_automation_system_FAS_.Views {
++    
++    
++    /// <summary>
++    /// ProductionQueryWindow
++    /// </summary>
++    public partial class ProductionQueryWindow : System.Windows.Window, System.Windows.Markup.IComponentConnector {
++        
++        private bool _contentLoaded;
++        
++        /// <summary>
++        /// InitializeComponent
++        /// </summary>
++        [System.Diagnostics.DebuggerNonUserCodeAttribute()]
++        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.0.0")]
++        public void InitializeComponent() {
++            if (_contentLoaded) {
++                return;
++            }
++            _contentLoaded = true;
++            System.Uri resourceLocater = new System.Uri("/factory-automation-system-FAS-;component/views/productionquerywindow.xaml", System.UriKind.Relative);
++            
++            #line 1 "..\..\..\..\Views\ProductionQueryWindow.xaml"
++            System.Windows.Application.LoadComponent(this, resourceLocater);
++            
++            #line default
++            #line hidden
++        }
++        
++        [System.Diagnostics.DebuggerNonUserCodeAttribute()]
++        [System.CodeDom.Compiler.GeneratedCodeAttribute("PresentationBuildTasks", "10.0.0.0")]
++        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
++        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Design", "CA1033:InterfaceMethodsShouldBeCallableByChildTypes")]
++        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
++        [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
++        void System.Windows.Markup.IComponentConnector.Connect(int connectionId, object target) {
++            switch (connectionId)
++            {
++            case 1:
++            
++            #line 53 "..\..\..\..\Views\ProductionQueryWindow.xaml"
++            ((System.Windows.Controls.Button)(target)).Click += new System.Windows.RoutedEventHandler(this.Close_Click);
++            
++            #line default
++            #line hidden
++            return;
++            }
++            this._contentLoaded = true;
++        }
++    }
++}
++
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/apphost.exe and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/apphost.exe differ
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfo.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfo.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfo.cs	2026-01-19 00:07:10.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfo.cs	2026-01-20 02:19:40.000000000 +0000
+@@ -14,7 +14,7 @@
+ [assembly: System.Reflection.AssemblyCompanyAttribute("factory-automation-system-FAS-")]
+ [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+ [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7954c3f39258176ca04546074f5f991b04c9c814")]
++[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1e6b57fe66d3892f3fcc46061353e2fca56e5b67")]
+ [assembly: System.Reflection.AssemblyProductAttribute("factory-automation-system-FAS-")]
+ [assembly: System.Reflection.AssemblyTitleAttribute("factory-automation-system-FAS-")]
+ [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfoInputs.cache /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfoInputs.cache
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfoInputs.cache	2026-01-19 00:07:10.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.AssemblyInfoInputs.cache	2026-01-20 02:19:40.000000000 +0000
+@@ -1 +1 @@
+-830d1195752adfee6f52fd1d78b4e553f018bdda87ecc423661d10797fd8eab3
++21994191c403d71b591c534f899f59bd27d278212278dfd8d49ed2540b7b768e
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.CoreCompileInputs.cache /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.CoreCompileInputs.cache
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.CoreCompileInputs.cache	2026-01-16 05:30:05.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.CoreCompileInputs.cache	2026-01-20 02:22:34.000000000 +0000
+@@ -1 +1 @@
+-1c6c759eaa71b372d159b71cd05c86ab5d58c6594993c34eb9e8b9e55fc90f0e
++6da9bee445d37ee770734186c2b8083412d8b7c3dc0a5a29a7041b9812f83d86
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.FileListAbsolute.txt /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.FileListAbsolute.txt
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.FileListAbsolute.txt	2026-01-16 03:42:06.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.csproj.FileListAbsolute.txt	2026-01-20 02:22:34.000000000 +0000
+@@ -20,3 +20,5 @@
+ C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\obj\Debug\net8.0-windows\ref\factory-automation-system-FAS-.dll
+ C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
+ C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\obj\Debug\net8.0-windows\factory-automation-system-FAS-_MarkupCompile.lref
++C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\obj\Debug\net8.0-windows\Views\ProductionQueryWindow.baml
++C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\obj\Debug\net8.0-windows\Views\ProductionQueryWindow.g.cs
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.dll and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.dll differ
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.g.resources and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.g.resources differ
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.pdb and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.pdb differ
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.sourcelink.json /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.sourcelink.json
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.sourcelink.json	2026-01-19 01:35:09.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-.sourcelink.json	2026-01-20 02:22:34.000000000 +0000
+@@ -1 +1 @@
+-{"documents":{"C:\\Users\\user2\\Source\\Repos\\factory-automation-system-FAS-\\*":"https://raw.githubusercontent.com/ekdlakdl12/factory-automation-system-FAS-/7954c3f39258176ca04546074f5f991b04c9c814/*"}}
+\ No newline at end of file
++{"documents":{"C:\\Users\\user2\\Source\\Repos\\factory-automation-system-FAS-\\*":"https://raw.githubusercontent.com/ekdlakdl12/factory-automation-system-FAS-/1e6b57fe66d3892f3fcc46061353e2fca56e5b67/*"}}
+\ No newline at end of file
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.cache /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.cache
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.cache	2026-01-19 04:14:16.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.cache	2026-01-20 02:22:34.000000000 +0000
+@@ -10,11 +10,11 @@
+ false
+ TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
+ C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\App.xaml
+-1-1644662438
++2-1872995358
+ 
+-15827279687
++18-1356763871
+ 198338916705
+-Views\MainWindow.xaml;
++Views\MainWindow.xaml;Views\ProductionQueryWindow.xaml;
+ 
+ False
+ 
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.i.cache /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.i.cache
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.i.cache	2026-01-19 00:07:13.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_MarkupCompile.i.cache	2026-01-20 02:20:17.000000000 +0000
+@@ -10,11 +10,11 @@
+ false
+ TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
+ C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\App.xaml
+-1-1644662438
++2-1872995358
+ 
+-17737020399
++20-1447023159
+ 198338916705
+-Views\MainWindow.xaml;
++Views\MainWindow.xaml;Views\ProductionQueryWindow.xaml;
+ 
+ False
+ 
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfo.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfo.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfo.cs	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfo.cs	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1,25 @@
++//------------------------------------------------------------------------------
++// <auto-generated>
++//     이 코드는 도구를 사용하여 생성되었습니다.
++//     런타임 버전:4.0.30319.42000
++//
++//     파일 내용을 변경하면 잘못된 동작이 발생할 수 있으며, 코드를 다시 생성하면
++//     이러한 변경 내용이 손실됩니다.
++// </auto-generated>
++//------------------------------------------------------------------------------
++
++using System;
++using System.Reflection;
++
++[assembly: System.Reflection.AssemblyCompanyAttribute("factory-automation-system-FAS-")]
++[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
++[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
++[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1e6b57fe66d3892f3fcc46061353e2fca56e5b67")]
++[assembly: System.Reflection.AssemblyProductAttribute("factory-automation-system-FAS-")]
++[assembly: System.Reflection.AssemblyTitleAttribute("factory-automation-system-FAS-")]
++[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
++[assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
++[assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]
++
++// MSBuild WriteCodeFragment 클래스에서 생성되었습니다.
++
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfoInputs.cache /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfoInputs.cache
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfoInputs.cache	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.AssemblyInfoInputs.cache	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1 @@
++21994191c403d71b591c534f899f59bd27d278212278dfd8d49ed2540b7b768e
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GeneratedMSBuildEditorConfig.editorconfig /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GeneratedMSBuildEditorConfig.editorconfig
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GeneratedMSBuildEditorConfig.editorconfig	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GeneratedMSBuildEditorConfig.editorconfig	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1,18 @@
++is_global = true
++build_property.TargetFramework = net8.0-windows
++build_property.TargetFrameworkIdentifier = .NETCoreApp
++build_property.TargetFrameworkVersion = v8.0
++build_property.TargetPlatformMinVersion = 7.0
++build_property.UsingMicrosoftNETSdkWeb = 
++build_property.ProjectTypeGuids = 
++build_property.InvariantGlobalization = 
++build_property.PlatformNeutralAssembly = 
++build_property.EnforceExtendedAnalyzerRules = 
++build_property._SupportedPlatformList = Linux,macOS,Windows
++build_property.RootNamespace = factory_automation_system_FAS_
++build_property.ProjectDir = C:\Users\user2\Source\Repos\factory-automation-system-FAS-\factory-automation-system-FAS-\
++build_property.EnableComHosting = 
++build_property.EnableGeneratedComInterfaceComImportInterop = 
++build_property.CsWinRTUseWindowsUIXamlProjections = false
++build_property.EffectiveAnalysisLevelStyle = 8.0
++build_property.EnableCodeStyleSeverity = 
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GlobalUsings.g.cs /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GlobalUsings.g.cs
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GlobalUsings.g.cs	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.GlobalUsings.g.cs	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1,6 @@
++// <auto-generated/>
++global using System;
++global using System.Collections.Generic;
++global using System.Linq;
++global using System.Threading;
++global using System.Threading.Tasks;
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.assets.cache and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.assets.cache differ
+diff -ruN /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.sourcelink.json /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.sourcelink.json
+--- /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.sourcelink.json	1970-01-01 00:00:00.000000000 +0000
++++ /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/factory-automation-system-FAS-_lp2cglun_wpftmp.sourcelink.json	2026-01-20 02:22:33.000000000 +0000
+@@ -0,0 +1 @@
++{"documents":{"C:\\Users\\user2\\Source\\Repos\\factory-automation-system-FAS-\\*":"https://raw.githubusercontent.com/ekdlakdl12/factory-automation-system-FAS-/1e6b57fe66d3892f3fcc46061353e2fca56e5b67/*"}}
+\ No newline at end of file
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/ref/factory-automation-system-FAS-.dll and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/ref/factory-automation-system-FAS-.dll differ
+Binary files /mnt/data/base2/factory-automation-system-FAS-/obj/Debug/net8.0-windows/refint/factory-automation-system-FAS-.dll and /mnt/data/repo/factory-automation-system-FAS-/obj/Debug/net8.0-windows/refint/factory-automation-system-FAS-.dll differ

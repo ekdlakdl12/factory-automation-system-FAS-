@@ -1,0 +1,585 @@
+diff --git a/App.xaml b/App.xaml
+index 4008dbd..10bf89f 100644
+--- a/App.xaml
++++ b/App.xaml
+@@ -2,7 +2,7 @@
+              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:local="clr-namespace:factory_automation_system_FAS_"
+-             StartupUri="Views/MainWindow.xaml">
++             StartupUri="Views/LoginWindow.xaml">
+     <Application.Resources>
+ 
+     </Application.Resources>
+diff --git a/Config/auth.sample.json b/Config/auth.sample.json
+new file mode 100644
+index 0000000..728bd2e
+--- /dev/null
++++ b/Config/auth.sample.json
+@@ -0,0 +1,15 @@
++{
++  "version": 1,
++  "hash_alg": "PBKDF2-SHA256",
++  "iterations": 100000,
++  "users": [
++    {
++      "id": "admin",
++      "display_name": "Administrator",
++      "role": "Admin",
++      "enabled": true,
++      "password_salt_b64": "+xOW0EOvsFp3cBEUdc9C3Q==",
++      "password_hash_b64": "95GIvT5BiVQhpYNPiDHb01ZQ9MO4yTcPMbWCQULaSCA="
++    }
++  ]
++}
+diff --git a/Models/AuthConfig.cs b/Models/AuthConfig.cs
+new file mode 100644
+index 0000000..95badd6
+--- /dev/null
++++ b/Models/AuthConfig.cs
+@@ -0,0 +1,42 @@
++// Models/AuthConfig.cs
++using System.Collections.Generic;
++using System.Text.Json.Serialization;
++
++namespace factory_automation_system_FAS_.Models
++{
++    public sealed class AuthConfig
++    {
++        [JsonPropertyName("version")]
++        public int Version { get; set; } = 1;
++
++        [JsonPropertyName("hash_alg")]
++        public string HashAlg { get; set; } = "PBKDF2-SHA256";
++
++        [JsonPropertyName("iterations")]
++        public int Iterations { get; set; } = 100000;
++
++        [JsonPropertyName("users")]
++        public List<AuthUserRecord> Users { get; set; } = new();
++    }
++
++    public sealed class AuthUserRecord
++    {
++        [JsonPropertyName("id")]
++        public string Id { get; set; } = "";
++
++        [JsonPropertyName("display_name")]
++        public string DisplayName { get; set; } = "";
++
++        [JsonPropertyName("role")]
++        public string Role { get; set; } = "Admin";
++
++        [JsonPropertyName("enabled")]
++        public bool Enabled { get; set; } = true;
++
++        [JsonPropertyName("password_salt_b64")]
++        public string PasswordSaltB64 { get; set; } = "";
++
++        [JsonPropertyName("password_hash_b64")]
++        public string PasswordHashB64 { get; set; } = "";
++    }
++}
+diff --git a/Models/UserSession.cs b/Models/UserSession.cs
+new file mode 100644
+index 0000000..ad84f2c
+--- /dev/null
++++ b/Models/UserSession.cs
+@@ -0,0 +1,10 @@
++// Models/UserSession.cs
++namespace factory_automation_system_FAS_.Models
++{
++    public sealed class UserSession
++    {
++        public string Id { get; init; } = "";
++        public string DisplayName { get; init; } = "";
++        public string Role { get; init; } = "Admin";
++    }
++}
+diff --git a/Services/AppSession.cs b/Services/AppSession.cs
+new file mode 100644
+index 0000000..18aa8c7
+--- /dev/null
++++ b/Services/AppSession.cs
+@@ -0,0 +1,13 @@
++// Services/AppSession.cs
++using factory_automation_system_FAS_.Models;
++
++namespace factory_automation_system_FAS_.Services
++{
++    public static class AppSession
++    {
++        public static UserSession? CurrentUser { get; internal set; }
++        public static bool IsAuthenticated => CurrentUser != null;
++
++        public static void Logout() => CurrentUser = null;
++    }
++}
+diff --git a/Services/AuthService.cs b/Services/AuthService.cs
+new file mode 100644
+index 0000000..d8f2606
+--- /dev/null
++++ b/Services/AuthService.cs
+@@ -0,0 +1,97 @@
++// Services/AuthService.cs
++using factory_automation_system_FAS_.Models;
++using System;
++using System.IO;
++using System.Linq;
++using System.Security.Cryptography;
++using System.Text.Json;
++
++namespace factory_automation_system_FAS_.Services
++{
++    public sealed class AuthService
++    {
++        private static readonly JsonSerializerOptions JsonOpts = new()
++        {
++            PropertyNameCaseInsensitive = true,
++            ReadCommentHandling = JsonCommentHandling.Skip,
++            AllowTrailingCommas = true
++        };
++
++        public AuthResult Validate(string userId, string password)
++        {
++            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
++                return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
++
++            ConfigService.EnsureAuthLocalExists();
++
++            AuthConfig cfg;
++            try
++            {
++                var json = File.ReadAllText(ConfigService.AuthLocalPath);
++                cfg = JsonSerializer.Deserialize<AuthConfig>(json, JsonOpts)
++                      ?? throw new InvalidOperationException("auth.local.json parse failed.");
++            }
++            catch
++            {
++                // 설정 파일이 깨져도 내부 정보 노출은 하지 않음
++                return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
++            }
++
++            var u = cfg.Users.FirstOrDefault(x =>
++                x.Enabled &&
++                string.Equals(x.Id, userId, StringComparison.OrdinalIgnoreCase));
++
++            if (u is null)
++                return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
++
++            if (!string.Equals(cfg.HashAlg, "PBKDF2-SHA256", StringComparison.OrdinalIgnoreCase))
++                return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
++
++            if (!TryVerifyPbkdf2Sha256(password, u.PasswordSaltB64, u.PasswordHashB64, cfg.Iterations))
++                return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
++
++            AppSession.CurrentUser = new UserSession
++            {
++                Id = u.Id,
++                DisplayName = string.IsNullOrWhiteSpace(u.DisplayName) ? u.Id : u.DisplayName,
++                Role = string.IsNullOrWhiteSpace(u.Role) ? "Admin" : u.Role
++            };
++
++            return AuthResult.Success(AppSession.CurrentUser);
++        }
++
++        private static bool TryVerifyPbkdf2Sha256(string password, string saltB64, string expectedHashB64, int iterations)
++        {
++            try
++            {
++                if (iterations <= 0) iterations = 100000;
++
++                var salt = Convert.FromBase64String(saltB64);
++                var expected = Convert.FromBase64String(expectedHashB64);
++
++                var actual = Rfc2898DeriveBytes.Pbkdf2(
++                    password: password,
++                    salt: salt,
++                    iterations: iterations,
++                    hashAlgorithm: HashAlgorithmName.SHA256,
++                    outputLength: expected.Length);
++
++                return CryptographicOperations.FixedTimeEquals(actual, expected);
++            }
++            catch
++            {
++                return false;
++            }
++        }
++    }
++
++    public sealed class AuthResult
++    {
++        public bool Ok { get; init; }
++        public string Message { get; init; } = "";
++        public UserSession? User { get; init; }
++
++        public static AuthResult Success(UserSession? user) => new() { Ok = true, User = user, Message = "" };
++        public static AuthResult Failed(string message) => new() { Ok = false, Message = message };
++    }
++}
+diff --git a/Services/ConfigService.cs b/Services/ConfigService.cs
+new file mode 100644
+index 0000000..7878988
+--- /dev/null
++++ b/Services/ConfigService.cs
+@@ -0,0 +1,45 @@
++// Services/ConfigService.cs
++using System;
++using System.IO;
++
++namespace factory_automation_system_FAS_.Services
++{
++    public static class ConfigService
++    {
++        private const string AppFolderName = "factory-automation-system-FAS";
++        private const string AuthLocalFileName = "auth.local.json";
++
++        public static string AppDataDir
++        {
++            get
++            {
++                var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
++                return Path.Combine(baseDir, AppFolderName);
++            }
++        }
++
++        public static string AuthLocalPath => Path.Combine(AppDataDir, AuthLocalFileName);
++
++        /// <summary>
++        /// Ensures auth.local.json exists under %AppData%\\factory-automation-system-FAS\\.
++        /// If missing, copies it from the packaged sample: {AppBaseDir}\\Config\\auth.sample.json
++        /// </summary>
++        public static void EnsureAuthLocalExists()
++        {
++            Directory.CreateDirectory(AppDataDir);
++
++            if (File.Exists(AuthLocalPath))
++                return;
++
++            var samplePath = Path.Combine(AppContext.BaseDirectory, "Config", "auth.sample.json");
++            if (!File.Exists(samplePath))
++            {
++                throw new FileNotFoundException(
++                    "auth.sample.json not found. Ensure it's included as Content and copied to output.",
++                    samplePath);
++            }
++
++            File.Copy(samplePath, AuthLocalPath, overwrite: false);
++        }
++    }
++}
+diff --git a/ViewModels/LoginViewModel.cs b/ViewModels/LoginViewModel.cs
+new file mode 100644
+index 0000000..a3d60e5
+--- /dev/null
++++ b/ViewModels/LoginViewModel.cs
+@@ -0,0 +1,109 @@
++// ViewModels/LoginViewModel.cs
++using factory_automation_system_FAS_.Services;
++using factory_automation_system_FAS_.Utils;
++using System;
++using System.ComponentModel;
++using System.Runtime.CompilerServices;
++using System.Windows.Input;
++using System.Windows.Threading;
++
++namespace factory_automation_system_FAS_.ViewModels
++{
++    public sealed class LoginViewModel : INotifyPropertyChanged
++    {
++        private readonly AuthService _auth = new();
++        private readonly DispatcherTimer _lockTimer = new();
++
++        private const int MaxFailCount = 5;
++        private const int LockSeconds = 30;
++
++        private int _failCount;
++        private int _lockRemaining;
++
++        private string _userId = "";
++        public string UserId { get => _userId; set { _userId = value; OnPropertyChanged(); } }
++
++        private string _password = "";
++        public string Password { get => _password; set { _password = value; OnPropertyChanged(); } }
++
++        private string _error = "";
++        public string Error { get => _error; private set { _error = value; OnPropertyChanged(); } }
++
++        public bool IsLocked => _lockRemaining > 0;
++        public string LockMessage => IsLocked ? $"로그인 시도가 너무 많습니다. {_lockRemaining}초 후 다시 시도하세요." : "";
++
++        public ICommand LoginCommand { get; }
++
++        public event Action? LoginSucceeded;
++
++        public LoginViewModel()
++        {
++            LoginCommand = new RelayCommand(DoLogin, CanLogin);
++
++            _lockTimer.Interval = TimeSpan.FromSeconds(1);
++            _lockTimer.Tick += (_, __) =>
++            {
++                if (_lockRemaining > 0)
++                {
++                    _lockRemaining--;
++                    OnPropertyChanged(nameof(IsLocked));
++                    OnPropertyChanged(nameof(LockMessage));
++                    RaiseLoginCanExecuteChanged();
++                }
++
++                if (_lockRemaining <= 0)
++                    _lockTimer.Stop();
++            };
++        }
++
++        private bool CanLogin()
++        {
++            if (IsLocked) return false;
++            return !string.IsNullOrWhiteSpace(UserId) && !string.IsNullOrWhiteSpace(Password);
++        }
++
++        private void DoLogin()
++        {
++            if (IsLocked) return;
++
++            Error = "";
++
++            var result = _auth.Validate(UserId.Trim(), Password);
++
++            // 보안상 Password는 즉시 비움 (UI는 PasswordBox가 따로 관리)
++            Password = "";
++
++            if (result.Ok)
++            {
++                _failCount = 0;
++                Error = "";
++                LoginSucceeded?.Invoke();
++                return;
++            }
++
++            _failCount++;
++            Error = string.IsNullOrWhiteSpace(result.Message) ? "아이디/비밀번호가 올바르지 않습니다" : result.Message;
++
++            if (_failCount >= MaxFailCount)
++            {
++                _failCount = 0;
++                _lockRemaining = LockSeconds;
++                OnPropertyChanged(nameof(IsLocked));
++                OnPropertyChanged(nameof(LockMessage));
++                _lockTimer.Start();
++            }
++
++            RaiseLoginCanExecuteChanged();
++        }
++
++        private void RaiseLoginCanExecuteChanged()
++        {
++            if (LoginCommand is RelayCommand rc)
++                rc.RaiseCanExecuteChanged();
++        }
++
++        public event PropertyChangedEventHandler? PropertyChanged;
++        private void OnPropertyChanged([CallerMemberName] string? name = null)
++            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
++    }
++}
+diff --git a/Views/LoginWindow.xaml b/Views/LoginWindow.xaml
+new file mode 100644
+index 0000000..e582d4e
+--- /dev/null
++++ b/Views/LoginWindow.xaml
+@@ -0,0 +1,94 @@
++<Window x:Class="factory_automation_system_FAS_.Views.LoginWindow"
++        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
++        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
++        Title="관리자 로그인"
++        Height="520" Width="420"
++        WindowStartupLocation="CenterScreen"
++        Background="#0B0F14"
++        ResizeMode="NoResize">
++
++    <Window.Resources>
++        <SolidColorBrush x:Key="Bg" Color="#0B0F14"/>
++        <SolidColorBrush x:Key="Card" Color="#161E27"/>
++        <SolidColorBrush x:Key="BorderSoft" Color="#26313D"/>
++        <SolidColorBrush x:Key="Accent" Color="#33E6A2"/>
++
++        <Style TargetType="TextBox">
++            <Setter Property="Height" Value="42"/>
++            <Setter Property="Padding" Value="12,0"/>
++            <Setter Property="Background" Value="#121820"/>
++            <Setter Property="Foreground" Value="#E6EEF6"/>
++            <Setter Property="BorderBrush" Value="#26313D"/>
++            <Setter Property="BorderThickness" Value="1"/>
++            <Setter Property="FontSize" Value="14"/>
++        </Style>
++
++        <Style TargetType="PasswordBox">
++            <Setter Property="Height" Value="42"/>
++            <Setter Property="Padding" Value="12,0"/>
++            <Setter Property="Background" Value="#121820"/>
++            <Setter Property="Foreground" Value="#E6EEF6"/>
++            <Setter Property="BorderBrush" Value="#26313D"/>
++            <Setter Property="BorderThickness" Value="1"/>
++            <Setter Property="FontSize" Value="14"/>
++        </Style>
++
++        <Style TargetType="Button">
++            <Setter Property="Height" Value="42"/>
++            <Setter Property="Padding" Value="14,0"/>
++            <Setter Property="FontWeight" Value="SemiBold"/>
++            <Setter Property="BorderThickness" Value="0"/>
++            <Setter Property="Cursor" Value="Hand"/>
++        </Style>
++    </Window.Resources>
++
++    <Grid Margin="24">
++        <Border Background="{StaticResource Card}"
++                BorderBrush="{StaticResource BorderSoft}"
++                BorderThickness="1"
++                CornerRadius="18"
++                Padding="22">
++            <Grid>
++                <Grid.RowDefinitions>
++                    <RowDefinition Height="Auto"/>
++                    <RowDefinition Height="Auto"/>
++                    <RowDefinition Height="Auto"/>
++                    <RowDefinition Height="Auto"/>
++                    <RowDefinition Height="Auto"/>
++                    <RowDefinition Height="*"/>
++                    <RowDefinition Height="Auto"/>
++                </Grid.RowDefinitions>
++
++                <!-- Title -->
++                <StackPanel Grid.Row="0" Margin="0,0,0,18">
++                    <TextBlock Text="DT Control Center" FontSize="22" FontWeight="Bold" Foreground="White"/>
++                    <TextBlock Text="관리자 로그인" FontSize="13" Foreground="#8FA0B0" Margin="0,6,0,0"/>
++                </StackPanel>
++
++                <!-- ID -->
++                <TextBlock Grid.Row="1" Text="ID" Foreground="#8FA0B0" Margin="2,0,0,6"/>
++                <TextBox Grid.Row="2"
++                         Text="{Binding UserId, UpdateSourceTrigger=PropertyChanged}"
++                         Margin="0,0,0,14"/>
++
++                <!-- PW -->
++                <TextBlock Grid.Row="3" Text="Password" Foreground="#8FA0B0" Margin="2,0,0,6"/>
++                <PasswordBox Grid.Row="4"
++                             PasswordChanged="PasswordBox_PasswordChanged"
++                             Margin="0,0,0,10"/>
++
++                <!-- Error / Lock -->
++                <StackPanel Grid.Row="5" Margin="0,0,0,10">
++                    <TextBlock Text="{Binding Error}" Foreground="#FF6B6B" FontSize="12" TextWrapping="Wrap" Margin="2,0,0,6"/>
++                    <TextBlock Text="{Binding LockMessage}" Foreground="#F5A524" FontSize="12" TextWrapping="Wrap" Margin="2,0,0,0"/>
++                </StackPanel>
++
++                <!-- Buttons -->
++                <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
++                    <Button Content="종료" Background="#26313D" Foreground="White" Click="Exit_Click" Margin="0,0,10,0"/>
++                    <Button Content="로그인" Background="{StaticResource Accent}" Foreground="Black" Command="{Binding LoginCommand}" IsDefault="True"/>
++                </StackPanel>
++            </Grid>
++        </Border>
++    </Grid>
++</Window>
+diff --git a/Views/LoginWindow.xaml.cs b/Views/LoginWindow.xaml.cs
+new file mode 100644
+index 0000000..1dad38f
+--- /dev/null
++++ b/Views/LoginWindow.xaml.cs
+@@ -0,0 +1,38 @@
++// Views/LoginWindow.xaml.cs
++using factory_automation_system_FAS_.ViewModels;
++using System.Windows;
++
++namespace factory_automation_system_FAS_.Views
++{
++    public partial class LoginWindow : Window
++    {
++        private readonly LoginViewModel _vm = new();
++
++        public LoginWindow()
++        {
++            InitializeComponent();
++
++            DataContext = _vm;
++            _vm.LoginSucceeded += OnLoginSucceeded;
++        }
++
++        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
++        {
++            // MVP: PasswordBox는 바인딩이 안 되므로 이벤트로 전달
++            if (sender is System.Windows.Controls.PasswordBox pb)
++                _vm.Password = pb.Password;
++        }
++
++        private void OnLoginSucceeded()
++        {
++            var main = new MainWindow();
++            main.Show();
++            Close();
++        }
++
++        private void Exit_Click(object sender, RoutedEventArgs e)
++        {
++            Application.Current.Shutdown();
++        }
++    }
++}
+diff --git a/factory-automation-system-FAS-.csproj b/factory-automation-system-FAS-.csproj
+index a65c7ad..4361c00 100644
+--- a/factory-automation-system-FAS-.csproj
++++ b/factory-automation-system-FAS-.csproj
+@@ -1,22 +1,28 @@
+-﻿<Project Sdk="Microsoft.NET.Sdk">
+-
+-  <PropertyGroup>
+-    <OutputType>WinExe</OutputType>
+-    <TargetFramework>net8.0-windows</TargetFramework>
+-    <RootNamespace>factory_automation_system_FAS_</RootNamespace>
+-    <Nullable>enable</Nullable>
+-    <ImplicitUsings>enable</ImplicitUsings>
+-    <UseWPF>true</UseWPF>
+-  </PropertyGroup>
+-
+-  <ItemGroup>
+-    <None Remove="Assets\Brand\adp_logo_from_screenshot_transparent.png" />
+-  </ItemGroup>
+-
+-  <ItemGroup>
+-    <Resource Include="Assets\Brand\adp_logo_from_screenshot_transparent.png">
+-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+-    </Resource>
+-  </ItemGroup>
+-
+-</Project>
++﻿<Project Sdk="Microsoft.NET.Sdk">
++
++  <PropertyGroup>
++    <OutputType>WinExe</OutputType>
++    <TargetFramework>net8.0-windows</TargetFramework>
++    <RootNamespace>factory_automation_system_FAS_</RootNamespace>
++    <Nullable>enable</Nullable>
++    <ImplicitUsings>enable</ImplicitUsings>
++    <UseWPF>true</UseWPF>
++  </PropertyGroup>
++
++  <ItemGroup>
++    <None Remove="Assets\Brand\adp_logo_from_screenshot_transparent.png" />
++  </ItemGroup>
++
++  <ItemGroup>
++    <Resource Include="Assets\Brand\adp_logo_from_screenshot_transparent.png">
++      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
++    </Resource>
++  </ItemGroup>
++
++  <ItemGroup>
++    <Content Include="Config\auth.sample.json">
++      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
++    </Content>
++  </ItemGroup>
++
++</Project>

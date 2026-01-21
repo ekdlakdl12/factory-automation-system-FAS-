@@ -1,0 +1,28 @@
+--- a/factory-automation-system-FAS-/ViewModels/LoginViewModel.cs
++++ b/factory-automation-system-FAS-/ViewModels/LoginViewModel.cs
+@@ -77,8 +77,10 @@
+ 
+         private bool CanLogin()
+         {
+-            if (IsLocked) return false;
+-            return !string.IsNullOrWhiteSpace(UserId) && !string.IsNullOrWhiteSpace(Password);
++            // MVP: 입력 바인딩 타이밍(특히 PasswordBox) 때문에 버튼이 비활성처럼 보이는 문제를 피하기 위해,
++            // 잠금 상태가 아닐 때는 항상 클릭 가능하게 둡니다.
++            // 실제 검증(빈 값/인증 실패)은 DoLogin()에서 처리합니다.
++            return !IsLocked;
+         }
+ 
+         private void DoLogin()
+@@ -86,6 +88,12 @@
+             if (IsLocked) return;
+ 
+             Error = "";
++
++            if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Password))
++            {
++                Error = "아이디/비밀번호를 입력해주세요.";
++                return;
++            }
+ 
+             var result = _auth.Validate(UserId.Trim(), Password);
+ 
