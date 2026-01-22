@@ -10,6 +10,36 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <COMReference Include="XGCommLib">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>2cff650c-6df0-48ae-9b06-c8dd467e0cd3</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="XGModuleServerAppLib">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>33941681-f87d-46e6-b693-d0978a9b77a5</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="XGProjectServerLib">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>c8a0e8ce-f700-4f58-aabb-af7de0f826a2</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Utils\" />
   </ItemGroup>
 
@@ -17,6 +47,9 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
     <PackageReference Include="MySql.Data" Version="9.5.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="NModbus4" Version="2.1.0" />
+    <PackageReference Include="System.IO.Ports" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>

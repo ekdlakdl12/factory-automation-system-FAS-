@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using MySql.Data.MySqlClient;
 using Dapper;
+using Newtonsoft.Json.Linq;
 using factory_automation_system_FAS_.Models;
 
 namespace factory_automation_system_FAS_.Services
@@ -24,7 +25,7 @@ namespace factory_automation_system_FAS_.Services
             _connStr = config.GetSection("ConnectionStrings")["MariaDbConnection"];
         }
 
-        // 1. 공통: 연결 상태 체크
+        // 1. DB 연결 상태 체크
         public bool CheckConnection()
         {
             using (var conn = new MySqlConnection(_connStr))
@@ -34,61 +35,57 @@ namespace factory_automation_system_FAS_.Services
             }
         }
 
-        // 2. RawMaterial (원자재 마스터)
-        public async Task<List<RawMaterial>> GetRawMaterialsAsync()
+        // 2. JSON 파일을 읽어 VisionEvent 테이블에 저장 (사용자 지정 경로 사용)
+        public async Task<bool> InsertVisionEventFromJsonAsync(int convId)
         {
-            using (var conn = new MySqlConnection(_connStr))
+            // [팩트체크] 파일 탐색기 경로 뒤에 파일명을 명시해야 합니다.
+            string jsonPath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\output.json";
+
+            try
             {
-                return (await conn.QueryAsync<RawMaterial>("SELECT * FROM RawMaterial")).ToList();
+                // 파일 존재 여부 확인
+                if (!File.Exists(jsonPath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"파일이 없습니다: {jsonPath}");
+                    return false;
+                }
+
+                // [권장] C++ 프로그램과 충돌 방지를 위한 공유 읽기 모드
+                string jsonContent;
+                using (var stream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var reader = new StreamReader(stream))
+                {
+                    jsonContent = await reader.ReadToEndAsync();
+                }
+
+                var data = Newtonsoft.Json.Linq.JObject.Parse(jsonContent);
+
+                using (var conn = new MySqlConnection(_connStr))
+                {
+                    string sql = @"INSERT INTO VisionEvent (conv_id, image_ref, detected_class, confidence, ts, meta) 
+                           VALUES (@convId, @imageRef, @class, @conf, @ts, @meta)";
+
+                    var parameters = new
+                    {
+                        convId = convId,
+                        imageRef = data["source"]?.ToString(),
+                        @class = data["detected_color"]?.ToString() ?? "Box",
+                        conf = 1.0,
+                        ts = DateTime.Parse(data["ts"]?.ToString() ?? DateTime.Now.ToString()),
+                        meta = jsonContent
+                    };
+
+                    return (await conn.ExecuteAsync(sql, parameters)) > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"상세 에러: {ex.Message}");
+                return false;
             }
         }
 
-        // 3. InboundReceipt (입고 이력)
-        public async Task<List<InboundReceipt>> GetInboundReceiptsAsync()
-        {
-            using (var conn = new MySqlConnection(_connStr))
-            {
-                return (await conn.QueryAsync<InboundReceipt>("SELECT * FROM InboundReceipt ORDER BY ts DESC")).ToList();
-            }
-        }
-
-        // 4. Product_WorkOrder (작업 지시)
-        public async Task<List<ProductWorkOrder>> GetWorkOrdersAsync()
-        {
-            using (var conn = new MySqlConnection(_connStr))
-            {
-                return (await conn.QueryAsync<ProductWorkOrder>("SELECT * FROM Product_WorkOrder ORDER BY start_time DESC")).ToList();
-            }
-        }
-
-        // 5. Machine (설비 정보)
-        public async Task<List<Machine>> GetMachinesAsync()
-        {
-            using (var conn = new MySqlConnection(_connStr))
-            {
-                return (await conn.QueryAsync<Machine>("SELECT * FROM Machine")).ToList();
-            }
-        }
-
-        // 6. Conveyor (라인 정보)
-        public async Task<List<Conveyor>> GetConveyorsAsync()
-        {
-            using (var conn = new MySqlConnection(_connStr))
-            {
-                return (await conn.QueryAsync<Conveyor>("SELECT * FROM Conveyor")).ToList();
-            }
-        }
-
-        // 7. AMRTask (로봇 이송 로그)
-        public async Task<List<AMRTask>> GetAMRTasksAsync()
-        {
-            using (var conn = new MySqlConnection(_connStr))
-            {
-                return (await conn.QueryAsync<AMRTask>("SELECT * FROM AMRTask ORDER BY start_ts DESC")).ToList();
-            }
-        }
-
-        // 8. VisionEvent (비전 검사 결과)
+        // 3. 비전 검사 최신 데이터 가져오기
         public async Task<List<VisionEvent>> GetRecentVisionEventsAsync(int limit = 50)
         {
             using (var conn = new MySqlConnection(_connStr))
@@ -98,21 +95,19 @@ namespace factory_automation_system_FAS_.Services
             }
         }
 
-        // 9. Inventory (현재고 현황)
-        public async Task<List<Inventory>> GetInventoryAsync()
-        {
-            using (var conn = new MySqlConnection(_connStr))
-            {
-                return (await conn.QueryAsync<Inventory>("SELECT * FROM Inventory")).ToList();
-            }
-        }
+        // --- 기타 테이블 조회 메서드 (기존 유지) ---
+        public async Task<List<RawMaterial>> GetRawMaterialsAsync() => await QueryAllAsync<RawMaterial>("RawMaterial");
+        public async Task<List<InboundReceipt>> GetInboundReceiptsAsync() => await QueryAllAsync<InboundReceipt>("InboundReceipt", "ts DESC");
+        public async Task<List<ProductWorkOrder>> GetWorkOrdersAsync() => await QueryAllAsync<ProductWorkOrder>("Product_WorkOrder", "start_time DESC");
+        public async Task<List<Machine>> GetMachinesAsync() => await QueryAllAsync<Machine>("Machine");
+        public async Task<List<Inventory>> GetInventoryAsync() => await QueryAllAsync<Inventory>("Inventory");
 
-        // 10. TraceLog (시스템 전체 통합 로그)
-        public async Task<List<TraceLog>> GetTraceLogsAsync()
+        private async Task<List<T>> QueryAllAsync<T>(string table, string orderBy = "")
         {
             using (var conn = new MySqlConnection(_connStr))
             {
-                return (await conn.QueryAsync<TraceLog>("SELECT * FROM TraceLog ORDER BY ts DESC")).ToList();
+                string sql = $"SELECT * FROM {table} {(string.IsNullOrEmpty(orderBy) ? "" : "ORDER BY " + orderBy)}";
+                return (await conn.QueryAsync<T>(sql)).ToList();
             }
         }
     }
