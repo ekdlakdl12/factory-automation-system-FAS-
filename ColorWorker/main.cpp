@@ -1,14 +1,17 @@
-﻿#include <iostream>
-#include <opencv2/opencv.hpp>
+﻿#include <opencv2/opencv.hpp>
+#include <iostream>
 #include <vector>
 #include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <cstdio>
+#include <cctype>
 #include <filesystem>
-#include <chrono>
 
-using namespace std;
 using namespace cv;
+using namespace std;
 
-// ===================== 유틸 =====================
+// ===================== 시각화 유틸 =====================
 static void ShowFit(const string& name, const Mat& src)
 {
     Mat disp;
@@ -18,46 +21,91 @@ static void ShowFit(const string& name, const Mat& src)
     imshow(name, disp);
 }
 
-static int GetNextIdFromCsv(const string& csvPath)
-{
-    if (!filesystem::exists(csvPath)) return 1;
-
-    ifstream in(csvPath);
-    if (!in.is_open()) return 1;
-
-    string line;
-    int lastId = 0;
-
-    // 첫 줄(헤더) 스킵
-    if (!getline(in, line)) return 1;
-
-    while (getline(in, line)) {
-        // id,elapsed_ms,color
-        // 안전하게 맨 앞 id만 파싱
-        size_t comma = line.find(',');
-        if (comma == string::npos) continue;
-        string idStr = line.substr(0, comma);
-        try {
-            int id = stoi(idStr);
-            lastId = max(lastId, id);
-        }
-        catch (...) {}
-    }
-    return lastId + 1;
+// ===================== JSON 유틸 (라이브러리 없이) =====================
+static bool WriteTextFile(const string& path, const string& text) {
+    ofstream ofs(path, ios::out | ios::trunc);
+    if (!ofs.is_open()) return false;
+    ofs << text;
+    ofs.close();
+    return true;
 }
 
-static bool AppendColorToCsv(const string& csvPath, int id, double elapsed_ms, const string& color)
-{
-    bool needHeader = !filesystem::exists(csvPath);
+static bool EnsureJsonArrayFile(const string& path) {
+    ifstream ifs(path);
+    if (ifs.is_open()) return true; // 이미 있으면 OK
+    return WriteTextFile(path, "[]\n");
+}
 
-    ofstream out(csvPath, ios::app);
-    if (!out.is_open()) return false;
-
-    if (needHeader) {
-        out << "id,elapsed_ms,color\n";
+static bool AppendJsonArray(const string& path, const string& recordJson) {
+    // 1) 기존 파일 읽기(없으면 []로 시작)
+    string content;
+    {
+        ifstream ifs(path, ios::in);
+        if (ifs.is_open()) {
+            ostringstream ss;
+            ss << ifs.rdbuf();
+            content = ss.str();
+            ifs.close();
+        }
+        else {
+            content = "[]";
+        }
     }
 
-    out << id << "," << fixed << setprecision(3) << elapsed_ms << "," << color << "\n";
+    auto rtrim = [&](string& s) {
+        while (!s.empty() && isspace((unsigned char)s.back())) s.pop_back();
+        };
+    auto ltrim = [&](string& s) {
+        size_t i = 0;
+        while (i < s.size() && isspace((unsigned char)s[i])) i++;
+        s.erase(0, i);
+        };
+
+    rtrim(content);
+    ltrim(content);
+    if (content.empty()) content = "[]";
+    if (content.front() != '[' || content.back() != ']') content = "[]";
+
+    bool hasAny = false;
+    for (size_t i = 1; i + 1 < content.size(); i++) {
+        if (content[i] == '{') { hasAny = true; break; }
+    }
+
+    string out;
+    if (!hasAny) {
+        out = "[\n" + recordJson + "\n]\n";
+    }
+    else {
+        out = content.substr(0, content.size() - 1);
+        rtrim(out);
+        if (!out.empty() && out.back() != '[') out += ",";
+        out += "\n" + recordJson + "\n]\n";
+    }
+
+    // tmp로 쓰고 교체(원자적에 가깝게)
+    string tmpPath = path + ".tmp";
+    {
+        ofstream ofs(tmpPath, ios::out | ios::trunc);
+        if (!ofs.is_open()) return false;
+        ofs << out;
+        ofs.close();
+    }
+
+    // 교체 시도
+    std::remove(path.c_str());
+    if (std::rename(tmpPath.c_str(), path.c_str()) != 0) {
+        // rename 실패(파일 잠김 등) 대비: 직접 덮어쓰기 fallback
+        ofstream ofs(path, ios::out | ios::trunc);
+        if (!ofs.is_open()) {
+            std::remove(tmpPath.c_str());
+            return false;
+        }
+        ofs << out;
+        ofs.close();
+        std::remove(tmpPath.c_str());
+        return true;
+    }
+
     return true;
 }
 
@@ -69,6 +117,7 @@ static void BuildMasksRGB(const Mat& hsv, Mat& maskR, Mat& maskG, Mat& maskB)
     Scalar r1L(0, 80, 80), r1U(10, 255, 255);
     Scalar r2L(170, 80, 80), r2U(179, 255, 255);
 
+    // 초록/파랑
     Scalar gL(35, 70, 70), gU(85, 255, 255);
     Scalar bL(90, 70, 70), bU(140, 255, 255);
 
@@ -125,13 +174,25 @@ static void DrawRR(Mat& img, const RotatedRect& rr, const Scalar& color, int thi
 int main()
 {
     // ===== 사용자 설정 =====
-    string imgPath = R"(C:\Users\dbsdm\Desktop\testimg\green.jpg)"; // 테스트 이미지
-    string csvPath = "color_log.csv";                                   // 실행 폴더에 누적 저장
-
-    Rect roi(0, 0, 0, 0);       // 0이면 전체. ROI 쓰려면 (x,y,w,h) 넣기
+    string imgPath = R"(C:\Users\dbsdm\Desktop\testimg\green_in.jpg)"; // 테스트 이미지
+    string colorJsonPath = "color_result.json";                    // <<<< 색상 전용 JSON 파일
+    Rect roi(0, 0, 0, 0);       // 0이면 전체
     double minArea = 3000.0;    // 작은 잡음 제외
     // =======================
 
+    // 저장 위치 확인용(헷갈리면 확인하세요)
+    cout << "[CWD] " << std::filesystem::current_path().string() << "\n";
+    cout << "[JSON] " << colorJsonPath << "\n";
+
+    // color_result.json은 무조건 존재하게
+    if (!EnsureJsonArrayFile(colorJsonPath)) {
+        cerr << "EnsureJsonArrayFile failed: " << colorJsonPath << "\n";
+        return -1;
+    }
+
+    // ==============================
+    // [현재 모드] 테스트 이미지 1장 처리
+    // ==============================
     Mat frame = imread(imgPath, IMREAD_COLOR);
     if (frame.empty()) {
         cerr << "imread failed. path=" << imgPath << "\n";
@@ -180,19 +241,25 @@ int main()
     int64 t1 = getTickCount();
     double elapsed_ms = (t1 - t0) * 1000.0 / getTickFrequency();
 
-    cout << "color=" << color << " elapsed_ms=" << elapsed_ms
-        << " areas(R,G,B)=(" << areaR << "," << areaG << "," << areaB << ")\n";
+    // ===== JSON 저장(label, color, ms) =====
+    static int labelCounter = 0;
+    labelCounter++;
 
-    // ===== CSV 누적 저장 (id, elapsed_ms, color) =====
-    int id = GetNextIdFromCsv(csvPath);
-    if (!AppendColorToCsv(csvPath, id, elapsed_ms, color)) {
-        cerr << "[Warn] CSV save failed: " << csvPath << "\n";
-    }
-    else {
-        cout << "[CSV] appended id=" << id << " -> " << csvPath << "\n";
-    }
+    ostringstream rec;
+    rec << "  {\n";
+    rec << "    \"label\": " << labelCounter << ",\n";
+    rec << "    \"color\": \"" << color << "\",\n";
+    rec << "    \"ms\": " << fixed << setprecision(3) << elapsed_ms << "\n";
+    rec << "  }";
 
-    // ===== 시각화 =====
+    bool ok = AppendJsonArray(colorJsonPath, rec.str());
+    cout << "[SAVE] " << (ok ? "OK" : "FAIL")
+        << " label=" << labelCounter
+        << " color=" << color
+        << " ms=" << fixed << setprecision(3) << elapsed_ms
+        << " -> " << colorJsonPath << "\n";
+
+    // ===== 시각화 유지 =====
     Mat vis = frame.clone();
 
     if (color == "RED")   DrawRR(vis, bestRR, Scalar(0, 0, 255), 2);
@@ -208,5 +275,97 @@ int main()
     ShowFit("maskB", maskB);
 
     waitKey(0);
+
+    // =====================================================================
+    // [나중에 카메라 연동할 때] 아래 블록을 사용하세요.
+    // 지금은 테스트 이미지 모드라서 주석 처리해 둡니다.
+    // =====================================================================
+    /*
+    int deviceIndex = 1;
+    VideoCapture cap(deviceIndex, CAP_DSHOW);
+    if (!cap.isOpened()) {
+        cerr << "camera open failed\n";
+        return -1;
+    }
+    cap.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M','J','P','G'));
+    cap.set(CAP_PROP_FRAME_WIDTH, 1920);
+    cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
+
+    // 이때는 imread/imgPath 관련 코드는 필요 없으니 위 테스트 이미지 블록을 주석 처리하세요.
+
+    namedWindow("result", WINDOW_NORMAL);
+    namedWindow("maskR", WINDOW_NORMAL);
+    namedWindow("maskG", WINDOW_NORMAL);
+    namedWindow("maskB", WINDOW_NORMAL);
+
+    int labelCounter = 0;
+
+    for (;;) {
+        Mat frame;
+        cap >> frame;
+        if (frame.empty()) continue;
+
+        // ROI를 카메라에서도 쓰려면 안전하게 클램프
+        // Rect camRoi = roi & Rect(0,0, frame.cols, frame.rows);
+        // Mat view = (camRoi.width>0 && camRoi.height>0) ? frame(camRoi).clone() : frame.clone();
+        Mat view = frame;
+
+        int64 t0 = getTickCount();
+
+        Mat hsv;
+        cvtColor(view, hsv, COLOR_BGR2HSV);
+        GaussianBlur(hsv, hsv, Size(3,3), 0);
+
+        Mat maskR, maskG, maskB;
+        BuildMasksRGB(hsv, maskR, maskG, maskB);
+
+        RotatedRect rrR, rrG, rrB;
+        double areaR = LargestContourArea(maskR, rrR);
+        double areaG = LargestContourArea(maskG, rrG);
+        double areaB = LargestContourArea(maskB, rrB);
+
+        string color = "NONE";
+        double bestArea = 0.0;
+        RotatedRect bestRR;
+
+        if (areaR > bestArea) { bestArea = areaR; color = "RED";   bestRR = rrR; }
+        if (areaG > bestArea) { bestArea = areaG; color = "GREEN"; bestRR = rrG; }
+        if (areaB > bestArea) { bestArea = areaB; color = "BLUE";  bestRR = rrB; }
+
+        if (bestArea < minArea) color = "NONE";
+
+        int64 t1 = getTickCount();
+        double elapsed_ms = (t1 - t0) * 1000.0 / getTickFrequency();
+
+        // JSON append
+        labelCounter++;
+        ostringstream rec;
+        rec << "  {\n";
+        rec << "    \"label\": " << labelCounter << ",\n";
+        rec << "    \"color\": \"" << color << "\",\n";
+        rec << "    \"ms\": " << fixed << setprecision(3) << elapsed_ms << "\n";
+        rec << "  }";
+        AppendJsonArray(colorJsonPath, rec.str());
+
+        // 시각화
+        Mat vis = view.clone();
+        if (color == "RED")   DrawRR(vis, bestRR, Scalar(0,0,255), 2);
+        if (color == "GREEN") DrawRR(vis, bestRR, Scalar(0,255,0), 2);
+        if (color == "BLUE")  DrawRR(vis, bestRR, Scalar(255,0,0), 2);
+
+        putText(vis, format("COLOR=%s (%.2f ms)", color.c_str(), elapsed_ms),
+            Point(20,40), FONT_HERSHEY_SIMPLEX, 1.0, Scalar(0,255,255), 2);
+
+        imshow("result", vis);
+        imshow("maskR", maskR);
+        imshow("maskG", maskG);
+        imshow("maskB", maskB);
+
+        int k = waitKey(1);
+        if (k == 27) break; // ESC
+    }
+    */
+    // =====================================================================
+
     return 0;
 }
