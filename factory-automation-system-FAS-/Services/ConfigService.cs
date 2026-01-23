@@ -6,8 +6,8 @@ namespace factory_automation_system_FAS_.Services
 {
     public static class ConfigService
     {
+        private const string UsersLocalFileName = "users.local.csv";
         private const string AppFolderName = "factory-automation-system-FAS";
-        private const string AuthLocalFileName = "auth.local.json";
 
         public static string AppDataDir
         {
@@ -18,28 +18,29 @@ namespace factory_automation_system_FAS_.Services
             }
         }
 
-        public static string AuthLocalPath => Path.Combine(AppDataDir, AuthLocalFileName);
+        // %AppData%\factory-automation-system-FAS\users.local.csv
+        public static string UsersLocalPath => Path.Combine(AppDataDir, UsersLocalFileName);
 
         /// <summary>
-        /// Ensures auth.local.json exists under %AppData%\\factory-automation-system-FAS\\.
-        /// If missing, copies it from the packaged sample: {AppBaseDir}\\Config\\auth.sample.json
+        /// Ensures users.local.csv exists under %AppData%\factory-automation-system-FAS\.
+        /// If missing, copies it from: {AppBaseDir}\Config\users.sample.csv
         /// </summary>
-        public static void EnsureAuthLocalExists()
+        public static void EnsureUsersLocalExists()
         {
             Directory.CreateDirectory(AppDataDir);
 
-            if (File.Exists(AuthLocalPath))
+            if (File.Exists(UsersLocalPath))
                 return;
 
-            var samplePath = Path.Combine(AppContext.BaseDirectory, "Config", "auth.sample.json");
+            var samplePath = Path.Combine(AppContext.BaseDirectory, "Config", "users.sample.csv");
             if (!File.Exists(samplePath))
             {
                 throw new FileNotFoundException(
-                    "auth.sample.json not found. Ensure it's included as Content and copied to output.",
+                    "users.sample.csv not found. Ensure it's included as Content and copied to output.",
                     samplePath);
             }
 
-            File.Copy(samplePath, AuthLocalPath, overwrite: false);
+            File.Copy(samplePath, UsersLocalPath, overwrite: false);
         }
     }
 }

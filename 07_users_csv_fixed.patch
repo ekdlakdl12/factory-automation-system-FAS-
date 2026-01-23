@@ -1,0 +1,288 @@
+--- a/factory-automation-system-FAS-/Services/ConfigService.cs+++ b/factory-automation-system-FAS-/Services/ConfigService.cs@@ -7,7 +7,8 @@     public static class ConfigService
+     {
+         private const string AppFolderName = "factory-automation-system-FAS";
+-        private const string AuthLocalFileName = "auth.local.json";
++        private const string UsersLocalFileName = "users.local.csv";
++        private const string AuthLocalFileName = "auth.local.json"; // legacy
+ 
+         public static string AppDataDir
+         {
+@@ -18,28 +19,39 @@             }
+         }
+ 
++        public static string UsersLocalPath => Path.Combine(AppDataDir, UsersLocalFileName);
++
++        // Legacy JSON path (kept for backward compatibility / cleanup)
+         public static string AuthLocalPath => Path.Combine(AppDataDir, AuthLocalFileName);
+ 
+         /// <summary>
+-        /// Ensures auth.local.json exists under %AppData%\\factory-automation-system-FAS\\.
+-        /// If missing, copies it from the packaged sample: {AppBaseDir}\\Config\\auth.sample.json
+-        /// </summary>
+-        public static void EnsureAuthLocalExists()
+-        {
+-            Directory.CreateDirectory(AppDataDir);
++/// Ensures users.local.csv exists under %AppData%\factory-automation-system-FAS\.
++/// If missing, copies it from the packaged sample: {AppBaseDir}\Config\users.sample.csv
++/// </summary>
++public static void EnsureUsersLocalExists()
++{
++    Directory.CreateDirectory(AppDataDir);
+ 
+-            if (File.Exists(AuthLocalPath))
+-                return;
++    if (File.Exists(UsersLocalPath))
++        return;
+ 
+-            var samplePath = Path.Combine(AppContext.BaseDirectory, "Config", "auth.sample.json");
+-            if (!File.Exists(samplePath))
+-            {
+-                throw new FileNotFoundException(
+-                    "auth.sample.json not found. Ensure it's included as Content and copied to output.",
+-                    samplePath);
+-            }
++    var samplePath = Path.Combine(AppContext.BaseDirectory, "Config", "users.sample.csv");
++    if (!File.Exists(samplePath))
++    {
++        throw new FileNotFoundException(
++            "users.sample.csv not found. Ensure it's included as Content and copied to output.",
++            samplePath);
++    }
+ 
+-            File.Copy(samplePath, AuthLocalPath, overwrite: false);
+-        }
++    File.Copy(samplePath, UsersLocalPath, overwrite: false);
++}
++
++/// <summary>
++/// Legacy JSON bootstrap (kept so older code/patches compile).
++/// </summary>
++public static void EnsureAuthLocalExists()
++{
++    EnsureUsersLocalExists();
++}
+     }
+ }
+--- a/factory-automation-system-FAS-/Services/AuthService.cs+++ b/factory-automation-system-FAS-/Services/AuthService.cs@@ -1,53 +1,40 @@ // Services/AuthService.cs
+ using factory_automation_system_FAS_.Models;
+ using System;
++using System.Collections.Generic;
+ using System.IO;
+ using System.Linq;
+ using System.Security.Cryptography;
+-using System.Text.Json;
+ 
+ namespace factory_automation_system_FAS_.Services
+ {
+     public sealed class AuthService
+-    {
+-        private static readonly JsonSerializerOptions JsonOpts = new()
+-        {
+-            PropertyNameCaseInsensitive = true,
+-            ReadCommentHandling = JsonCommentHandling.Skip,
+-            AllowTrailingCommas = true
+-        };
+-
+-        public AuthResult Validate(string userId, string password)
++    {        public AuthResult Validate(string userId, string password)
+         {
+             if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
+                 return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
+ 
+-            ConfigService.EnsureAuthLocalExists();
+-
+-            AuthConfig cfg;
+-            try
+-            {
+-                var json = File.ReadAllText(ConfigService.AuthLocalPath);
+-                cfg = JsonSerializer.Deserialize<AuthConfig>(json, JsonOpts)
+-                      ?? throw new InvalidOperationException("auth.local.json parse failed.");
+-            }
+-            catch
+-            {
+-                // 설정 파일이 깨져도 내부 정보 노출은 하지 않음
+-                return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
+-            }
+-
+-            var u = cfg.Users.FirstOrDefault(x =>
+-                x.Enabled &&
+-                string.Equals(x.Id, userId, StringComparison.OrdinalIgnoreCase));
+-
+-            if (u is null)
+-                return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
+-
+-            if (!string.Equals(cfg.HashAlg, "PBKDF2-SHA256", StringComparison.OrdinalIgnoreCase))
+-                return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
+-
+-            if (!TryVerifyPbkdf2Sha256(password, u.PasswordSaltB64, u.PasswordHashB64, cfg.Iterations))
++            ConfigService.EnsureUsersLocalExists();
++
++CsvUserRecord? u;
++try
++{
++    u = FindUserFromCsv(ConfigService.UsersLocalPath, userId);
++}
++catch
++{
++    // 설정 파일이 깨져도 내부 정보 노출은 하지 않음
++    return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
++}
++
++if (u is null)
++    return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
++
++if (!u.Enabled)
++    return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
++
++if (!TryVerifyPbkdf2Sha256(password, u.PasswordSaltB64, u.PasswordHashB64, u.Iterations))
++    return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");            if (!TryVerifyPbkdf2Sha256(password, u.PasswordSaltB64, u.PasswordHashB64, cfg.Iterations))
+                 return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
+ 
+             AppSession.CurrentUser = new UserSession
+@@ -60,7 +47,128 @@             return AuthResult.Success(AppSession.CurrentUser);
+         }
+ 
+-        private static bool TryVerifyPbkdf2Sha256(string password, string saltB64, string expectedHashB64, int iterations)
++        
++private sealed class CsvUserRecord
++{
++    public string Id { get; init; } = "";
++    public string DisplayName { get; init; } = "";
++    public string Role { get; init; } = "";
++    public bool Enabled { get; init; }
++    public string PasswordSaltB64 { get; init; } = "";
++    public string PasswordHashB64 { get; init; } = "";
++    public int Iterations { get; init; } = 100000;
++}
++
++private static CsvUserRecord? FindUserFromCsv(string csvPath, string userId)
++{
++    // Expected header:
++    // id,display_name,role,enabled,password_salt_b64,password_hash_b64[,iterations]
++    var lines = File.ReadAllLines(csvPath);
++    if (lines.Length <= 1) return null;
++
++    var header = SplitCsvLine(lines[0]);
++    var idx = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
++    for (int i = 0; i < header.Count; i++)
++    {
++        var key = header[i].Trim();
++        if (!string.IsNullOrEmpty(key) && !idx.ContainsKey(key))
++            idx[key] = i;
++    }
++
++    int GetIndex(string key) => idx.TryGetValue(key, out var i) ? i : -1;
++
++    int iId = GetIndex("id");
++    int iName = GetIndex("display_name");
++    int iRole = GetIndex("role");
++    int iEnabled = GetIndex("enabled");
++    int iSalt = GetIndex("password_salt_b64");
++    int iHash = GetIndex("password_hash_b64");
++    int iIter = GetIndex("iterations");
++
++    if (iId < 0 || iEnabled < 0 || iSalt < 0 || iHash < 0)
++        throw new InvalidOperationException("users.local.csv header missing required columns.");
++
++    for (int row = 1; row < lines.Length; row++)
++    {
++        var line = lines[row].Trim();
++        if (string.IsNullOrEmpty(line) || line.StartsWith("#")) continue;
++
++        var cols = SplitCsvLine(lines[row]);
++
++        string Col(int i) => (i >= 0 && i < cols.Count) ? cols[i].Trim() : "";
++
++        var id = Col(iId);
++        if (!string.Equals(id, userId, StringComparison.OrdinalIgnoreCase))
++            continue;
++
++        return new CsvUserRecord
++        {
++            Id = id,
++            DisplayName = Col(iName),
++            Role = Col(iRole),
++            Enabled = ParseBool(Col(iEnabled)),
++            PasswordSaltB64 = Col(iSalt),
++            PasswordHashB64 = Col(iHash),
++            Iterations = ParseIntOrDefault(Col(iIter), 100000),
++        };
++    }
++
++    return null;
++}
++
++private static bool ParseBool(string s)
++{
++    if (string.IsNullOrWhiteSpace(s)) return false;
++    s = s.Trim();
++    return s.Equals("true", StringComparison.OrdinalIgnoreCase)
++        || s.Equals("1")
++        || s.Equals("y", StringComparison.OrdinalIgnoreCase)
++        || s.Equals("yes", StringComparison.OrdinalIgnoreCase);
++}
++
++private static int ParseIntOrDefault(string s, int fallback)
++{
++    return int.TryParse(s, out var v) ? v : fallback;
++}
++
++private static List<string> SplitCsvLine(string line)
++{
++    // Minimal CSV splitter with quotes support.
++    var result = new List<string>();
++    var cur = new System.Text.StringBuilder();
++    bool inQuotes = false;
++
++    for (int i = 0; i < line.Length; i++)
++    {
++        char c = line[i];
++        if (c == '"')
++        {
++            if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
++            {
++                cur.Append('"'); // escaped quote
++                i++;
++            }
++            else
++            {
++                inQuotes = !inQuotes;
++            }
++            continue;
++        }
++
++        if (c == ',' && !inQuotes)
++        {
++            result.Add(cur.ToString());
++            cur.Clear();
++            continue;
++        }
++
++        cur.Append(c);
++    }
++
++    result.Add(cur.ToString());
++    return result;
++}
++private static bool TryVerifyPbkdf2Sha256(string password, string saltB64, string expectedHashB64, int iterations)
+         {
+             try
+             {
+--- a/factory-automation-system-FAS-/factory-automation-system-FAS-.csproj+++ b/factory-automation-system-FAS-/factory-automation-system-FAS-.csproj@@ -22,6 +22,10 @@ 		<Content Include="Config\auth.sample.json">
+ 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+ 		</Content>
++		<Content Include="Config\users.sample.csv">
++			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
++		</Content>
++
+ 	</ItemGroup>
+ 
+ 
+diff --git a/factory-automation-system-FAS-/Config/users.sample.csv b/factory-automation-system-FAS-/Config/users.sample.csv
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/factory-automation-system-FAS-/Config/users.sample.csv
+@@ -0,0 +1,2 @@
++id,display_name,role,enabled,password_salt_b64,password_hash_b64,iterations
++admin,Administrator,Admin,true,+xOW0EOvsFp3cBEUdc9C3Q==,95GIvT5BiVQhpYNPiDHb01ZQ9MO4yTcPMbWCQULaSCA=,100000

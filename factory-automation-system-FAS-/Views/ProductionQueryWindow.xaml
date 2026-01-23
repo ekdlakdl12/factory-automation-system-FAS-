@@ -3,14 +3,14 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="생산조회" Height="720" Width="1100"
         WindowStartupLocation="CenterOwner"
-        Background="#0B0F14">
+        Background="#F5F7FA">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="Bg" Color="#0B0F14"/>
-        <SolidColorBrush x:Key="Panel" Color="#121820"/>
-        <SolidColorBrush x:Key="Card" Color="#161E27"/>
-        <SolidColorBrush x:Key="BorderSoft" Color="#26313D"/>
-        <SolidColorBrush x:Key="Accent" Color="#33E6A2"/>
+        <SolidColorBrush x:Key="Bg" Color="#F5F7FA"/>
+        <SolidColorBrush x:Key="Panel" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="Card" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#D7DEE8"/>
+        <SolidColorBrush x:Key="Accent" Color="#2EE6A6"/>
 
         <Style TargetType="Button">
             <Setter Property="Height" Value="38"/>
@@ -25,18 +25,18 @@
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="GridLinesVisibility" Value="None"/>
             <Setter Property="RowHeaderWidth" Value="0"/>
-            <Setter Property="Background" Value="#121820"/>
-            <Setter Property="Foreground" Value="#E6EEF6"/>
-            <Setter Property="BorderBrush" Value="#26313D"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#D7DEE8"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="ColumnHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#161E27"/>
-                        <Setter Property="Foreground" Value="#E6EEF6"/>
-                        <Setter Property="BorderBrush" Value="#26313D"/>
+                        <Setter Property="Background" Value="#F0F3F7"/>
+                        <Setter Property="Foreground" Value="#0F172A"/>
+                        <Setter Property="BorderBrush" Value="#D7DEE8"/>
                         <Setter Property="BorderThickness" Value="0,0,0,1"/>
                         <Setter Property="FontWeight" Value="SemiBold"/>
                         <Setter Property="Padding" Value="10,6"/>
@@ -44,7 +44,6 @@
                     </Style>
                 </Setter.Value>
             </Setter>
-
         </Style>
     </Window.Resources>
 
@@ -54,52 +53,78 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,14">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="생산조회" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                <TextBlock Text="(MVP) DB 연동 전: 스키마 기반 탭/컬럼만 선구현 (데이터는 비어있을 수 있음)" Foreground="#8FA0B0" FontSize="12" Margin="0,6,0,0"/>
+                <TextBlock Text="생산조회" FontSize="22" FontWeight="Bold" Foreground="#0F172A"/>
+                <TextBlock Text="(MVP) DB 연동 전: 스키마 기반 탭/컬럼만 선구현 (데이터는 비어있을 수 있음)"
+                           Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
             </StackPanel>
 
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="CSV로 받기" Background="{StaticResource Accent}" Foreground="Black" Margin="0,0,10,0"
+                <Button Content="CSV로 받기"
+                        Background="{StaticResource Accent}"
+                        Foreground="#0B1220"
+                        Margin="0,0,10,0"
                         Command="{Binding ExportCsvCommand}"/>
-                <Button Content="닫기" Background="#26313D" Foreground="White" Click="Close_Click"/>
+                <Button Content="닫기"
+                        Background="#E2E8F0"
+                        Foreground="#0F172A"
+                        Click="Close_Click"/>
             </StackPanel>
         </DockPanel>
 
-        <!-- Body -->
-        <Border Grid.Row="1" Background="{StaticResource Card}" BorderBrush="{StaticResource BorderSoft}" BorderThickness="1" CornerRadius="14" Padding="14">
+        <Border Grid.Row="1"
+                Background="{StaticResource Card}"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="14">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Tabs (schema-first) -->
-                <TabControl Grid.Row="0" SelectedIndex="{Binding SelectedTabIndex}" Background="Transparent" BorderThickness="0" Margin="0,0,0,10">
+                <TabControl Grid.Row="0"
+                            SelectedIndex="{Binding SelectedTabIndex}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Margin="0,0,0,10">
                     <TabItem Header="Product WorkOrder">
-                        <TextBlock Text="제품 작업지시(Production) - Product_WorkOrder" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
+                        <TextBlock Text="제품 작업지시(Production) - Product_WorkOrder"
+                                   Foreground="#64748B"
+                                   FontSize="12"
+                                   Margin="8,6,0,8"/>
                     </TabItem>
                     <TabItem Header="Vision Event">
-                        <TextBlock Text="비전 이벤트 - VisionEvent (카메라/컨베이어 감지 로그)" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
+                        <TextBlock Text="비전 이벤트 - VisionEvent (카메라/컨베이어 감지 로그)"
+                                   Foreground="#64748B"
+                                   FontSize="12"
+                                   Margin="8,6,0,8"/>
                     </TabItem>
                     <TabItem Header="Trace Log">
-                        <TextBlock Text="통합 이력 로그 - TraceLog (누가/무엇을/언제)" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
+                        <TextBlock Text="통합 이력 로그 - TraceLog (누가/무엇을/언제)"
+                                   Foreground="#64748B"
+                                   FontSize="12"
+                                   Margin="8,6,0,8"/>
                     </TabItem>
                     <TabItem Header="Inventory">
-                        <TextBlock Text="재고/위치 - Inventory" Foreground="#8FA0B0" FontSize="12" Margin="8,6,0,8"/>
+                        <TextBlock Text="재고/위치 - Inventory"
+                                   Foreground="#64748B"
+                                   FontSize="12"
+                                   Margin="8,6,0,8"/>
                     </TabItem>
                 </TabControl>
 
-                <!-- Table -->
                 <Grid Grid.Row="1">
                     <DataGrid ItemsSource="{Binding ActiveTableView}"/>
 
-                    <!-- Empty hint -->
-                    <TextBlock Text="현재는 DB/조회 로직 연결 전이라 데이터가 비어있을 수 있습니다.\nCSV로 받기는 '현재 탭'의 테이블(헤더 포함)을 그대로 내보냅니다." 
-                               Foreground="#8FA0B0" FontSize="13" TextAlignment="Center"
-                               VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="현재는 DB/조회 로직 연결 전이라 데이터가 비어있을 수 있습니다.\nCSV로 받기는 '현재 탭'의 테이블(헤더 포함)을 그대로 내보냅니다."
+                               Foreground="#64748B"
+                               FontSize="13"
+                               TextAlignment="Center"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>

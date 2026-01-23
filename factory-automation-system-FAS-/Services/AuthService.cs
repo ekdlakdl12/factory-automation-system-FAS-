@@ -2,34 +2,23 @@
 using factory_automation_system_FAS_.Models;
 using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace factory_automation_system_FAS_.Services
 {
     public sealed class AuthService
     {
-        private static readonly JsonSerializerOptions JsonOpts = new()
-        {
-            PropertyNameCaseInsensitive = true,
-            ReadCommentHandling = JsonCommentHandling.Skip,
-            AllowTrailingCommas = true
-        };
-
         public AuthResult Validate(string userId, string password)
         {
             if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(password))
                 return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
 
-            ConfigService.EnsureAuthLocalExists();
+            ConfigService.EnsureUsersLocalExists();
 
-            AuthConfig cfg;
+            AuthUserRecord? u;
             try
             {
-                var json = File.ReadAllText(ConfigService.AuthLocalPath);
-                cfg = JsonSerializer.Deserialize<AuthConfig>(json, JsonOpts)
-                      ?? throw new InvalidOperationException("auth.local.json parse failed.");
+                u = LoadUserFromCsv(ConfigService.UsersLocalPath, userId);
             }
             catch
             {
@@ -37,17 +26,13 @@ namespace factory_automation_system_FAS_.Services
                 return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
             }
 
-            var u = cfg.Users.FirstOrDefault(x =>
-                x.Enabled &&
-                string.Equals(x.Id, userId, StringComparison.OrdinalIgnoreCase));
-
-            if (u is null)
+            if (u is null || !u.Enabled)
                 return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
 
-            if (!string.Equals(cfg.HashAlg, "PBKDF2-SHA256", StringComparison.OrdinalIgnoreCase))
-                return AuthResult.Failed("인증 설정을 불러올 수 없습니다");
+            // iterations는 샘플과 동일하게 100000 고정
+            const int iterations = 100000;
 
-            if (!TryVerifyPbkdf2Sha256(password, u.PasswordSaltB64, u.PasswordHashB64, cfg.Iterations))
+            if (!TryVerifyPbkdf2Sha256(password, u.PasswordSaltB64, u.PasswordHashB64, iterations))
                 return AuthResult.Failed("아이디/비밀번호가 올바르지 않습니다");
 
             AppSession.CurrentUser = new UserSession
@@ -82,6 +67,56 @@ namespace factory_automation_system_FAS_.Services
             {
                 return false;
             }
+        }
+
+        private static AuthUserRecord? LoadUserFromCsv(string csvPath, string userId)
+        {
+            // CSV 포맷:
+            // id,display_name,role,enabled,password_salt_b64,password_hash_b64
+            // admin,Administrator,Admin,true,....,....
+
+            var lines = File.ReadAllLines(csvPath);
+
+            foreach (var raw in lines)
+            {
+                var line = raw?.Trim();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                if (line.StartsWith("#")) continue;
+
+                // 헤더 스킵
+                if (line.StartsWith("id,", StringComparison.OrdinalIgnoreCase)) continue;
+
+                var parts = line.Split(',');
+                if (parts.Length < 6) continue;
+
+                var id = parts[0].Trim();
+                if (!string.Equals(id, userId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var displayName = parts[1].Trim();
+                var role = parts[2].Trim();
+                var enabledStr = parts[3].Trim();
+
+                var saltB64 = parts[4].Trim();
+                var hashB64 = parts[5].Trim();
+
+                var enabled =
+                    string.Equals(enabledStr, "true", StringComparison.OrdinalIgnoreCase)
+                    || enabledStr == "1"
+                    || string.Equals(enabledStr, "y", StringComparison.OrdinalIgnoreCase);
+
+                return new AuthUserRecord
+                {
+                    Id = id,
+                    DisplayName = displayName,
+                    Role = string.IsNullOrWhiteSpace(role) ? "Admin" : role,
+                    Enabled = enabled,
+                    PasswordSaltB64 = saltB64,
+                    PasswordHashB64 = hashB64
+                };
+            }
+
+            return null;
         }
     }
 

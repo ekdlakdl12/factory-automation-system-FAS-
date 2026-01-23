@@ -4,21 +4,22 @@
         Title="관리자 로그인"
         Height="520" Width="420"
         WindowStartupLocation="CenterScreen"
-        Background="#0B0F14"
+        Background="#F5F7FA"
         ResizeMode="NoResize">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="Bg" Color="#0B0F14"/>
-        <SolidColorBrush x:Key="Card" Color="#161E27"/>
-        <SolidColorBrush x:Key="BorderSoft" Color="#26313D"/>
-        <SolidColorBrush x:Key="Accent" Color="#33E6A2"/>
+        <!-- ===== Light Theme Colors (hard-coded) ===== -->
+        <SolidColorBrush x:Key="Bg" Color="#F5F7FA"/>
+        <SolidColorBrush x:Key="Card" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#D7DEE8"/>
+        <SolidColorBrush x:Key="Accent" Color="#2EE6A6"/>
 
         <Style TargetType="TextBox">
             <Setter Property="Height" Value="42"/>
             <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="Background" Value="#121820"/>
-            <Setter Property="Foreground" Value="#E6EEF6"/>
-            <Setter Property="BorderBrush" Value="#26313D"/>
+            <Setter Property="Background" Value="#F0F3F7"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#D7DEE8"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
@@ -26,9 +27,9 @@
         <Style TargetType="PasswordBox">
             <Setter Property="Height" Value="42"/>
             <Setter Property="Padding" Value="12,0"/>
-            <Setter Property="Background" Value="#121820"/>
-            <Setter Property="Foreground" Value="#E6EEF6"/>
-            <Setter Property="BorderBrush" Value="#26313D"/>
+            <Setter Property="Background" Value="#F0F3F7"/>
+            <Setter Property="Foreground" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#D7DEE8"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
@@ -61,32 +62,54 @@
 
                 <!-- Title -->
                 <StackPanel Grid.Row="0" Margin="0,0,0,18">
-                    <TextBlock Text="DT Control Center" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="관리자 로그인" FontSize="13" Foreground="#8FA0B0" Margin="0,6,0,0"/>
+                    <TextBlock Text="DT Control Center"
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="#0F172A"/>
+                    <TextBlock Text="관리자 로그인"
+                               FontSize="13"
+                               Foreground="#64748B"
+                               Margin="0,6,0,0"/>
                 </StackPanel>
 
                 <!-- ID -->
-                <TextBlock Grid.Row="1" Text="ID" Foreground="#8FA0B0" Margin="2,0,0,6"/>
+                <TextBlock Grid.Row="1" Text="ID" Foreground="#64748B" Margin="2,0,0,6"/>
                 <TextBox Grid.Row="2"
                          Text="{Binding UserId, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,14"/>
 
                 <!-- PW -->
-                <TextBlock Grid.Row="3" Text="Password" Foreground="#8FA0B0" Margin="2,0,0,6"/>
+                <TextBlock Grid.Row="3" Text="Password" Foreground="#64748B" Margin="2,0,0,6"/>
                 <PasswordBox Grid.Row="4"
                              PasswordChanged="PasswordBox_PasswordChanged"
                              Margin="0,0,0,10"/>
 
                 <!-- Error / Lock -->
                 <StackPanel Grid.Row="5" Margin="0,0,0,10">
-                    <TextBlock Text="{Binding Error}" Foreground="#FF6B6B" FontSize="12" TextWrapping="Wrap" Margin="2,0,0,6"/>
-                    <TextBlock Text="{Binding LockMessage}" Foreground="#F5A524" FontSize="12" TextWrapping="Wrap" Margin="2,0,0,0"/>
+                    <TextBlock Text="{Binding Error}"
+                               Foreground="#E11D48"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Margin="2,0,0,6"/>
+                    <TextBlock Text="{Binding LockMessage}"
+                               Foreground="#D97706"
+                               FontSize="12"
+                               TextWrapping="Wrap"
+                               Margin="2,0,0,0"/>
                 </StackPanel>
 
                 <!-- Buttons -->
                 <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="종료" Background="#26313D" Foreground="White" Click="Exit_Click" Margin="0,0,10,0"/>
-                    <Button Content="로그인" Background="{StaticResource Accent}" Foreground="Black" Command="{Binding LoginCommand}" IsDefault="True"/>
+                    <Button Content="종료"
+                            Background="#E2E8F0"
+                            Foreground="#0F172A"
+                            Click="Exit_Click"
+                            Margin="0,0,10,0"/>
+                    <Button Content="로그인"
+                            Background="{StaticResource Accent}"
+                            Foreground="#0B1220"
+                            Command="{Binding LoginCommand}"
+                            IsDefault="True"/>
                 </StackPanel>
             </Grid>
         </Border>

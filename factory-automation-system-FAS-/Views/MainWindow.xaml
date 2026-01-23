@@ -1,5 +1,4 @@
-﻿<!-- Views/MainWindow.xaml -->
-<Window x:Class="factory_automation_system_FAS_.Views.MainWindow"
+﻿<Window x:Class="factory_automation_system_FAS_.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:factory_automation_system_FAS_.ViewModels"
@@ -8,25 +7,22 @@
         Title="DT Control Center"
         Width="1920" Height="1080"
         WindowStartupLocation="CenterScreen"
-        Background="#0B0F14">
+        Background="#F5F7FA">
 
     <Window.Resources>
-        <!-- Colors -->
-        <SolidColorBrush x:Key="Bg" Color="#0B0F14"/>
-        <SolidColorBrush x:Key="Panel" Color="#121820"/>
-        <SolidColorBrush x:Key="Card" Color="#161E27"/>
-        <SolidColorBrush x:Key="BorderSoft" Color="#26313D"/>
+        <SolidColorBrush x:Key="Bg" Color="#F5F7FA"/>
+        <SolidColorBrush x:Key="Panel" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="Card" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#D7DEE8"/>
 
-        <SolidColorBrush x:Key="Accent" Color="#33E6A2"/>
-        <SolidColorBrush x:Key="AccentSoft" Color="#2AAE8A"/>
-        <SolidColorBrush x:Key="Station" Color="#58A6FF"/>
-        <SolidColorBrush x:Key="Output" Color="#F5A524"/>
+        <SolidColorBrush x:Key="Accent" Color="#2EE6A6"/>
+        <SolidColorBrush x:Key="AccentSoft" Color="#22B892"/>
+        <SolidColorBrush x:Key="Station" Color="#2563EB"/>
+        <SolidColorBrush x:Key="Output" Color="#D97706"/>
 
-        <!-- ✅ Pen 리소스 (에러 방지) -->
-        <Pen x:Key="GridPenMajor" Brush="#1F2A36" Thickness="1"/>
-        <Pen x:Key="GridPenMinor" Brush="#18222C" Thickness="1"/>
+        <Pen x:Key="GridPenMajor" Brush="#D7DEE8" Thickness="1"/>
+        <Pen x:Key="GridPenMinor" Brush="#E6ECF4" Thickness="1"/>
 
-        <!-- ✅ Grid Brush -->
         <DrawingBrush x:Key="GridBrush"
                       TileMode="Tile"
                       Viewport="0,0,160,160"
@@ -39,7 +35,6 @@
                             <RectangleGeometry Rect="0,0,160,160"/>
                         </GeometryDrawing.Geometry>
                     </GeometryDrawing>
-
                     <GeometryDrawing Brush="Transparent" Pen="{StaticResource GridPenMinor}">
                         <GeometryDrawing.Geometry>
                             <GeometryGroup>
@@ -52,7 +47,6 @@
             </DrawingBrush.Drawing>
         </DrawingBrush>
 
-        <!-- Card Style -->
         <Style x:Key="CardBox" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource Card}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
@@ -68,25 +62,20 @@
             <ColumnDefinition Width="380"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ================= CENTER MAP ================= -->
         <Border Grid.Column="0"
-                Background="#0E141B"
+                Background="#FFFFFF"
                 BorderBrush="{StaticResource BorderSoft}"
                 BorderThickness="1"
                 CornerRadius="18"
                 Padding="16">
-            
 
-            <!-- Zoom/Pan host -->
             <Grid ClipToBounds="True"
                   b:MapInputBehavior.TargetCanvas="{Binding ElementName=MapCanvas}"
                   b:MapInputBehavior.ZoomCommand="{Binding ZoomCommand}"
                   b:MapInputBehavior.BeginPanCommand="{Binding BeginPanCommand}"
                   b:MapInputBehavior.PanCommand="{Binding PanCommand}"
                   b:MapInputBehavior.EndPanCommand="{Binding EndPanCommand}">
-                  
 
-                <!-- Map canvas -->
                 <Canvas x:Name="MapCanvas"
                         Width="1536" Height="995"
                         RenderTransformOrigin="0,0">
@@ -98,105 +87,90 @@
                         </TransformGroup>
                     </Canvas.RenderTransform>
 
-                    <!-- Background -->
                     <Rectangle Width="1536" Height="995" Fill="{StaticResource GridBrush}"/>
 
-                    <!-- ===== STATIONS ===== -->
-
-                    <!-- Rack A -->
                     <Border Style="{StaticResource CardBox}"
                             Width="320" Height="130"
                             Canvas.Left="90" Canvas.Top="90">
                         <StackPanel>
-                            <TextBlock Text="진열대(랙) A" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="성형 제품 적재 구역" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                            <TextBlock Text="진열대(랙) A" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="성형 제품 적재 구역" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Rack B -->
                     <Border Style="{StaticResource CardBox}"
                             Width="320" Height="130"
                             Canvas.Left="520" Canvas.Top="90">
                         <StackPanel>
-                            <TextBlock Text="진열대(랙) B" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="성형 제품 적재 구역" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                            <TextBlock Text="진열대(랙) B" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="성형 제품 적재 구역" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Forming 1 -->
                     <Border Style="{StaticResource CardBox}"
                             Width="300" Height="170"
                             Canvas.Left="310" Canvas.Top="360">
                         <StackPanel>
-                            <TextBlock Text="성형 1" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="Forming Station #1" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                            <TextBlock Text="성형 1" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="Forming Station #1" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Forming 2 -->
                     <Border Style="{StaticResource CardBox}"
                             Width="300" Height="170"
                             Canvas.Left="670" Canvas.Top="360">
                         <StackPanel>
-                            <TextBlock Text="성형 2" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="Forming Station #2" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                            <TextBlock Text="성형 2" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="Forming Station #2" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Output -->
                     <Border Style="{StaticResource CardBox}"
                             Width="380" Height="190"
                             Canvas.Left="820" Canvas.Top="650">
                         <StackPanel>
-                            <TextBlock Text="생산 출구" Foreground="White" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="생산 → AMR 픽업 지점" Foreground="#9FB0C0" FontSize="12" Margin="0,6,0,0"/>
+                            <TextBlock Text="생산 출구" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                            <TextBlock Text="생산 → AMR 픽업 지점" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- ===== AMR ROUTES (STRAIGHT ONLY) ===== -->
                     <Polyline Points="1010,760 1010,570 470,570 470,440 250,440 250,155"
                               Stroke="{StaticResource Accent}"
                               StrokeThickness="4"
-                              Opacity="0.38"
-                              StrokeLineJoin="Miter"/>
+                              Opacity="0.38"/>
 
                     <Polyline Points="1010,760 1010,570 790,570 790,440 650,440 650,155"
                               Stroke="{StaticResource AccentSoft}"
                               StrokeThickness="3"
                               Opacity="0.7"
-                              StrokeDashArray="8 6"
-                              StrokeLineJoin="Miter"/>
+                              StrokeDashArray="8 6"/>
 
-
-                    <!-- ===== Cart (Blue square) ===== -->
                     <Rectangle Width="70" Height="70"
                                Fill="#0A62FF"
                                RadiusX="6" RadiusY="6"
                                Canvas.Left="{Binding CartX}"
                                Canvas.Top="{Binding CartY}"/>
-                    <!-- ===== Cart Load (Red dot on cart) ===== -->
-                        <Ellipse Width="26" Height="26"
-                                 Fill="#E11919"
-                                 Canvas.Left="{Binding CartLoadX}"
-                                 Canvas.Top="{Binding CartLoadY}">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CartHasLoad}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
 
+                    <Ellipse Width="26" Height="26"
+                             Fill="#E11919"
+                             Canvas.Left="{Binding CartLoadX}"
+                             Canvas.Top="{Binding CartLoadY}">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CartHasLoad}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
 
                 </Canvas>
             </Grid>
         </Border>
 
-        <!-- ================= RIGHT PANEL ================= -->
         <Border Grid.Column="1"
                 Margin="14,0,0,0"
                 Background="{StaticResource Panel}"
@@ -207,7 +181,21 @@
 
             <DockPanel LastChildFill="True">
 
-                <!-- Bottom Environment -->
+                <Border DockPanel.Dock="Top"
+                        Background="#0B1220"
+                        CornerRadius="12"
+                        Padding="16"
+                        Margin="0,0,0,16">
+
+                    <StackPanel>
+                        <Image Source="/Assets/Brand/adp_logo_from_screenshot_transparent.png"
+                               Height="110"
+                               Stretch="Uniform"
+                               Margin="0,0,0,12"/>
+                    </StackPanel>
+
+                </Border>
+
                 <Border DockPanel.Dock="Bottom"
                         Background="{StaticResource Card}"
                         BorderBrush="{StaticResource BorderSoft}"
@@ -217,7 +205,7 @@
 
                     <StackPanel>
                         <TextBlock Text="Factory Environment"
-                                   Foreground="White"
+                                   Foreground="#0F172A"
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,10"/>
 
@@ -233,41 +221,35 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Gas" Foreground="#B8C2CC" Margin="0,0,16,6"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="— ppm" Foreground="#B8C2CC"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Gas" Foreground="#475569" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="— ppm" Foreground="#475569"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Temperature" Foreground="#B8C2CC" Margin="0,0,16,6"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="— °C" Foreground="#B8C2CC"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Temperature" Foreground="#475569" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="— °C" Foreground="#475569"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Humidity" Foreground="#B8C2CC" Margin="0,0,16,6"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="— %" Foreground="#B8C2CC"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Humidity" Foreground="#475569" Margin="0,0,16,6"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="— %" Foreground="#475569"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="IP" Foreground="#B8C2CC" Margin="0,0,16,0"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="—" Foreground="#B8C2CC"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="IP" Foreground="#475569" Margin="0,0,16,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="—" Foreground="#475569"/>
                         </Grid>
 
                         <TextBlock Text="No data connected (UI placeholder)"
-                                   Foreground="#6B7785"
+                                   Foreground="#94A3B8"
                                    FontSize="11"
                                    Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Top -->
-                <StackPanel DockPanel.Dock="Top">
-                    <!-- ✅ 로고 유지 -->
-                    <Image Source="/Assets/Brand/adp_logo_from_screenshot_transparent.png"
-                           Height="110"
-                           Stretch="Uniform"
-                           Margin="0,0,0,12"/>
-
+                <StackPanel>
                     <Button Content="생산조회"
                             Height="50"
                             Background="{StaticResource Accent}"
-                            Foreground="Black"
+                            Foreground="#0B1220"
                             FontWeight="Bold"
                             BorderThickness="0"
                             Margin="0,0,0,16"/>
+
                     <Button Content="제품 +1 (Output)"
                             Height="50"
                             Margin="0,0,0,16"
@@ -278,8 +260,7 @@
                             Command="{Binding AddStockCommand}"
                             CommandParameter="{x:Static m:StationId.Output}"/>
 
-
-                    <Border Height="1" Background="#1F2A36" Margin="0,6,0,0"/>
+                    <Border Height="1" Background="#D7DEE8" Margin="0,6,0,0"/>
                 </StackPanel>
 
                 <Grid/>
