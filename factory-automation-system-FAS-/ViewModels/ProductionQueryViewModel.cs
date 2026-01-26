@@ -1,153 +1,272 @@
+using factory_automation_system_FAS_.Models;
 using factory_automation_system_FAS_.Utils;
 using Microsoft.Win32;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace factory_automation_system_FAS_.ViewModels
 {
     /// <summary>
-    /// DB 연동 전 단계(MVP):
-    /// - "스키마(컬럼)부터" UI에 박아두고
-    /// - 실제 데이터는 나중에 DB/서버 연결되면 채우는 방식
+    /// LOG(생산조회) 화면용 VM
+    /// - 상단 2줄 조회(설비 상태 / 제품 검사)
+    /// - 리스트(DataGrid 1개) 필터 갱신
+    /// - MVP: 더미 데이터
     /// </summary>
     public sealed class ProductionQueryViewModel : INotifyPropertyChanged
     {
-        public DataTable WorkOrderTable { get; }
-        public DataTable VisionEventTable { get; }
-        public DataTable TraceLogTable { get; }
-        public DataTable InventoryTable { get; }
+        // ====== ComboBox 옵션 ======
+        public ObservableCollection<string> Devices { get; } = new();
+        public ObservableCollection<string> Statuses { get; } = new();
+        public ObservableCollection<string> Shapes { get; } = new();
+        public ObservableCollection<string> Colors { get; } = new();
 
-        private int _selectedTabIndex;
-        public int SelectedTabIndex
-        {
-            get => _selectedTabIndex;
-            set
-            {
-                if (_selectedTabIndex == value) return;
-                _selectedTabIndex = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(ActiveTable));
-                OnPropertyChanged(nameof(ActiveTableView));
-                OnPropertyChanged(nameof(ActiveHasRows));
-            }
-        }
+        // ====== 조회 입력값 ======
+        private DateTime? _deviceDate;
+        public DateTime? DeviceDate { get => _deviceDate; set { _deviceDate = value; OnPropertyChanged(); } }
 
-        public DataTable ActiveTable => SelectedTabIndex switch
-        {
-            0 => WorkOrderTable,
-            1 => VisionEventTable,
-            2 => TraceLogTable,
-            3 => InventoryTable,
-            _ => WorkOrderTable
-        };
+        private string? _selectedDevice;
+        public string? SelectedDevice { get => _selectedDevice; set { _selectedDevice = value; OnPropertyChanged(); } }
 
-        public DataView ActiveTableView => ActiveTable.DefaultView;
-        public bool ActiveHasRows => ActiveTable.Rows.Count > 0;
+        private string? _selectedStatus;
+        public string? SelectedStatus { get => _selectedStatus; set { _selectedStatus = value; OnPropertyChanged(); } }
 
+        private DateTime? _inspectionDate;
+        public DateTime? InspectionDate { get => _inspectionDate; set { _inspectionDate = value; OnPropertyChanged(); } }
+
+        private string? _selectedShape;
+        public string? SelectedShape { get => _selectedShape; set { _selectedShape = value; OnPropertyChanged(); } }
+
+        private string? _selectedColor;
+        public string? SelectedColor { get => _selectedColor; set { _selectedColor = value; OnPropertyChanged(); } }
+
+        // ====== 로그 원본/뷰 ======
+        public ObservableCollection<LogRecord> AllLogs { get; } = new();
+        public ICollectionView LogsView { get; }
+
+        // ====== 현재 필터 표시 ======
+        private string _activeFilterLabel = "현재 필터: 없음 (전체 표시)";
+        public string ActiveFilterLabel { get => _activeFilterLabel; private set { _activeFilterLabel = value; OnPropertyChanged(); } }
+
+        private FilterMode _mode = FilterMode.None;
+
+        // ====== Commands ======
+        public ICommand ApplyDeviceFilterCommand { get; }
+        public ICommand ApplyInspectionFilterCommand { get; }
+        public ICommand ClearFilterCommand { get; }
+        public ICommand OpenDetailCommand { get; }
         public ICommand ExportCsvCommand { get; }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public ProductionQueryViewModel()
         {
-            WorkOrderTable = CreateWorkOrderSchema();
-            VisionEventTable = CreateVisionEventSchema();
-            TraceLogTable = CreateTraceLogSchema();
-            InventoryTable = CreateInventorySchema();
+            // ICollectionView 생성 (필터는 View에 걸어둠)
+            LogsView = CollectionViewSource.GetDefaultView(AllLogs);
+            LogsView.Filter = FilterLogs;
 
+            ApplyDeviceFilterCommand = new RelayCommand(ApplyDeviceFilter);
+            ApplyInspectionFilterCommand = new RelayCommand(ApplyInspectionFilter);
+            ClearFilterCommand = new RelayCommand(ClearFilter);
+            OpenDetailCommand = new RelayCommand<LogRecord>(OpenDetail);
             ExportCsvCommand = new RelayCommand(ExportCsv);
-            SelectedTabIndex = 0;
+
+            SeedOptions();
+            SeedDummyLogs();
+
+            // 초기값
+            DeviceDate = DateTime.Today;
+            InspectionDate = DateTime.Today;
         }
 
-        // =====================
-        // Schema (DB 테이블과 1:1 매핑)
-        // =====================
+        // =========================
+        // Filtering
+        // =========================
 
-        private static DataTable CreateWorkOrderSchema()
+        private bool FilterLogs(object obj)
         {
-            // Product_WorkOrder
-            var dt = new DataTable("Product_WorkOrder");
-            dt.Columns.Add("product_id", typeof(int));
-            dt.Columns.Add("wo_id", typeof(string));
-            dt.Columns.Add("raw_id", typeof(int));
-            dt.Columns.Add("start_time", typeof(string));
-            dt.Columns.Add("end_time", typeof(string));
-            dt.Columns.Add("status", typeof(string));
-            return dt;
+            if (obj is not LogRecord r) return false;
+            if (_mode == FilterMode.None) return true;
+
+            if (_mode == FilterMode.Device)
+            {
+                // 설비 상태 조회: 날짜(선택) + 장치(선택) + 상태(선택)
+                if (DeviceDate.HasValue && r.Timestamp.Date != DeviceDate.Value.Date) return false;
+                if (!string.IsNullOrWhiteSpace(SelectedDevice) && !string.Equals(r.Device, SelectedDevice, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!string.IsNullOrWhiteSpace(SelectedStatus) && !string.Equals(r.Status, SelectedStatus, StringComparison.OrdinalIgnoreCase)) return false;
+                return r.Kind == "설비";
+            }
+
+            if (_mode == FilterMode.Inspection)
+            {
+                // 제품 검사 조회: 날짜(선택) + 모양(선택) + 색깔(선택)
+                if (InspectionDate.HasValue && r.Timestamp.Date != InspectionDate.Value.Date) return false;
+                if (!string.IsNullOrWhiteSpace(SelectedShape) && !string.Equals(r.Shape, SelectedShape, StringComparison.OrdinalIgnoreCase)) return false;
+                if (!string.IsNullOrWhiteSpace(SelectedColor) && !string.Equals(r.Color, SelectedColor, StringComparison.OrdinalIgnoreCase)) return false;
+                return r.Kind == "검사";
+            }
+
+            return true;
         }
 
-        private static DataTable CreateVisionEventSchema()
+        private void ApplyDeviceFilter()
         {
-            // VisionEvent
-            var dt = new DataTable("VisionEvent");
-            dt.Columns.Add("event_id", typeof(int));
-            dt.Columns.Add("conv_id", typeof(int));
-            dt.Columns.Add("image_ref", typeof(string));
-            dt.Columns.Add("detected_class", typeof(string));
-            dt.Columns.Add("confidence", typeof(double));
-            dt.Columns.Add("ts", typeof(string));
-            dt.Columns.Add("meta", typeof(string)); // JSON string
-            return dt;
+            _mode = FilterMode.Device;
+
+            var d = DeviceDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "전체";
+            var dev = string.IsNullOrWhiteSpace(SelectedDevice) ? "전체" : SelectedDevice;
+            var st = string.IsNullOrWhiteSpace(SelectedStatus) ? "전체" : SelectedStatus;
+
+            ActiveFilterLabel = $"현재 필터: [설비] 날짜={d}, 장치={dev}, 상태={st}";
+            LogsView.Refresh();
         }
 
-        private static DataTable CreateTraceLogSchema()
+        private void ApplyInspectionFilter()
         {
-            // TraceLog
-            var dt = new DataTable("TraceLog");
-            dt.Columns.Add("trace_id", typeof(int));
-            dt.Columns.Add("entity_type", typeof(string));
-            dt.Columns.Add("entity_id", typeof(int));
-            dt.Columns.Add("action", typeof(string));
-            dt.Columns.Add("ts", typeof(string));
-            dt.Columns.Add("user_id", typeof(string));
-            dt.Columns.Add("detail", typeof(string)); // JSON string
-            return dt;
+            _mode = FilterMode.Inspection;
+
+            var d = InspectionDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "전체";
+            var sh = string.IsNullOrWhiteSpace(SelectedShape) ? "전체" : SelectedShape;
+            var co = string.IsNullOrWhiteSpace(SelectedColor) ? "전체" : SelectedColor;
+
+            ActiveFilterLabel = $"현재 필터: [검사] 날짜={d}, 모양={sh}, 색깔={co}";
+            LogsView.Refresh();
         }
 
-        private static DataTable CreateInventorySchema()
+        private void ClearFilter()
         {
-            // Inventory
-            var dt = new DataTable("Inventory");
-            dt.Columns.Add("inv_id", typeof(int));
-            dt.Columns.Add("material_id", typeof(int));
-            dt.Columns.Add("qty", typeof(int));
-            dt.Columns.Add("location", typeof(string));
-            dt.Columns.Add("updated_at", typeof(string));
-            return dt;
+            _mode = FilterMode.None;
+            ActiveFilterLabel = "현재 필터: 없음 (전체 표시)";
+            LogsView.Refresh();
         }
 
-        // =====================
-        // Export
-        // =====================
+        // =========================
+        // Detail / Export
+        // =========================
+
+        private void OpenDetail(LogRecord r)
+        {
+            if (r is null) return;
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"날짜: {r.Timestamp:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine($"구분: {r.Kind}");
+            sb.AppendLine($"요약: {r.Summary}");
+            sb.AppendLine();
+            sb.AppendLine($"장치: {r.Device}");
+            sb.AppendLine($"상태: {r.Status}");
+            sb.AppendLine($"모양: {r.Shape}");
+            sb.AppendLine($"색깔: {r.Color}");
+
+            MessageBox.Show(sb.ToString(), "상세 확인", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         private void ExportCsv()
         {
+            var dlg = new SaveFileDialog
+            {
+                Title = "로그 CSV 저장",
+                Filter = "CSV (*.csv)|*.csv",
+                FileName = $"logs_{DateTime.Now:yyyyMMdd_HHmm}.csv"
+            };
+
+            if (dlg.ShowDialog() != true)
+                return;
+
             try
             {
-                var name = ActiveTable.TableName;
-                var dlg = new SaveFileDialog
+                // 현재 View에 보이는 것만 저장
+                var rows = LogsView.Cast<LogRecord>().ToList();
+
+                var lines = new StringBuilder();
+                lines.AppendLine("timestamp,kind,summary,device,status,shape,color");
+
+                foreach (var r in rows)
                 {
-                    Title = $"{name} CSV 저장",
-                    Filter = "CSV (*.csv)|*.csv",
-                    FileName = $"{name}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-                };
+                    string esc(string s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
+                    lines.AppendLine(
+                        string.Join(",",
+                            esc(r.Timestamp.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
+                            esc(r.Kind),
+                            esc(r.Summary),
+                            esc(r.Device),
+                            esc(r.Status),
+                            esc(r.Shape),
+                            esc(r.Color)
+                        )
+                    );
+                }
 
-                if (dlg.ShowDialog() != true)
-                    return;
-
-                CsvUtil.WriteDataTableToCsv(ActiveTable, dlg.FileName);
-                MessageBox.Show("CSV 저장 완료!", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                File.WriteAllText(dlg.FileName, lines.ToString(), Encoding.UTF8);
+                MessageBox.Show($"저장 완료: {dlg.FileName}", "CSV", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"CSV 저장 실패: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "CSV 저장 실패", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        // =========================
+        // Dummy data (MVP)
+        // =========================
+
+        private void SeedOptions()
+        {
+            // 장치/상태/모양/색깔 옵션 (나중에 DB로 교체)
+            Devices.Clear();
+            Devices.Add("Camera-1");
+            Devices.Add("Camera-2");
+            Devices.Add("Sensor-1");
+            Devices.Add("Sensor-2");
+
+            Statuses.Clear();
+            Statuses.Add("OK");
+            Statuses.Add("WARN");
+            Statuses.Add("FAIL");
+
+            Shapes.Clear();
+            Shapes.Add("A");
+            Shapes.Add("B");
+            Shapes.Add("C");
+
+            Colors.Clear();
+            Colors.Add("Red");
+            Colors.Add("Blue");
+            Colors.Add("Green");
+        }
+
+        private void SeedDummyLogs()
+        {
+            AllLogs.Clear();
+
+            // 설비 로그
+            AllLogs.Add(LogRecord.DeviceLog(DateTime.Today.AddHours(9), "Camera-1", "OK"));
+            AllLogs.Add(LogRecord.DeviceLog(DateTime.Today.AddHours(10), "Camera-2", "WARN"));
+            AllLogs.Add(LogRecord.DeviceLog(DateTime.Today.AddHours(11), "Sensor-1", "OK"));
+            AllLogs.Add(LogRecord.DeviceLog(DateTime.Today.AddHours(12), "Sensor-2", "FAIL"));
+
+            // 검사 로그
+            AllLogs.Add(LogRecord.InspectionLog(DateTime.Today.AddHours(9).AddMinutes(10), "A", "Red"));
+            AllLogs.Add(LogRecord.InspectionLog(DateTime.Today.AddHours(10).AddMinutes(5), "B", "Blue"));
+            AllLogs.Add(LogRecord.InspectionLog(DateTime.Today.AddHours(11).AddMinutes(20), "C", "Green"));
+        }
+
         private void OnPropertyChanged([CallerMemberName] string? name = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        private enum FilterMode
+        {
+            None,
+            Device,
+            Inspection
+        }
     }
 }

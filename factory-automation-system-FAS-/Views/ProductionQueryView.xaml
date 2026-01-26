@@ -5,55 +5,253 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d">
 
-    <Grid Background="#F5F7FA" Margin="20">
+    <UserControl.Resources>
+        <!-- ===== Light Theme (이 컨트롤에서만 쓰는 로컬 스타일) ===== -->
+        <SolidColorBrush x:Key="Bg" Color="#F5F7FA"/>
+        <SolidColorBrush x:Key="Card" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#D7DEE8"/>
+        <SolidColorBrush x:Key="TextStrong" Color="#0F172A"/>
+        <SolidColorBrush x:Key="TextSub" Color="#64748B"/>
+        <SolidColorBrush x:Key="Accent" Color="#2EE6A6"/>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="DatePicker">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="{StaticResource TextStrong}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="SelectionUnit" Value="FullRow"/>
+            <Setter Property="RowHeight" Value="36"/>
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#F0F3F7"/>
+                        <Setter Property="Foreground" Value="{StaticResource TextStrong}"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Padding" Value="10,6"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource Bg}" Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- 헤더 -->
+            <RowDefinition Height="Auto"/>
+            <!-- 검색패널 -->
             <RowDefinition Height="*"/>
+            <!-- 리스트 -->
         </Grid.RowDefinitions>
 
-        <!-- 헤더 -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="생산 조회"
-                       FontSize="22"
-                       FontWeight="Bold"
-                       Foreground="#0F172A"/>
-            <TextBlock Text="DB 연동 전 (MVP) – 스키마 기반 화면"
-                       FontSize="12"
-                       Foreground="#64748B"
-                       Margin="0,6,0,0"/>
-        </StackPanel>
+        <!-- ===== 헤더 ===== -->
+        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="LOG 화면"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextStrong}"/>
+                <TextBlock Text="날짜/장치/상태 또는 날짜/모양/색깔로 조회 (MVP: 더미 데이터)"
+                           FontSize="12"
+                           Foreground="{StaticResource TextSub}"
+                           Margin="0,6,0,0"/>
+            </StackPanel>
 
-        <!-- 본문 -->
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="CSV로 받기"
+                        Background="{StaticResource Accent}"
+                        Foreground="#0B1220"
+                        Margin="0,0,10,0"
+                        Command="{Binding ExportCsvCommand}"/>
+
+                <Button Content="필터 초기화"
+                        Background="#E2E8F0"
+                        Foreground="{StaticResource TextStrong}"
+                        Command="{Binding ClearFilterCommand}"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- ===== 검색 패널 (2줄) ===== -->
         <Border Grid.Row="1"
-                Background="White"
-                BorderBrush="#D7DEE8"
+                Background="{StaticResource Card}"
+                BorderBrush="{StaticResource BorderSoft}"
                 BorderThickness="1"
-                CornerRadius="12"
-                Padding="12">
-
+                CornerRadius="14"
+                Padding="14"
+                Margin="0,0,0,12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- 탭 -->
-                <TabControl Grid.Row="0"
-                            SelectedIndex="{Binding SelectedTabIndex}">
-                    <TabItem Header="WorkOrder"/>
-                    <TabItem Header="VisionEvent"/>
-                    <TabItem Header="TraceLog"/>
-                    <TabItem Header="Inventory"/>
-                </TabControl>
+                <!-- 1줄: 날짜/장치/상태 -->
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="110"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- 테이블 -->
-                <DataGrid Grid.Row="1"
-                          Margin="0,10,0,0"
-                          ItemsSource="{Binding ActiveTableView}"
-                          AutoGenerateColumns="True"
-                          IsReadOnly="True"/>
+                    <TextBlock Grid.Column="0" Text="날짜"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextStrong}"/>
+                    <DatePicker Grid.Column="1"
+                                SelectedDate="{Binding DeviceDate}"/>
+
+                    <TextBlock Grid.Column="2" Text="장치"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextStrong}"
+                               Margin="18,0,0,0"/>
+                    <ComboBox Grid.Column="3"
+                              ItemsSource="{Binding Devices}"
+                              SelectedItem="{Binding SelectedDevice}"/>
+
+                    <TextBlock Grid.Column="4" Text="상태"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextStrong}"
+                               Margin="18,0,0,0"/>
+                    <ComboBox Grid.Column="5"
+                              ItemsSource="{Binding Statuses}"
+                              SelectedItem="{Binding SelectedStatus}"/>
+
+                    <Button Grid.Column="7"
+                            Content="확인"
+                            Background="{StaticResource Accent}"
+                            Foreground="#0B1220"
+                            Command="{Binding ApplyDeviceFilterCommand}"/>
+                </Grid>
+
+                <!-- 2줄: 날짜/모양/색깔 -->
+                <Grid Grid.Row="1" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="110"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="날짜"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextStrong}"/>
+                    <DatePicker Grid.Column="1"
+                                SelectedDate="{Binding InspectionDate}"/>
+
+                    <TextBlock Grid.Column="2" Text="모양"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextStrong}"
+                               Margin="18,0,0,0"/>
+                    <ComboBox Grid.Column="3"
+                              ItemsSource="{Binding Shapes}"
+                              SelectedItem="{Binding SelectedShape}"/>
+
+                    <TextBlock Grid.Column="4" Text="색깔"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource TextStrong}"
+                               Margin="18,0,0,0"/>
+                    <ComboBox Grid.Column="5"
+                              ItemsSource="{Binding Colors}"
+                              SelectedItem="{Binding SelectedColor}"/>
+
+                    <Button Grid.Column="7"
+                            Content="확인"
+                            Background="{StaticResource Accent}"
+                            Foreground="#0B1220"
+                            Command="{Binding ApplyInspectionFilterCommand}"/>
+                </Grid>
+
+                <!-- 현재 필터 안내 -->
+                <TextBlock Grid.Row="2"
+                           Text="{Binding ActiveFilterLabel}"
+                           Foreground="{StaticResource TextSub}"
+                           FontSize="12"
+                           Margin="0,2,0,0"/>
             </Grid>
+        </Border>
 
+        <!-- ===== 리스트 화면 (DataGrid 1개) ===== -->
+        <Border Grid.Row="2"
+                Background="{StaticResource Card}"
+                BorderBrush="{StaticResource BorderSoft}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="12">
+            <Grid>
+                <DataGrid ItemsSource="{Binding LogsView}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="날짜" Binding="{Binding TimestampText}" Width="160"/>
+                        <DataGridTextColumn Header="구분" Binding="{Binding Kind}" Width="90"/>
+                        <DataGridTextColumn Header="요약" Binding="{Binding Summary}" Width="*"/>
+
+                        <DataGridTemplateColumn Header="확인" Width="110">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="확인"
+                                            Height="30"
+                                            Background="#E2E8F0"
+                                            Foreground="{StaticResource TextStrong}"
+                                            Command="{Binding DataContext.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>
