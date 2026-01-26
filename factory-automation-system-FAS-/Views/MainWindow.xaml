@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:factory_automation_system_FAS_.ViewModels"
         xmlns:b="clr-namespace:factory_automation_system_FAS_.Behaviors"
         xmlns:m="clr-namespace:factory_automation_system_FAS_.Models"
+        xmlns:views="clr-namespace:factory_automation_system_FAS_.Views"
         Title="DT Control Center"
         Width="1920" Height="1080"
         WindowStartupLocation="CenterScreen"
@@ -54,6 +55,12 @@
             <Setter Property="CornerRadius" Value="14"/>
             <Setter Property="Padding" Value="14"/>
         </Style>
+
+        <!-- ✅ 탭 헤더 숨김: WPF에는 TabStripPlacement=None 없음 -->
+        <Style TargetType="{x:Type TabItem}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="IsTabStop" Value="False"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="14">
@@ -62,115 +69,142 @@
             <ColumnDefinition Width="380"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
-                Background="#FFFFFF"
-                BorderBrush="{StaticResource BorderSoft}"
-                BorderThickness="1"
-                CornerRadius="18"
-                Padding="16">
+        <!-- =========================
+             LEFT: 화면 전환 영역 (TabControl)
+             MainTabIndex: 0=메인, 1=생산조회
+             ========================= -->
+        <TabControl Grid.Column="0"
+                    SelectedIndex="{Binding MainTabIndex}"
+                    BorderThickness="0"
+                    Background="Transparent">
 
-            <Grid ClipToBounds="True"
-                  b:MapInputBehavior.TargetCanvas="{Binding ElementName=MapCanvas}"
-                  b:MapInputBehavior.ZoomCommand="{Binding ZoomCommand}"
-                  b:MapInputBehavior.BeginPanCommand="{Binding BeginPanCommand}"
-                  b:MapInputBehavior.PanCommand="{Binding PanCommand}"
-                  b:MapInputBehavior.EndPanCommand="{Binding EndPanCommand}">
+            <!-- ===== Tab 0: 기존 메인 화면 ===== -->
+            <TabItem>
+                <Border Background="#FFFFFF"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        CornerRadius="18"
+                        Padding="16">
 
-                <Canvas x:Name="MapCanvas"
-                        Width="1536" Height="995"
-                        RenderTransformOrigin="0,0">
+                    <Grid ClipToBounds="True"
+                          b:MapInputBehavior.TargetCanvas="{Binding ElementName=MapCanvas}"
+                          b:MapInputBehavior.ZoomCommand="{Binding ZoomCommand}"
+                          b:MapInputBehavior.BeginPanCommand="{Binding BeginPanCommand}"
+                          b:MapInputBehavior.PanCommand="{Binding PanCommand}"
+                          b:MapInputBehavior.EndPanCommand="{Binding EndPanCommand}">
 
-                    <Canvas.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform ScaleX="{Binding Viewport.Scale}" ScaleY="{Binding Viewport.Scale}"/>
-                            <TranslateTransform X="{Binding Viewport.TranslateX}" Y="{Binding Viewport.TranslateY}"/>
-                        </TransformGroup>
-                    </Canvas.RenderTransform>
+                        <Canvas x:Name="MapCanvas"
+                                Width="1536" Height="995"
+                                RenderTransformOrigin="0,0">
 
-                    <Rectangle Width="1536" Height="995" Fill="{StaticResource GridBrush}"/>
+                            <Canvas.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="{Binding Viewport.Scale}" ScaleY="{Binding Viewport.Scale}"/>
+                                    <TranslateTransform X="{Binding Viewport.TranslateX}" Y="{Binding Viewport.TranslateY}"/>
+                                </TransformGroup>
+                            </Canvas.RenderTransform>
 
-                    <Border Style="{StaticResource CardBox}"
-                            Width="320" Height="130"
-                            Canvas.Left="90" Canvas.Top="90">
-                        <StackPanel>
-                            <TextBlock Text="진열대(랙) A" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="성형 제품 적재 구역" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
+                            <Rectangle Width="1536" Height="995" Fill="{StaticResource GridBrush}"/>
 
-                    <Border Style="{StaticResource CardBox}"
-                            Width="320" Height="130"
-                            Canvas.Left="520" Canvas.Top="90">
-                        <StackPanel>
-                            <TextBlock Text="진열대(랙) B" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="성형 제품 적재 구역" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
+                            <Border Style="{StaticResource CardBox}"
+                                    Width="320" Height="130"
+                                    Canvas.Left="90" Canvas.Top="90">
+                                <StackPanel>
+                                    <TextBlock Text="진열대(랙) A" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                                    <TextBlock Text="성형 제품 적재 구역" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Border>
 
-                    <Border Style="{StaticResource CardBox}"
-                            Width="300" Height="170"
-                            Canvas.Left="310" Canvas.Top="360">
-                        <StackPanel>
-                            <TextBlock Text="성형 1" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="Forming Station #1" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
+                            <Border Style="{StaticResource CardBox}"
+                                    Width="320" Height="130"
+                                    Canvas.Left="520" Canvas.Top="90">
+                                <StackPanel>
+                                    <TextBlock Text="진열대(랙) B" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                                    <TextBlock Text="성형 제품 적재 구역" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Border>
 
-                    <Border Style="{StaticResource CardBox}"
-                            Width="300" Height="170"
-                            Canvas.Left="670" Canvas.Top="360">
-                        <StackPanel>
-                            <TextBlock Text="성형 2" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="Forming Station #2" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
+                            <Border Style="{StaticResource CardBox}"
+                                    Width="300" Height="170"
+                                    Canvas.Left="310" Canvas.Top="360">
+                                <StackPanel>
+                                    <TextBlock Text="성형 1" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                                    <TextBlock Text="Forming Station #1" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Border>
 
-                    <Border Style="{StaticResource CardBox}"
-                            Width="380" Height="190"
-                            Canvas.Left="820" Canvas.Top="650">
-                        <StackPanel>
-                            <TextBlock Text="생산 출구" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
-                            <TextBlock Text="생산 → AMR 픽업 지점" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
-                        </StackPanel>
-                    </Border>
+                            <Border Style="{StaticResource CardBox}"
+                                    Width="300" Height="170"
+                                    Canvas.Left="670" Canvas.Top="360">
+                                <StackPanel>
+                                    <TextBlock Text="성형 2" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                                    <TextBlock Text="Forming Station #2" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Border>
 
-                    <Polyline Points="1010,760 1010,570 470,570 470,440 250,440 250,155"
-                              Stroke="{StaticResource Accent}"
-                              StrokeThickness="4"
-                              Opacity="0.38"/>
+                            <Border Style="{StaticResource CardBox}"
+                                    Width="380" Height="190"
+                                    Canvas.Left="820" Canvas.Top="650">
+                                <StackPanel>
+                                    <TextBlock Text="생산 출구" Foreground="#0F172A" FontWeight="SemiBold" FontSize="18"/>
+                                    <TextBlock Text="생산 → AMR 픽업 지점" Foreground="#64748B" FontSize="12" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </Border>
 
-                    <Polyline Points="1010,760 1010,570 790,570 790,440 650,440 650,155"
-                              Stroke="{StaticResource AccentSoft}"
-                              StrokeThickness="3"
-                              Opacity="0.7"
-                              StrokeDashArray="8 6"/>
+                            <Polyline Points="1010,760 1010,570 470,570 470,440 250,440 250,155"
+                                      Stroke="{StaticResource Accent}"
+                                      StrokeThickness="4"
+                                      Opacity="0.38"/>
 
-                    <Rectangle Width="70" Height="70"
-                               Fill="#0A62FF"
-                               RadiusX="6" RadiusY="6"
-                               Canvas.Left="{Binding CartX}"
-                               Canvas.Top="{Binding CartY}"/>
+                            <Polyline Points="1010,760 1010,570 790,570 790,440 650,440 650,155"
+                                      Stroke="{StaticResource AccentSoft}"
+                                      StrokeThickness="3"
+                                      Opacity="0.7"
+                                      StrokeDashArray="8 6"/>
 
-                    <Ellipse Width="26" Height="26"
-                             Fill="#E11919"
-                             Canvas.Left="{Binding CartLoadX}"
-                             Canvas.Top="{Binding CartLoadY}">
-                        <Ellipse.Style>
-                            <Style TargetType="Ellipse">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CartHasLoad}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Ellipse.Style>
-                    </Ellipse>
+                            <Rectangle Width="70" Height="70"
+                                       Fill="#0A62FF"
+                                       RadiusX="6" RadiusY="6"
+                                       Canvas.Left="{Binding CartX}"
+                                       Canvas.Top="{Binding CartY}"/>
 
-                </Canvas>
-            </Grid>
-        </Border>
+                            <Ellipse Width="26" Height="26"
+                                     Fill="#E11919"
+                                     Canvas.Left="{Binding CartLoadX}"
+                                     Canvas.Top="{Binding CartLoadY}">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CartHasLoad}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
 
+                        </Canvas>
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <!-- ===== Tab 1: 생산조회(메인 내부 화면) ===== -->
+            <TabItem>
+                <Border Background="#FFFFFF"
+                        BorderBrush="{StaticResource BorderSoft}"
+                        BorderThickness="1"
+                        CornerRadius="18"
+                        Padding="16">
+                    <views:ProductionQueryView DataContext="{Binding ProductionQueryVm}" />
+                </Border>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- =========================
+             RIGHT: 사이드바
+             ========================= -->
         <Border Grid.Column="1"
                 Margin="14,0,0,0"
                 Background="{StaticResource Panel}"
@@ -186,14 +220,12 @@
                         CornerRadius="12"
                         Padding="16"
                         Margin="0,0,0,16">
-
                     <StackPanel>
                         <Image Source="/Assets/Brand/adp_logo_from_screenshot_transparent.png"
                                Height="110"
                                Stretch="Uniform"
                                Margin="0,0,0,12"/>
                     </StackPanel>
-
                 </Border>
 
                 <Border DockPanel.Dock="Bottom"
@@ -202,7 +234,6 @@
                         BorderThickness="1"
                         CornerRadius="14"
                         Padding="14">
-
                     <StackPanel>
                         <TextBlock Text="Factory Environment"
                                    Foreground="#0F172A"
@@ -242,19 +273,32 @@
                 </Border>
 
                 <StackPanel>
+                    <!-- ✅ Click 제거: MVVM Command로 화면전환 -->
                     <Button Content="생산조회"
                             Height="50"
                             Background="{StaticResource Accent}"
                             Foreground="#0B1220"
                             FontWeight="Bold"
                             BorderThickness="0"
-                            Margin="0,0,0,16"/>
+                            Margin="0,0,0,16"
+                            Width="330"
+                            Command="{Binding OpenProductionQueryCommand}"/>
+
+                    <Button Content="홈(메인)으로"
+                            Height="44"
+                            Background="#E6ECF4"
+                            Foreground="#0B1220"
+                            FontWeight="SemiBold"
+                            BorderThickness="0"
+                            Margin="0,0,0,16"
+                            Width="330"
+                            Command="{Binding NavigateHomeCommand}"/>
 
                     <Button Content="제품 +1 (Output)"
                             Height="50"
                             Margin="0,0,0,16"
                             Background="#E11919"
-                            Foreground="White"
+                            Foreground="#0B1220"
                             FontWeight="Bold"
                             BorderThickness="0"
                             Command="{Binding AddStockCommand}"

@@ -24,6 +24,21 @@ namespace factory_automation_system_FAS_.ViewModels
         public ICommand EndPanCommand { get; }
         public ICommand ResetViewCommand { get; }
         public ICommand AddStockCommand { get; }
+        public ICommand OpenProductionQueryCommand { get; }
+        public ICommand NavigateHomeCommand { get; }
+
+        // 화면 전환 인덱스 (0=메인, 1=생산조회)
+        private int _mainTabIndex = 0;
+        public int MainTabIndex
+        {
+            get => _mainTabIndex;
+            set { _mainTabIndex = value; OnPropertyChanged(); }
+        }
+
+        // ProductionQueryView에 꽂아줄 VM
+        public ProductionQueryViewModel ProductionQueryVm { get; } = new();
+
+
 
 
         // ===== 새로: Simulation =====
@@ -103,6 +118,9 @@ namespace factory_automation_system_FAS_.ViewModels
                 SyncFromSim();
             });
 
+            OpenProductionQueryCommand = new RelayCommand(() => MainTabIndex = 1);
+            NavigateHomeCommand = new RelayCommand(() => MainTabIndex = 0);
+
 
             // ===== Simulation timer =====
             _timer.Interval = TimeSpan.FromMilliseconds(16); // ~60fps 느낌
@@ -113,6 +131,8 @@ namespace factory_automation_system_FAS_.ViewModels
 
             // 최초 1회 렌더 동기화
             SyncFromSim();
+            MainTabIndex = 0;
+
         }
 
         private void OnTick()
@@ -205,6 +225,7 @@ namespace factory_automation_system_FAS_.ViewModels
                 ProductDots.Add(new ProductDotVm { X = x, Y = y });
             }
         }
+     
 
         // ===== INotifyPropertyChanged =====
         public event PropertyChangedEventHandler? PropertyChanged;

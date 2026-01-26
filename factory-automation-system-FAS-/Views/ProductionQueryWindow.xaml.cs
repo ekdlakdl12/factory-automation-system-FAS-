@@ -1,19 +1,15 @@
 using System.Windows;
 using factory_automation_system_FAS_.ViewModels;
 
+using System.Windows.Controls;
+
 namespace factory_automation_system_FAS_.Views
 {
-    public partial class ProductionQueryWindow : Window
+    public partial class ProductionQueryView : UserControl
     {
-        public ProductionQueryWindow()
+        public ProductionQueryView()
         {
             InitializeComponent();
-            DataContext = new ProductionQueryViewModel();
-        }
-
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
         }
     }
 }

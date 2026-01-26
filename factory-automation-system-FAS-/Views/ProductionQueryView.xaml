@@ -1,0 +1,59 @@
+﻿<UserControl x:Class="factory_automation_system_FAS_.Views.ProductionQueryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <Grid Background="#F5F7FA" Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 헤더 -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="생산 조회"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="#0F172A"/>
+            <TextBlock Text="DB 연동 전 (MVP) – 스키마 기반 화면"
+                       FontSize="12"
+                       Foreground="#64748B"
+                       Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <!-- 본문 -->
+        <Border Grid.Row="1"
+                Background="White"
+                BorderBrush="#D7DEE8"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="12">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 탭 -->
+                <TabControl Grid.Row="0"
+                            SelectedIndex="{Binding SelectedTabIndex}">
+                    <TabItem Header="WorkOrder"/>
+                    <TabItem Header="VisionEvent"/>
+                    <TabItem Header="TraceLog"/>
+                    <TabItem Header="Inventory"/>
+                </TabControl>
+
+                <!-- 테이블 -->
+                <DataGrid Grid.Row="1"
+                          Margin="0,10,0,0"
+                          ItemsSource="{Binding ActiveTableView}"
+                          AutoGenerateColumns="True"
+                          IsReadOnly="True"/>
+            </Grid>
+
+        </Border>
+    </Grid>
+</UserControl>

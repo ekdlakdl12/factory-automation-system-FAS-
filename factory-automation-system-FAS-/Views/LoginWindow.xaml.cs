@@ -26,6 +26,7 @@ namespace factory_automation_system_FAS_.Views
         private void OnLoginSucceeded()
         {
             var main = new MainWindow();
+            Application.Current.MainWindow = main;
             main.Show();
             Close();
         }
