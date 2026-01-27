@@ -47,19 +47,6 @@
                         <TextBox x:Name="TxtLogStat" Width="150" Height="25"/>
                     </StackPanel>
                     <Button Grid.Row="0" Grid.Column="3" Content="확인" Height="25" Margin="5"/>
-                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="날짜" Width="40" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TxtLogDate2" Width="150" Height="25"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="모양" Width="40" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TxtLogShape" Width="150" Height="25"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="색깔" Width="40" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TxtLogColor" Width="150" Height="25"/>
-                    </StackPanel>
-                    <Button Grid.Row="1" Grid.Column="3" Content="확인" Height="25" Margin="5"/>
                 </Grid>
                 <DataGrid x:Name="dgHistory" Grid.Row="1" BorderBrush="Black" BorderThickness="1"/>
             </Grid>
@@ -70,34 +57,34 @@
                         <StackPanel>
                             <TextBlock Text="IP 설정" FontWeight="Bold" FontSize="14" Margin="0,0,0,15"/>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Gas Sensor 1 :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="Gas Sensor 1 :" Width="100"/>
                                 <TextBox x:Name="IpGas1" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Gas Sensor 2 :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="Gas Sensor 2 :" Width="100"/>
                                 <TextBox x:Name="IpGas2" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Gas Sensor 3 :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="Gas Sensor 3 :" Width="100"/>
                                 <TextBox x:Name="IpGas3" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="RC Car :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="RC Car :" Width="100"/>
                                 <TextBox x:Name="IpRcCar" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Input PLC :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="Input PLC :" Width="100"/>
                                 <TextBox x:Name="IpInPlc" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Output PLC :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="Output PLC :" Width="100"/>
                                 <TextBox x:Name="IpOutPlc" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="DB :" Width="100" VerticalAlignment="Center"/>
+                                <TextBlock Text="DB :" Width="100"/>
                                 <TextBox x:Name="IpDb" Height="25"/>
                             </DockPanel>
-                            <Button Content="확인" Margin="0,20,0,0" Width="70" HorizontalAlignment="Right" Height="30"/>
+                            <Button Content="확인" Click="BtnIpConfirm_Click" Margin="0,20,0,0" Width="70" HorizontalAlignment="Right" Height="30"/>
                         </StackPanel>
                     </Border>
 
@@ -105,34 +92,34 @@
                         <StackPanel>
                             <TextBlock Text="디바이스 연결 확인" FontWeight="Bold" FontSize="14" Margin="0,0,0,15"/>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Gas Sensor 1 :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogGas1" Height="25"/>
+                                <TextBlock Text="Gas Sensor 1 :" Width="100"/>
+                                <TextBox x:Name="LogGas1" Height="25" IsReadOnly="True"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Gas Sensor 2 :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogGas2" Height="25"/>
+                                <TextBlock Text="Gas Sensor 2 :" Width="100"/>
+                                <TextBox x:Name="LogGas2" Height="25" IsReadOnly="True"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Gas Sensor 3 :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogGas3" Height="25"/>
+                                <TextBlock Text="Gas Sensor 3 :" Width="100"/>
+                                <TextBox x:Name="LogGas3" Height="25" IsReadOnly="True"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="RC Car :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogRcCar" Height="25"/>
+                                <TextBlock Text="RC Car :" Width="100"/>
+                                <TextBox x:Name="LogRcCar" Height="25" IsReadOnly="True"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Input PLC :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogInPlc" Height="25"/>
+                                <TextBlock Text="Input PLC :" Width="100"/>
+                                <TextBox x:Name="LogInPlc" Height="25" IsReadOnly="True"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="Output PLC :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogOutPlc" Height="25"/>
+                                <TextBlock Text="Output PLC :" Width="100"/>
+                                <TextBox x:Name="LogOutPlc" Height="25" IsReadOnly="True"/>
                             </DockPanel>
                             <DockPanel Margin="0,3">
-                                <TextBlock Text="DB :" Width="100" VerticalAlignment="Center"/>
-                                <TextBox x:Name="LogDb" Height="25"/>
+                                <TextBlock Text="DB :" Width="100"/>
+                                <TextBox x:Name="LogDb" Height="25" IsReadOnly="True"/>
                             </DockPanel>
-                            <Button Content="확인" Margin="0,20,0,0" Width="70" HorizontalAlignment="Right" Height="30"/>
+                            <Button Content="확인" Click="BtnConnCheck_Click" Margin="0,20,0,0" Width="70" HorizontalAlignment="Right" Height="30"/>
                         </StackPanel>
                     </Border>
 
@@ -140,18 +127,18 @@
                         <StackPanel>
                             <TextBlock Text="계정" FontWeight="Bold" FontSize="14" Margin="0,0,0,15"/>
                             <DockPanel Margin="0,5">
-                                <TextBlock Text="Name :" Width="80" VerticalAlignment="Center"/>
+                                <TextBlock Text="Name :" Width="80"/>
                                 <TextBox x:Name="AccName" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,5">
-                                <TextBlock Text="Password :" Width="80" VerticalAlignment="Center"/>
+                                <TextBlock Text="Password :" Width="80"/>
                                 <TextBox x:Name="AccPw" Height="25"/>
                             </DockPanel>
                             <DockPanel Margin="0,5">
-                                <TextBlock Text="권한 :" Width="80" VerticalAlignment="Center"/>
+                                <TextBlock Text="권한 :" Width="80"/>
                                 <TextBox x:Name="AccAuth" Height="25"/>
                             </DockPanel>
-                            <Button Content="확인" Margin="0,10,0,0" Width="60" HorizontalAlignment="Right" Height="25"/>
+                            <Button Content="확인" Click="BtnAccConfirm_Click" Margin="0,10,0,0" Width="60" HorizontalAlignment="Right" Height="25"/>
                             <Border BorderBrush="Black" BorderThickness="1" Height="130" Margin="0,15,0,0" Background="#EEE">
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Top" Text="순번  이름  권한" Background="#DDD" Padding="5" TextAlignment="Center" FontSize="11"/>
@@ -174,6 +161,7 @@
                     <Button Content="HISTORY LOG" Height="50" Margin="0,5" Background="White" Click="ShowLog_Click"/>
                     <Button Content="SYSTEM SETTING" Height="50" Margin="0,5" Background="White" Click="ShowSetting_Click"/>
                 </StackPanel>
+
                 <StackPanel VerticalAlignment="Bottom" Margin="15">
                     <TextBlock Text="PRODUCTION STATS" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
                     <Grid Margin="0,2">
@@ -190,9 +178,9 @@
                     </Grid>
                     <Border Background="Black" Padding="10" Margin="0,20,0,0">
                         <StackPanel>
-                            <TextBlock Text="TEMP: 24.5°C" Foreground="Lime"/>
-                            <TextBlock Text="HUMI: 40.0%" Foreground="Lime"/>
-                            <TextBlock Text="CO2 : 400ppm" Foreground="Lime"/>
+                            <TextBlock x:Name="SideTemp" Text="TEMP: 24.5°C" Foreground="Lime"/>
+                            <TextBlock x:Name="SideHumi" Text="HUMI: 40.0%" Foreground="Lime"/>
+                            <TextBlock x:Name="SideCo2" Text="CO2 : 400ppm" Foreground="Lime"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
