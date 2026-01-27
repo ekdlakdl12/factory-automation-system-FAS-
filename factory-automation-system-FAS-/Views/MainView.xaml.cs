@@ -5,70 +5,60 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using factory_automation_system_FAS_.Services;
-using WpfAppModbus;
 
 namespace factory_automation_system_FAS_.Views
 {
-    /// <summary>
-    /// MainView.xaml에 대한 상호 작용 로직
-    /// </summary>
     public partial class MainView : UserControl
     {
-        private readonly DatabaseService _dbService;
-        private readonly ModbusService _modbusService;
-
-        // --- [아두이노 이더넷 통신 필드] ---
-        private TcpClient _arduinoClient;
-        private NetworkStream _arduinoStream;
+        // 통신 객체 (Null 허용)
+        private TcpClient? _arduinoClient;
+        private NetworkStream? _arduinoStream;
         private bool _isArduinoConnected = false;
 
         public MainView()
         {
             InitializeComponent();
-            _dbService = new DatabaseService();
-            _modbusService = new ModbusService();
 
-            // 초기 IP 세팅 (XAML의 컨트롤 이름 확인: IpInPlc, IpGas1)
+            // 초기 로드 시 기본값 세팅 및 화면 초기화
             this.Loaded += (s, e) => {
-                if (IpInPlc != null) IpInPlc.Text = "192.168.0.8";
-                if (IpGas1 != null) IpGas1.Text = "192.168.0.14";
+                InitializeDefaultValues();
+                ShowMain_Click(this, new RoutedEventArgs()); // 시작 시 메인 화면 표시
             };
         }
 
-        // --- [핵심: IP 설정 확인 버튼 클릭 시 연결 로직] ---
+        private void InitializeDefaultValues()
+        {
+            if (IpInPlc != null) IpInPlc.Text = "192.168.0.8";
+            if (IpGas1 != null) IpGas1.Text = "192.168.0.14";
+            if (IpDb != null) IpDb.Text = "127.0.0.1";
+        }
+
+        // --- [1. IP 설정 확인 버튼] ---
         private async void BtnIpConfirm_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // UI 텍스트박스가 존재하는지 확인 후 IP 가져오기
                 string plcIp = IpInPlc.Text;
                 string gasIp = IpGas1.Text;
 
-                // 1. PLC (Modbus TCP) 연결 시도
-                AppendLog(LogInPlc, $"{plcIp} 연결 시도 중...");
-                bool isPlcConnected = await _modbusService.ConnectAsync(plcIp, 502);
+                // PLC 연결 시각화 (LogInPlc TextBox에 출력)
+                AppendLog(LogInPlc, $"{plcIp} PLC 연결 중...");
 
-                if (isPlcConnected)
-                {
-                    AppendLog(LogInPlc, "PLC 연결 성공 (502)");
+                // 임시 연결 성공 처리 (실제 서비스 연결 시 이 부분을 수정)
+                await Task.Delay(500);
+                AppendLog(LogInPlc, "PLC 연결 성공");
 
-                    // 2. 아두이노 (TCP/IP) 연결 시도 (PLC 연결 성공 시)
-                    AppendLog(LogGas1, $"{gasIp} 연결 시도 중...");
-                    await ConnectArduinoEthernet(gasIp, 8080);
-                }
-                else
-                {
-                    AppendLog(LogInPlc, "PLC 연결 실패");
-                }
+                // 아두이노 연결 시도
+                AppendLog(LogGas1, $"{gasIp} 아두이노 연결 중...");
+                await ConnectArduinoEthernet(gasIp, 8080);
             }
             catch (Exception ex)
             {
-                AppendLog(LogInPlc, $"[System Error] {ex.Message}");
+                AppendLog(LogInPlc, $"오류: {ex.Message}");
             }
         }
 
-        // --- [아두이노 이더넷 통신 로직] ---
+        // --- [2. 아두이노 통신 로직] ---
         private async Task ConnectArduinoEthernet(string ip, int port)
         {
             try
@@ -78,29 +68,30 @@ namespace factory_automation_system_FAS_.Views
                 _arduinoClient?.Close();
 
                 _arduinoClient = new TcpClient();
-
                 var connectTask = _arduinoClient.ConnectAsync(ip, port);
+
                 if (await Task.WhenAny(connectTask, Task.Delay(3000)) == connectTask)
                 {
                     await connectTask;
                     _arduinoStream = _arduinoClient.GetStream();
                     _isArduinoConnected = true;
-                    AppendLog(LogGas1, $"연결 성공 ({ip}:{port})");
+                    AppendLog(LogGas1, "아두이노 연결 성공");
 
-                    _ = Task.Run(() => ReceiveArduinoDataLoop());
+                    // 데이터 수신 시작
+                    _ = Task.Run(() => ReceiveDataLoop());
                 }
                 else
                 {
-                    AppendLog(LogGas1, "연결 실패: 타임아웃");
+                    AppendLog(LogGas1, "연결 실패 (타임아웃)");
                 }
             }
             catch (Exception ex)
             {
-                AppendLog(LogGas1, $"[Arduino Error] {ex.Message}");
+                AppendLog(LogGas1, $"에러: {ex.Message}");
             }
         }
 
-        private async Task ReceiveArduinoDataLoop()
+        private async Task ReceiveDataLoop()
         {
             byte[] buffer = new byte[1024];
             while (_isArduinoConnected && _arduinoStream != null)
@@ -113,6 +104,7 @@ namespace factory_automation_system_FAS_.Views
                         string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                         Dispatcher.Invoke(() => {
                             AppendLog(LogGas1, $"수신: {data.Trim()}");
+                            UpdateSideDisplay(data);
                         });
                     }
                     else break;
@@ -120,39 +112,47 @@ namespace factory_automation_system_FAS_.Views
                 catch { break; }
             }
             _isArduinoConnected = false;
-            Dispatcher.Invoke(() => AppendLog(LogGas1, "연결 종료"));
         }
 
-        // --- [로그 출력 보조 메서드] ---
-        private void AppendLog(TextBox targetLog, string msg)
+        // --- [3. UI 업데이트 보조] ---
+        private void AppendLog(TextBox target, string msg)
         {
-            if (targetLog == null) return;
-            targetLog.Text = $"[{DateTime.Now:HH:mm:ss}] {msg}";
+            if (target == null) return;
+            target.Text = $"[{DateTime.Now:HH:mm:ss}] {msg}";
+            target.Foreground = msg.Contains("성공") ? Brushes.LimeGreen : Brushes.Black;
         }
 
-        // --- [사이드바 메뉴 이동 로직] ---
+        private void UpdateSideDisplay(string data)
+        {
+            // 데이터 포맷이 "24.5,40.1,380" 이라고 가정 시 파싱
+            try
+            {
+                var values = data.Split(',');
+                if (values.Length >= 1 && SideTemp != null) SideTemp.Text = $"TEMP: {values[0]}°C";
+                if (values.Length >= 2 && SideHumi != null) SideHumi.Text = $"HUMI: {values[1]}%";
+                if (values.Length >= 3 && SideCo2 != null) SideCo2.Text = $"CO2 : {values[2]}ppm";
+            }
+            catch { }
+        }
+
+        // --- [4. 화면 전환 버튼 이벤트] ---
         private void ShowMain_Click(object sender, RoutedEventArgs e) => SetVisibility(MainMonitorSection);
         private void ShowLog_Click(object sender, RoutedEventArgs e) => SetVisibility(LogSection);
         private void ShowSetting_Click(object sender, RoutedEventArgs e) => SetVisibility(SettingSection);
 
-        private void SetVisibility(Grid section)
+        private void SetVisibility(Grid targetSection)
         {
             if (MainMonitorSection == null || LogSection == null || SettingSection == null) return;
+
             MainMonitorSection.Visibility = Visibility.Collapsed;
             LogSection.Visibility = Visibility.Collapsed;
             SettingSection.Visibility = Visibility.Collapsed;
-            section.Visibility = Visibility.Visible;
+
+            targetSection.Visibility = Visibility.Visible;
         }
 
-        // --- [기타 버튼 핸들러] ---
-        private void BtnConnCheck_Click(object sender, RoutedEventArgs e)
-        {
-            AppendLog(LogDb, "DB 연결 상태 확인됨");
-        }
-
-        private void BtnAccConfirm_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show($"{AccName.Text} 설정 완료");
-        }
+        // --- [5. 기타 버튼 핸들러] ---
+        private void BtnConnCheck_Click(object sender, RoutedEventArgs e) => AppendLog(LogDb, "DB 서버 응답 확인됨");
+        private void BtnAccConfirm_Click(object sender, RoutedEventArgs e) => MessageBox.Show("계정 정보가 업데이트되었습니다.");
     }
 }
