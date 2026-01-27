@@ -1,232 +1,149 @@
-﻿// Services/SimulationEngine.cs
-using factory_automation_system_FAS_.Models;
+﻿using factory_automation_system_FAS_.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+using System.Collections.ObjectModel;
 
 namespace factory_automation_system_FAS_.Services
 {
     /// <summary>
-    /// ✅ 시뮬 로직 담당 (UI 모름 / MVVM-friendly)
-    /// - Output에 랜덤 제품 생성
-    /// - 카트가 1개 픽업 -> RackA/B 랜덤 드롭 -> 다시 Output
-    /// - 경로는 RouteModel의 waypoint를 따라 이동
+    /// Phase C-3 (A안 기반) 최소 시뮬레이션 엔진
+    /// - RC카는 3개 레인 중 랜덤 1개 선택
+    /// - 왼쪽(파란 영역)에서 제품 Pick -> 오른쪽(빨간 영역)에서 Drop
+    /// - Drop 지점에서는 60초 대기(=drop cycle)
+    /// - Drop 후 빈 카트로 왼쪽으로 복귀
+    /// - 제품 아이콘은 Cart.HasLoad 로 표현 (카트에 붙어서 이동)
     /// </summary>
     public sealed class SimulationEngine
     {
-        public StationModel Output { get; }
-        public StationModel RackA { get; }
-        public StationModel RackB { get; }
-        public CartModel Cart { get; }
-        public RouteModel Route { get; }
+        // ===== Map 좌표계(= MapView에서 CroppedBitmap으로 잘라서 쓰는 영역) =====
+        // Cropped 영역: (x=0, y=150, w=3100, h=1700) 기준으로 좌표 잡음
+        // 레인 3개: 상/중/하 (너가 그린 QR1-4 / QR2-5 / QR3-6 느낌)
+        private const double LeftX = 1180;
+        private const double RightX = 2200;
+
+        private static readonly double[] LaneY = new double[]
+        {
+            430,   // 상단 레인
+            720,   // 중단 레인
+            1040   // 하단 레인
+        };
+
+        // 이동 속도(px/sec)
+        private const double Speed = 650;
+
+        // 드롭 대기(초) - 너가 “drop은 1분대로”라 해서 60초
+        private const double DropWaitSeconds = 60;
 
         private readonly Random _rng = new();
 
-        // 제품 생성 파라미터 (MVP)
-        // tick마다 확률로 1개 생성
-        public double SpawnProbabilityPerTick { get; set; } = 0.08; // 0.05~0.12 사이로 튜닝 ㄱㄱ
-
-        // 도착 판정(픽셀)
-        public double ArriveEps { get; set; } = 6.0;
-
-        public SimulationEngine()
+        // ===== 공개 상태 =====
+        public CartModel Cart { get; } = new()
         {
-            Route = RouteModel.CreateDefault();
+            Position = new PointD(LeftX, LaneY[1]),
+            State = CartState.IdleAtLeft,
+            HasLoad = true // 초기엔 들고 출발해도 되고, 아니면 false로 시작해도 됨
+        };
 
-            // 스테이션 앵커는 "경로 끝점" 기준으로 잡음 (가장 심플)
-            Output = new StationModel(StationId.Output, new Point(1010, 760));
-            RackA = new StationModel(StationId.RackA, new Point(250, 155));
-            RackB = new StationModel(StationId.RackB, new Point(650, 155));
+        public StationModel RackA { get; } = new() { Id = StationId.RackA, Name = "RackA", Stock = 0 };
+        public StationModel RackB { get; } = new() { Id = StationId.RackB, Name = "RackB", Stock = 0 };
+        public StationModel Output { get; } = new() { Id = StationId.Output, Name = "Output", Stock = 0 };
 
-            Cart = new CartModel
-            {
-                Position = new Point(1010, 760),
-                SpeedPxPerSec = 260.0,
-                HasLoad = false,
-                State = CartState.ToOutput,
-                Target = StationId.RackA
-            };
+        public ObservableCollection<LogRecord> Logs { get; } = new();
 
-            // 처음엔 Output 근처 대기라서 route는 비워도 되지만,
-            // 로직 단순화를 위해 “Output로 복귀 루트”를 기본으로 둠.
-            SetRoute(Route.BackFromRackA);
-        }
+        // ===== 내부 상태 =====
+        private int _laneIndex = 1;
+        private double _dropWaitAcc = 0;
 
-        public void Reset()
+        public void Tick(double dt)
         {
-            Output.Stock = 0;
-            RackA.Stock = 0;
-            RackB.Stock = 0;
+            if (dt <= 0) return;
 
-            Cart.Position = Output.Anchor;
-            Cart.HasLoad = false;
-            Cart.State = CartState.ToOutput;
-            Cart.Target = StationId.RackA;
-
-            SetRoute(Route.BackFromRackA);
-        }
-        public void AddStock(StationId id, int count = 1)
-        {
-            if (count <= 0) return;
-
-            switch (id)
-            {
-                case StationId.Output:
-                    Output.Stock += count;
-                    break;
-
-                case StationId.RackA:
-                    RackA.Stock += count;
-                    break;
-
-                case StationId.RackB:
-                    RackB.Stock += count;
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(id), id, "Unknown StationId");
-            }
-        }
-
-
-        public void Tick(double dtSeconds)
-        {
-            // 1) Output 랜덤 생성 제거
-         /*   if (_rng.NextDouble() < SpawnProbabilityPerTick)
-                Output.Stock++;*/
-
-            // 2) 카트 상태머신
             switch (Cart.State)
             {
-                case CartState.ToOutput:
-                               //  먼저 도착했는지 확인 (도착이면 이동하지 말고 바로 Loading)
-                    if (IsArrived(Cart.Position, Output.Anchor))
-                    {
-                        Cart.State = CartState.Loading;
-                        break;
-                    }
+                case CartState.IdleAtLeft:
+                    // 다음 사이클 시작: 레인 랜덤 선택 + 제품 픽업(현재는 항상 가능 처리)
+                    _laneIndex = _rng.Next(0, 3);
+                    Cart.Position = new PointD(LeftX, LaneY[_laneIndex]);
+                    Cart.HasLoad = true;
 
-                              // 아직 Output이 아니면 이동
-                    StepMove(dtSeconds);
+                    AddLog("PICK", $"Lane{_laneIndex + 1} (LEFT)", Cart.Position.X, Cart.Position.Y);
+
+                    Cart.State = CartState.ToDrop;
+                    _dropWaitAcc = 0;
                     break;
 
-
-                case CartState.Loading:
-                    // Output에 재고가 있으면 1개 싣고 목적지를 랜덤 선택
-                    if (!Cart.HasLoad && Output.Stock > 0)
+                case CartState.ToDrop:
+                    // 오른쪽으로 이동
                     {
-                        Output.Stock--;
-                        Cart.HasLoad = true;
-
-                        Cart.Target = (_rng.Next(0, 2) == 0) ? StationId.RackA : StationId.RackB;
-                        Cart.State = CartState.ToRack;
-
-                        if (Cart.Target == StationId.RackA) SetRoute(Route.ToRackA);
-                        else SetRoute(Route.ToRackB);
-                    }
-                    else
-                    {
-                        // 재고 없으면 그냥 계속 대기(또는 살짝 흔들기 같은 연출은 나중에)
-                        // 여기서는 아무것도 안 함
-                    }
-                    break;
-
-                case CartState.ToRack:
-                    StepMove(dtSeconds);
-                    var targetAnchor = (Cart.Target == StationId.RackA) ? RackA.Anchor : RackB.Anchor;
-                    if (IsArrived(Cart.Position, targetAnchor))
-                    {
-                        Cart.State = CartState.Unloading;
-                    }
-                    break;
-
-                case CartState.Unloading:
-                    {
-                        // ✅ 방금 도착했던 랙 기억
-                        var deliveredTo = Cart.Target; // RackA or RackB 여야 함
-
-                        if (Cart.HasLoad)
+                        double nx = Cart.Position.X + Speed * dt;
+                        if (nx >= RightX)
                         {
-                            if (deliveredTo == StationId.RackA) RackA.Stock++;
-                            else if (deliveredTo == StationId.RackB) RackB.Stock++;
+                            nx = RightX;
+                            Cart.Position = new PointD(nx, LaneY[_laneIndex]);
 
-                            Cart.HasLoad = false;
+                            // 도착 -> 드롭 대기
+                            Cart.State = CartState.DroppingWait;
+                            _dropWaitAcc = 0;
                         }
-
-                        // 다시 Output로 복귀
-                        var lastRack = Cart.Target;   // ⭐️ unloading 직전의 랙 기억
-
-                        Cart.State = CartState.ToOutput;
-                        Cart.Target = StationId.Output;
-
-                        if (lastRack == StationId.RackA)
-                            SetRoute(Route.BackFromRackA);
                         else
-                            SetRoute(Route.BackFromRackB);
-
-
-                        break;
+                        {
+                            Cart.Position = new PointD(nx, LaneY[_laneIndex]);
+                        }
                     }
+                    break;
 
+                case CartState.DroppingWait:
+                    _dropWaitAcc += dt;
+                    if (_dropWaitAcc >= DropWaitSeconds)
+                    {
+                        // 드롭 완료
+                        Cart.HasLoad = false;
+                        Output.Stock += 1;
+
+                        AddLog("DROP", $"Lane{_laneIndex + 1} (RIGHT)", Cart.Position.X, Cart.Position.Y);
+
+                        Cart.State = CartState.ReturningEmpty;
+                        _dropWaitAcc = 0;
+                    }
+                    break;
+
+                case CartState.ReturningEmpty:
+                    // 왼쪽으로 복귀
+                    {
+                        double nx = Cart.Position.X - Speed * dt;
+                        if (nx <= LeftX)
+                        {
+                            nx = LeftX;
+                            Cart.Position = new PointD(nx, LaneY[_laneIndex]);
+
+                            Cart.State = CartState.IdleAtLeft; // 다음 사이클
+                        }
+                        else
+                        {
+                            Cart.Position = new PointD(nx, LaneY[_laneIndex]);
+                        }
+                    }
+                    break;
             }
         }
 
-        private void SetRoute(List<Point> route)
+        public void AddStock(StationId id, int amount)
         {
-            Cart.CurrentRoute = route.ToList();
-            Cart.RouteIndex = 0;
+            if (amount <= 0) return;
 
-            // route의 첫 점이 현재 위치와 같을 수 있으니(예: 출발점),
-            // 다음으로 넘어가도록 살짝 보정
-            while (Cart.RouteIndex < Cart.CurrentRoute.Count &&
-                   Distance(Cart.Position, Cart.CurrentRoute[Cart.RouteIndex]) < ArriveEps)
-            {
-                Cart.RouteIndex++;
-            }
+            if (id == StationId.Output) Output.Stock += amount;
+            if (id == StationId.RackA) RackA.Stock += amount;
+            if (id == StationId.RackB) RackB.Stock += amount;
         }
 
-        private void StepMove(double dtSeconds)
+        private void AddLog(string evt, string station, double x, double y)
         {
-            if (Cart.RouteIndex >= Cart.CurrentRoute.Count) return;
-
-            var target = Cart.CurrentRoute[Cart.RouteIndex];
-            var pos = Cart.Position;
-
-            var to = target - pos;
-            double dist = to.Length;
-
-            if (dist < ArriveEps)
+            Logs.Add(new LogRecord
             {
-                Cart.Position = target;
-                Cart.RouteIndex++;
-                return;
-            }
-
-            double step = Cart.SpeedPxPerSec * dtSeconds;
-            if (step >= dist)
-            {
-                Cart.Position = target;
-                Cart.RouteIndex++;
-                return;
-            }
-
-            to.Normalize();
-            Cart.Position = pos + (to * step);
-        }
-
-        private bool IsArrived(Point a, Point b) => Distance(a, b) < ArriveEps;
-
-        private static double Distance(Point a, Point b)
-        {
-            var d = a - b;
-            return d.Length;
+                Timestamp = DateTime.Now,
+                Event = evt,
+                Station = station,
+                Detail = $"x={x:0}, y={y:0}"
+            });
         }
     }
 }
