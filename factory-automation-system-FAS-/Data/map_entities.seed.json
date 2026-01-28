@@ -1,0 +1,75 @@
+[
+  {
+    "type": "conveyor",
+    "id": "In_Conv_1",
+    "displayName": "In Conv 1",
+    "x": 200,
+    "y": 200,
+    "width": 140,
+    "height": 18,
+    "direction": "Right",
+    "lane": 1,
+    "status": "Running",
+    "speed": 1.2,
+    "zIndex": 10,
+    "hasItem": true
+  },
+  {
+    "type": "conveyor",
+    "id": "Out_Conv_1",
+    "displayName": "Out Conv 1",
+    "x": 200,
+    "y": 260,
+    "width": 140,
+    "height": 18,
+    "direction": "Left",
+    "lane": 1,
+    "status": "Idle",
+    "speed": 0.0,
+    "zIndex": 10,
+    "hasItem": false
+  },
+  {
+    "type": "sensor",
+    "id": "ItemDetect_1",
+    "displayName": "Item Detect 1",
+    "x": 360,
+    "y": 195,
+    "width": 14,
+    "height": 14,
+    "sensorType": "ItemDetect",
+    "status": "Normal",
+    "isTriggered": true,
+    "zIndex": 20
+  },
+  {
+    "type": "camera",
+    "id": "Camera_1",
+    "displayName": "CCTV 1",
+    "x": 420,
+    "y": 180,
+    "width": 18,
+    "height": 18,
+    "status": "Offline",
+    "isStreaming": false,
+    "zIndex": 20
+  },
+  {
+    "type": "barcode",
+    "id": "Barcode_1",
+    "displayName": "Barcode 1",
+    "x": 420,
+    "y": 230,
+    "width": 18,
+    "height": 18,
+    "status": "Normal",
+    "lastCode": "A-123-XYZ",
+    "zIndex": 20
+  },
+
+  { "type": "layoutzone", "id": "Area_Input", "displayName": "INPUT", "x": 120, "y": 120, "width": 900, "height": 520, "zIndex": 5 },
+  { "type": "conveyorblock", "id": "In_Conv_1_BG", "displayName": "In_Conv_1", "x": 180, "y": 220, "width": 180, "height": 70, "zIndex": 55, "showCenterLine": true },
+  { "type": "path", "id": "In_Line_1", "points": "360,255 520,255 520,470", "thickness": 8, "zIndex": 25 },
+
+  { "type": "camera", "id": "Cam_1", "displayName": "CAM-1", "x": 800, "y": 300, "width": 20, "height": 20, "zIndex": 80 }
+]

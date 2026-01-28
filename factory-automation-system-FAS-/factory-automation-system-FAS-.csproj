@@ -7,10 +7,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+	<AssemblyName>factory_automation_system_FAS_</AssemblyName>
+
+
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Assets\Brand\adp_logo_from_screenshot_transparent.png" />
+    <None Remove="Assets\Maps\main_layout.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +27,20 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
+	<ItemGroup>
+	  <Resource Include="Assets\Maps\main_layout.png">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Data\" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Data\map_entities.seed.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
 
 
 </Project>

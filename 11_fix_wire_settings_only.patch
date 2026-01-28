@@ -1,0 +1,71 @@
+diff --git a/factory-automation-system-FAS-/ViewModels/MainViewModel.cs b/factory-automation-system-FAS-/ViewModels/MainViewModel.cs
+--- a/factory-automation-system-FAS-/ViewModels/MainViewModel.cs
++++ b/factory-automation-system-FAS-/ViewModels/MainViewModel.cs
+@@ -26,8 +26,9 @@
+         public ICommand AddStockCommand { get; }
+         public ICommand OpenProductionQueryCommand { get; }
+         public ICommand NavigateHomeCommand { get; }
++        public ICommand NavigateSettingsCommand { get; }
+ 
+-        // 화면 전환 인덱스 (0=메인, 1=생산조회)
++        // 화면 전환 인덱스 (0=메인, 1=생산조회, 2=설정)
+         private int _mainTabIndex = 0;
+         public int MainTabIndex
+         {
+@@ -37,6 +38,7 @@
+ 
+         // ProductionQueryView에 꽂아줄 VM
+         public ProductionQueryViewModel ProductionQueryVm { get; } = new();
++        public SettingsViewModel SettingsVm { get; } = new();
+ 
+         // ===== 새로: Simulation =====
+         private readonly SimulationEngine _sim = new();
+@@ -113,6 +115,9 @@
+ 
+             OpenProductionQueryCommand = new RelayCommand(() => MainTabIndex = 1);
+             NavigateHomeCommand = new RelayCommand(() => MainTabIndex = 0);
++            NavigateSettingsCommand = new RelayCommand(() => MainTabIndex = 2);
++
++            NavigateSettingsCommand = new RelayCommand(() => MainTabIndex = 2);
+ 
+             // ===== Simulation timer =====
+             _timer.Interval = TimeSpan.FromMilliseconds(16); // ~60fps
+
+diff --git a/factory-automation-system-FAS-/Views/MainWindow.xaml b/factory-automation-system-FAS-/Views/MainWindow.xaml
+--- a/factory-automation-system-FAS-/Views/MainWindow.xaml
++++ b/factory-automation-system-FAS-/Views/MainWindow.xaml
+@@ -200,6 +200,17 @@
+                 </Border>
+             </TabItem>
+ 
++            <!-- ===== Tab 2: 설정(유저 관리) ===== -->
++            <TabItem>
++                <Border Background="#FFFFFF"
++                        BorderBrush="{StaticResource BorderSoft}"
++                        BorderThickness="1"
++                        CornerRadius="18"
++                        Padding="16">
++                    <views:SettingsView DataContext="{Binding SettingsVm}" />
++                </Border>
++            </TabItem>
++
+         </TabControl>
+ 
+         <!-- =========================
+@@ -294,6 +305,16 @@
+                             Width="330"
+                             Command="{Binding NavigateHomeCommand}"/>
+ 
++                    <Button Content="설정(유저관리)"
++                            Height="44"
++                            Background="#E6ECF4"
++                            Foreground="#0B1220"
++                            FontWeight="SemiBold"
++                            BorderThickness="0"
++                            Margin="0,0,0,16"
++                            Width="330"
++                            Command="{Binding NavigateSettingsCommand}"/>
++
+                     <Button Content="제품 +1 (Output)"
+                             Height="50"
+                             Margin="0,0,0,16"

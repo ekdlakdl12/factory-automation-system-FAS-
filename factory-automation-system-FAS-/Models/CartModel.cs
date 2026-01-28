@@ -16,7 +16,7 @@ namespace factory_automation_system_FAS_.Models
 
         public bool HasLoad { get; set; }
         public StationId Target { get; set; } = StationId.RackA;
-        public CartState State { get; set; } = CartState.ToOutput;
+        public CartState State { get; set; } = CartState.IdleAtLeft;
 
         // 현재 따라가는 웨이포인트들
         public List<Point> CurrentRoute { get; set; } = new();
