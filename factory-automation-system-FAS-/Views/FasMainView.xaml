@@ -18,36 +18,50 @@
                 </Canvas>
             </Grid>
 
-            <Grid x:Name="LogSection" Visibility="Collapsed" Margin="20">
+            <Grid x:Name="LogSection" Visibility="Visible" Margin="20">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Margin="0,0,0,10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="100"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="날짜" Width="40" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TxtLogDate1" Width="150" Height="25"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="장치" Width="40" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TxtLogDev" Width="150" Height="25"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="상태" Width="40" VerticalAlignment="Center"/>
-                        <TextBox x:Name="TxtLogStat" Width="150" Height="25"/>
-                    </StackPanel>
-                    <Button Grid.Column="3" Content="확인" Height="25" Margin="5"/>
-                </Grid>
-                <DataGrid x:Name="dgHistory" Grid.Row="1" BorderBrush="Black" BorderThickness="1"/>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <WrapPanel Margin="0,5">
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="날짜" Width="40" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtLogDateStart" Width="120" Height="25"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="장치" Width="40" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtLogDevName" Width="120" Height="25"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="상태" Width="40" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtLogStatus" Width="120" Height="25"/>
+                        </StackPanel>
+                        <Button Content="확인" Width="60" Height="25" Margin="5" Click="BtnLogSearch_Click"/>
+                    </WrapPanel>
+
+                    <WrapPanel Margin="0,5">
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="날짜" Width="40" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtLogDateEnd" Width="120" Height="25"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="모양" Width="40" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtLogDevName2" Width="120" Height="25"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="색깔" Width="40" VerticalAlignment="Center"/>
+                            <TextBox x:Name="TxtLogStatus2" Width="120" Height="25"/>
+                        </StackPanel>
+                        <Button Content="확인" Width="60" Height="25" Margin="5" Click="BtnLogSearch_Click"/>
+                    </WrapPanel>
+                </StackPanel>
+
+                <DataGrid x:Name="dgHistory" Grid.Row="1" BorderBrush="Black" BorderThickness="1" AutoGenerateColumns="True"/>
             </Grid>
 
-            <Grid x:Name="SettingSection" Visibility="Visible" Margin="20">
+            <Grid x:Name="SettingSection" Visibility="Collapsed" Margin="20">
                 <UniformGrid Columns="3">
                     <Border BorderBrush="Black" BorderThickness="1" Margin="5" Padding="15">
                         <StackPanel>
@@ -115,7 +129,7 @@
                                 <TextBlock Text="DB :" Width="100"/>
                                 <TextBox x:Name="LogDb" Height="25" IsReadOnly="True"/>
                             </DockPanel>
-                            <Button Content="확인" Click="BtnConnCheck_Click" Margin="0,20,0,0" Width="70" HorizontalAlignment="Right" Height="30"/>
+                            <Button Content="갱신" Click="BtnConnCheck_Click" Margin="0,20,0,0" Width="70" HorizontalAlignment="Right" Height="30"/>
                         </StackPanel>
                     </Border>
 
@@ -134,7 +148,7 @@
                                 <TextBlock Text="권한 :" Width="80"/>
                                 <TextBox x:Name="AccAuth" Height="25"/>
                             </DockPanel>
-                            <Button Content="확인" Click="BtnAccConfirm_Click" Margin="0,10,0,0" Width="60" HorizontalAlignment="Right" Height="25"/>
+                            <Button Content="추가" Click="BtnAccConfirm_Click" Margin="0,10,0,0" Width="60" HorizontalAlignment="Right" Height="25"/>
                             <Border BorderBrush="Black" BorderThickness="1" Height="130" Margin="0,15,0,0" Background="#EEE">
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Top" Text="순번  이름  권한" Background="#DDD" Padding="5" TextAlignment="Center" FontSize="11"/>
@@ -153,8 +167,8 @@
                     <Border Background="#222" Height="70" CornerRadius="5" Margin="0,10,0,30">
                         <TextBlock Text="F.A.S SYSTEM" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16"/>
                     </Border>
-                    <Button x:Name="BtnShowMain" Content="MAIN VIEW" Height="50" Margin="0,5" Background="#4A76C5" Foreground="White" Click="ShowMain_Click"/>
-                    <Button x:Name="BtnShowLog" Content="HISTORY LOG" Height="50" Margin="0,5" Background="White" Click="ShowLog_Click"/>
+                    <Button x:Name="BtnShowMain" Content="MAIN VIEW" Height="50" Margin="0,5" Background="White" Click="ShowMain_Click"/>
+                    <Button x:Name="BtnShowLog" Content="HISTORY LOG" Height="50" Margin="0,5" Background="#4A76C5" Foreground="White" Click="ShowLog_Click"/>
                     <Button x:Name="BtnShowSetting" Content="SYSTEM SETTING" Height="50" Margin="0,5" Background="White" Click="ShowSetting_Click"/>
                 </StackPanel>
 
@@ -162,28 +176,21 @@
                     <TextBlock Text="PRODUCTION STATS" FontWeight="Bold" FontSize="12" Margin="0,0,0,10"/>
                     <Grid Margin="0,2">
                         <TextBlock Text="TOTAL"/>
-                        <TextBlock Text="2,560" HorizontalAlignment="Right"/>
+                        <TextBlock Text="0" HorizontalAlignment="Right"/>
                     </Grid>
                     <Grid Margin="0,2">
                         <TextBlock Text="GOOD" Foreground="Blue"/>
-                        <TextBlock Text="2,509" HorizontalAlignment="Right"/>
+                        <TextBlock Text="0" HorizontalAlignment="Right"/>
                     </Grid>
                     <Grid Margin="0,2">
                         <TextBlock Text="DEFECT" Foreground="Red"/>
-                        <TextBlock Text="51" HorizontalAlignment="Right"/>
+                        <TextBlock Text="0" HorizontalAlignment="Right"/>
                     </Grid>
-
                     <Border Background="Black" Padding="10" Margin="0,20,0,0">
                         <StackPanel>
-                            <TextBlock x:Name="TxtTemp" 
-                   Text="{Binding Temp, StringFormat='TEMP: {0}°C', FallbackValue='TEMP: --°C'}" 
-                   Foreground="Lime" FontFamily="Consolas" FontSize="14"/>
-                            <TextBlock x:Name="TxtHumi" 
-                   Text="{Binding Humi, StringFormat='HUMI: {0}%', FallbackValue='HUMI: --%'}" 
-                   Foreground="Lime" FontFamily="Consolas" FontSize="14"/>
-                            <TextBlock x:Name="TxtCo2" 
-                   Text="{Binding Co2, StringFormat='CO2 : {0}ppm', FallbackValue='CO2 : --ppm'}" 
-                   Foreground="Lime" FontFamily="Consolas" FontSize="14"/>
+                            <TextBlock x:Name="TxtTemp" Text="{Binding Temp, StringFormat='TEMP: {0}°C', FallbackValue='TEMP: --°C'}" Foreground="Lime" FontFamily="Consolas" FontSize="14"/>
+                            <TextBlock x:Name="TxtHumi" Text="{Binding Humi, StringFormat='HUMI: {0}%', FallbackValue='HUMI: --%'}" Foreground="Lime" FontFamily="Consolas" FontSize="14"/>
+                            <TextBlock x:Name="TxtCo2" Text="{Binding Co2, StringFormat='CO2 : {0}ppm', FallbackValue='CO2 : --ppm'}" Foreground="Lime" FontFamily="Consolas" FontSize="14"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

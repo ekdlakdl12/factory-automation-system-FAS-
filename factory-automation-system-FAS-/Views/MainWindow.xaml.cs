@@ -11,7 +11,6 @@ using WpfAppModbus;
 
 namespace factory_automation_system_FAS_
 {
-    // 데이터 바인딩을 위한 ViewModel (기능 추가용)
     public class MainViewModel : INotifyPropertyChanged
     {
         private string _arduinoData = "0";
@@ -30,7 +29,7 @@ namespace factory_automation_system_FAS_
     {
         private DatabaseService? _dbService;
         private ModbusService? _modbusService;
-        private MainViewModel _viewModel; // 바인딩 객체
+        private MainViewModel _viewModel;
 
         private TcpClient? _arduinoClient;
         private NetworkStream? _arduinoStream;
@@ -40,7 +39,7 @@ namespace factory_automation_system_FAS_
         {
             InitializeComponent();
             _viewModel = new MainViewModel();
-            this.DataContext = _viewModel; // 바인딩 연결
+            this.DataContext = _viewModel;
 
             try
             {
@@ -59,11 +58,12 @@ namespace factory_automation_system_FAS_
             try
             {
                 _isArduinoConnected = false;
-                _arduinoStream?.Close();
+                _arduinoStream?.Dispose(); // Close 대신 Dispose 권장
                 _arduinoClient?.Close();
 
                 _arduinoClient = new TcpClient();
                 var connectTask = _arduinoClient.ConnectAsync(ip, port);
+
                 if (await Task.WhenAny(connectTask, Task.Delay(10000)) == connectTask)
                 {
                     await connectTask;
@@ -90,7 +90,19 @@ namespace factory_automation_system_FAS_
                         string data = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
                         Dispatcher.Invoke(() => {
                             AppendLog($"[Arduino 수신] {data}");
-                            _viewModel.ArduinoData = data; // 바인딩된 값 갱신 (UI 자동 변경)
+                            _viewModel.ArduinoData = data;
+
+                            string[] splitData = data.Split(',');
+                            if (splitData.Length >= 3)
+                            {
+                                MainControl.Temp = splitData[0];
+                                MainControl.Humi = splitData[1];
+                                MainControl.Co2 = splitData[2];
+                            }
+                            else if (splitData.Length == 1)
+                            {
+                                MainControl.Temp = splitData[0];
+                            }
                         });
                     }
                     else break;
@@ -113,7 +125,8 @@ namespace factory_automation_system_FAS_
                     LedConn.Fill = Brushes.LimeGreen;
                     BtnPlcConnect.IsEnabled = false;
                     BtnPlcDisconnect.IsEnabled = true;
-                    await ConnectArduinoEthernet("192.168.0.231", 8080);
+                    // 아두이노 연결 시도 - 하나더있음 두개 평균내서 하나 내보낼거임192.168.0.221
+                    await ConnectArduinoEthernet("192.168.0.220", 8080);
                 }
                 else { MessageBox.Show("PLC 네트워크 상태를 확인하세요."); }
             }
@@ -122,52 +135,107 @@ namespace factory_automation_system_FAS_
 
         private void BtnPlcDisconnect_Click(object sender, RoutedEventArgs e)
         {
-            _modbusService?.Disconnect();
-            _isArduinoConnected = false;
-            _arduinoStream?.Close();
-            _arduinoClient?.Close();
-            AppendLog("모든 연결 해제됨");
-            LedConn.Fill = Brushes.Gray;
-            BtnPlcConnect.IsEnabled = true;
-            BtnPlcDisconnect.IsEnabled = false;
+            try
+            {
+                _modbusService?.Disconnect();
+                _isArduinoConnected = false;
+                _arduinoStream?.Dispose();
+                _arduinoClient?.Close();
+                AppendLog("모든 연결 해제됨");
+                LedConn.Fill = Brushes.Gray;
+                BtnPlcConnect.IsEnabled = true;
+                BtnPlcDisconnect.IsEnabled = false;
+            }
+            catch (Exception ex) { AppendLog($"[Disconnect Error] {ex.Message}"); }
         }
 
+        // 수정한 부분: 데이터 읽기 핸들러 예외 처리 강화
         private async void BtnModbusRead_Click(object sender, RoutedEventArgs e)
         {
-            if (_modbusService == null || !_modbusService.IsConnected) return;
+            if (_modbusService == null || !_modbusService.IsConnected)
+            {
+                AppendLog("PLC가 연결되어 있지 않습니다.");
+                return;
+            }
+
             if (!ushort.TryParse(TxtAddr.Text, out ushort addr)) return;
-            var data = await _modbusService.ReadRegistersAsync(addr, 2);
-            if (data != null) AppendLog($"[PLC READ] Addr {addr}: {data[0]}");
+
+            try
+            {
+                // 읽기 시도 시 버튼 비활성화 (중복 클릭 방지)
+                BtnModbusRead.IsEnabled = false;
+                var data = await _modbusService.ReadRegistersAsync(addr, 2);
+                if (data != null && data.Length > 0)
+                {
+                    AppendLog($"[PLC READ] Addr {addr}: {data[0]}");
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"[PLC READ ERROR] {ex.Message}");
+                // 연결 끊김 여부 확인
+                if (!_modbusService.IsConnected) LedConn.Fill = Brushes.Red;
+            }
+            finally
+            {
+                BtnModbusRead.IsEnabled = true;
+            }
         }
 
+        // 수정한 부분: 데이터 쓰기 핸들러 예외 처리 강화
         private async void BtnModbusWrite_Click(object sender, RoutedEventArgs e)
         {
             if (_modbusService == null || !_modbusService.IsConnected) return;
             if (!ushort.TryParse(TxtAddr.Text, out ushort addr) || !ushort.TryParse(TxtWriteVal.Text, out ushort val)) return;
-            bool success = await _modbusService.WriteRegisterAsync(addr, val);
-            if (success) AppendLog($"[PLC WRITE] Addr {addr} -> {val} 성공");
+
+            try
+            {
+                BtnModbusWrite.IsEnabled = false;
+                bool success = await _modbusService.WriteRegisterAsync(addr, val);
+                if (success)
+                    AppendLog($"[PLC WRITE] Addr {addr} -> {val} 성공");
+                else
+                    AppendLog($"[PLC WRITE] Addr {addr} 실패 (응답 없음)");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"[PLC WRITE ERROR] {ex.Message}");
+            }
+            finally
+            {
+                BtnModbusWrite.IsEnabled = true;
+            }
         }
 
         private async void BtnImportJson_Click(object sender, RoutedEventArgs e)
         {
             if (_dbService == null) return;
-            bool result = await _dbService.InsertVisionEventFromJsonAsync(1);
-            if (result) dgVisionLogs.ItemsSource = await _dbService.GetRecentVisionEventsAsync();
+            try
+            {
+                bool result = await _dbService.InsertVisionEventFromJsonAsync(1);
+                if (result) dgVisionLogs.ItemsSource = await _dbService.GetRecentVisionEventsAsync();
+            }
+            catch (Exception ex) { AppendLog($"[DB Error] {ex.Message}"); }
         }
 
         private void AppendLog(string msg)
         {
             if (TxtLog == null) return;
-            Dispatcher.Invoke(() => {
-                TxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {msg}{Environment.NewLine}");
-                TxtLog.ScrollToEnd();
-            });
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(() => AppendLog(msg)));
+                return;
+            }
+            TxtLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {msg}{Environment.NewLine}");
+            TxtLog.ScrollToEnd();
         }
 
         protected override void OnClosed(EventArgs e)
         {
-            _modbusService?.Disconnect();
             _isArduinoConnected = false;
+            _modbusService?.Disconnect();
+            _arduinoStream?.Dispose();
+            _arduinoClient?.Close();
             base.OnClosed(e);
         }
     }
