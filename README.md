@@ -56,4 +56,3 @@
 - **Configuration**: `appsettings.json`을 통한 보안 관리 (Git Ignore 적용됨)
 
 ---
-<p align="center"><b>© 2026 All Day Project Team. All Rights Reserved.</b></p>
