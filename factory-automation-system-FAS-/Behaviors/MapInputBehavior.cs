@@ -81,18 +81,17 @@ namespace factory_automation_system_FAS_.Behaviors
         private static void Host_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (sender is not DependencyObject host) return;
+            if (sender is not IInputElement inputHost) return;
 
             var cmd = GetZoomCommand(host);
             if (cmd is null) return;
 
-            var canvas = GetTargetCanvas(host);
-            if (canvas is null) return;
+            var posOnHost = e.GetPosition(inputHost);
 
-            var posOnCanvas = e.GetPosition(canvas);
             var args = new ZoomArgs
             {
                 Delta = e.Delta,
-                MousePosOnCanvas = posOnCanvas
+                MousePosOnCanvas = posOnHost // 이름은 그대로 두고, 값은 host 좌표를 넣는다
             };
 
             if (cmd.CanExecute(args))
@@ -100,6 +99,7 @@ namespace factory_automation_system_FAS_.Behaviors
 
             e.Handled = true;
         }
+
 
         private static void Host_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {

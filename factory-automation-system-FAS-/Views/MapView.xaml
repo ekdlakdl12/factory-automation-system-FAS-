@@ -59,14 +59,16 @@
             - We avoid Viewbox here because it introduces another implicit scale.
             - The only transform controlling pan/zoom/fit is MapViewportModel (Scale + Translate).
         -->
-        <Grid x:Name="ViewportHost" ClipToBounds="True">
+        <Grid x:Name="ViewportHost"
+              ClipToBounds="True"
+              Background="Transparent"
+              b:MapInputBehavior.TargetCanvas="{Binding ElementName=MapCanvas}"
+              b:MapInputBehavior.BeginPanCommand="{Binding BeginPanCommand}"
+              b:MapInputBehavior.PanCommand="{Binding PanCommand}"
+              b:MapInputBehavior.EndPanCommand="{Binding EndPanCommand}"
+              b:MapInputBehavior.ZoomCommand="{Binding ZoomCommand}">
             <Canvas x:Name="MapCanvas"
                     Width="3100" Height="1700"
-                    b:MapInputBehavior.TargetCanvas="{Binding ElementName=MapCanvas}"
-                    b:MapInputBehavior.BeginPanCommand="{Binding BeginPanCommand}"
-                    b:MapInputBehavior.PanCommand="{Binding PanCommand}"
-                    b:MapInputBehavior.EndPanCommand="{Binding EndPanCommand}"
-                    b:MapInputBehavior.ZoomCommand="{Binding ZoomCommand}"
                     Background="Transparent">
 
                 <Canvas.RenderTransform>

@@ -111,7 +111,7 @@ namespace factory_automation_system_FAS_.Models
             TranslateY = (HostHeight - (ContentHeight * Scale)) / 2.0;
         }
 
-        public void ZoomAt(int wheelDelta, Point mousePosOnCanvas)
+        public void ZoomAt(int wheelDelta, Point mousePosOnHost)
         {
             double oldScale = Scale;
             double newScale = oldScale;
@@ -122,14 +122,16 @@ namespace factory_automation_system_FAS_.Models
             newScale = Math.Max(MinZoom, Math.Min(MaxZoom, newScale));
             if (Math.Abs(newScale - oldScale) < 0.0001) return;
 
-            // Keep the world point under the cursor fixed on screen.
-            // world = (screen - translate) / scale
-            double worldX = (mousePosOnCanvas.X - TranslateX) / oldScale;
-            double worldY = (mousePosOnCanvas.Y - TranslateY) / oldScale;
+            // World point currently under cursor:
+            // w = (mouse - T) / oldScale
+            double wx = (mousePosOnHost.X - TranslateX) / oldScale;
+            double wy = (mousePosOnHost.Y - TranslateY) / oldScale;
 
+            // New translation to keep that world point under cursor:
+            // T' = mouse - (w * newScale)
             Scale = newScale;
-            TranslateX = mousePosOnCanvas.X - (worldX * newScale);
-            TranslateY = mousePosOnCanvas.Y - (worldY * newScale);
+            TranslateX = mousePosOnHost.X - (wx * newScale);
+            TranslateY = mousePosOnHost.Y - (wy * newScale);
         }
 
         public void BeginPan(Point mousePosInWindow)
