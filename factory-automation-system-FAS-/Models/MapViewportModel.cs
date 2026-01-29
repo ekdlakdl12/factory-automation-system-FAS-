@@ -25,6 +25,25 @@ namespace factory_automation_system_FAS_.Models
         public double ContentWidth { get; set; } = 3100.0;
         public double ContentHeight { get; set; } = 1700.0;
 
+        // ===== Optional: OPS Focus Rect =====
+        /// <summary>
+        /// Optional world-rectangle that represents the operator's region-of-interest (ROI).
+        /// When set, Fit/Reset will prefer this ROI over the whole map.
+        /// </summary>
+        private Rect? _focusRectWorld;
+
+        public void SetFocusRect(Rect? rectWorld)
+        {
+            _focusRectWorld = rectWorld;
+
+            // If the view size is already known, re-fit once to the ROI.
+            // (This runs only when callers explicitly set the ROI; it won't fight user pan/zoom.)
+            if (HostWidth > 0 && HostHeight > 0 && _focusRectWorld.HasValue)
+            {
+                FitToContent();
+            }
+        }
+
         // ===== Transform Props =====
         private double _scale = 1.0;
         public double Scale
@@ -92,6 +111,14 @@ namespace factory_automation_system_FAS_.Models
         public void FitToContent()
         {
             if (HostWidth <= 0 || HostHeight <= 0) return;
+
+            // Prefer a ROI (OPS focus rect) if available.
+            if (_focusRectWorld.HasValue && _focusRectWorld.Value.Width > 1 && _focusRectWorld.Value.Height > 1)
+            {
+                FitToRect(_focusRectWorld.Value);
+                return;
+            }
+
             if (ContentWidth <= 0 || ContentHeight <= 0) return;
 
             var pad = Math.Max(0, FitPadding);
@@ -109,6 +136,33 @@ namespace factory_automation_system_FAS_.Models
             // Center content within host.
             TranslateX = (HostWidth - (ContentWidth * Scale)) / 2.0;
             TranslateY = (HostHeight - (ContentHeight * Scale)) / 2.0;
+        }
+
+        /// <summary>
+        /// Fit a world-rectangle (ROI) into the current host(view), using FitPadding (view pixels).
+        /// </summary>
+        public void FitToRect(Rect rectWorld)
+        {
+            if (HostWidth <= 0 || HostHeight <= 0) return;
+            if (rectWorld.Width <= 0 || rectWorld.Height <= 0) return;
+
+            var pad = Math.Max(0, FitPadding);
+
+            double availW = Math.Max(1, HostWidth - (pad * 2));
+            double availH = Math.Max(1, HostHeight - (pad * 2));
+
+            double scaleX = availW / rectWorld.Width;
+            double scaleY = availH / rectWorld.Height;
+            double newScale = Math.Min(scaleX, scaleY);
+            newScale = Math.Max(MinZoom, Math.Min(MaxZoom, newScale));
+
+            Scale = newScale;
+
+            // Center the ROI within host.
+            double cx = rectWorld.X + (rectWorld.Width / 2.0);
+            double cy = rectWorld.Y + (rectWorld.Height / 2.0);
+            TranslateX = (HostWidth / 2.0) - (cx * Scale);
+            TranslateY = (HostHeight / 2.0) - (cy * Scale);
         }
 
         public void ZoomAt(int wheelDelta, Point mousePosOnHost)

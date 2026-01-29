@@ -29,6 +29,7 @@
             <CroppedBitmap x:Key="MapBg"
                            Source="{StaticResource MainLayoutBmp}"
                            SourceRect="0,150,3100,1700" />
+            <!-- NOTE: MapBg is cropped (Y=150). MapEntities seed coordinates are already crop-based; DO NOT apply extra Y offsets. -->
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -96,10 +97,6 @@
                             <Canvas/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
-                    <ItemsControl.RenderTransform>
-                        <TranslateTransform Y="-150"/>
-                    </ItemsControl.RenderTransform>
-
 
                     <ItemsControl.ItemContainerStyle>
                         <Style TargetType="ContentPresenter">

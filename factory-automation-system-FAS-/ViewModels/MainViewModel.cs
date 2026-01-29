@@ -316,6 +316,10 @@ namespace factory_automation_system_FAS_.ViewModels
                     if (vm != null)
                         AddEntity(vm);
                 }
+
+                // OPS UI: Prefer focusing the viewport to the meaningful region (entities bbox)
+                // instead of fitting the entire 3100x1700 map (which contains large blank areas).
+                ApplyOpsFocusRectFromEntities();
             }
             catch
             {
@@ -396,6 +400,58 @@ namespace factory_automation_system_FAS_.ViewModels
             AddEntity(c1);
             AddEntity(s1);
             AddEntity(cam);
+
+            ApplyOpsFocusRectFromEntities();
+        }
+
+        /// <summary>
+        /// Compute a world-space ROI (entities bounding box + padding) and set it on the viewport.
+        /// This is OPS UI behavior: initial view should highlight the operational area, not the whole map.
+        /// </summary>
+        private void ApplyOpsFocusRectFromEntities()
+        {
+            if (MapEntities.Count == 0) return;
+
+            double minX = double.PositiveInfinity;
+            double minY = double.PositiveInfinity;
+            double maxX = double.NegativeInfinity;
+            double maxY = double.NegativeInfinity;
+
+            foreach (var e in MapEntities)
+            {
+                // Entities are positioned by top-left (X,Y). Include width/height so the ROI covers the full icon/shape.
+                double x1 = e.X;
+                double y1 = e.Y;
+                double x2 = e.X + Math.Max(1, e.Width);
+                double y2 = e.Y + Math.Max(1, e.Height);
+
+                if (x1 < minX) minX = x1;
+                if (y1 < minY) minY = y1;
+                if (x2 > maxX) maxX = x2;
+                if (y2 > maxY) maxY = y2;
+            }
+
+            if (!double.IsFinite(minX) || !double.IsFinite(minY) || !double.IsFinite(maxX) || !double.IsFinite(maxY))
+                return;
+
+            // World padding (in map pixels). Tune for OPS readability.
+            const double pad = 260;
+
+            minX -= pad;
+            minY -= pad;
+            maxX += pad;
+            maxY += pad;
+
+            // Clamp into overall content bounds to avoid excessive empty margins.
+            minX = Math.Max(0, minX);
+            minY = Math.Max(0, minY);
+            maxX = Math.Min(Viewport.ContentWidth, maxX);
+            maxY = Math.Min(Viewport.ContentHeight, maxY);
+
+            double w = Math.Max(10, maxX - minX);
+            double h = Math.Max(10, maxY - minY);
+
+            Viewport.SetFocusRect(new Rect(minX, minY, w, h));
         }
 
         private MapEntityVM? CreateVmFromDto(MapEntitySeedDto dto)
