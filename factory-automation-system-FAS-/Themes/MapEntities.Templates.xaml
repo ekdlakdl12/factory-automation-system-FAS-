@@ -27,7 +27,7 @@
                     </TransformGroup>
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
@@ -83,16 +83,9 @@
             <Grid>
 
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
-                <TextBlock Text="{Binding DisplayName}"
-                           FontSize="{Binding LabelFontSize}"
-                           FontWeight="Bold"
-                           Foreground="#22323E"
-                           Opacity="0.6"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"/>
             </Grid>
         </Border>
     </DataTemplate>
@@ -108,7 +101,7 @@
                 <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
             </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
@@ -171,7 +164,7 @@
                     </TransformGroup>
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
@@ -225,7 +218,7 @@
                     </TransformGroup>
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
@@ -281,7 +274,7 @@
                     </TransformGroup>
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
@@ -290,7 +283,7 @@
                         <SkewTransform AngleX="-20"/>
                     </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
@@ -378,7 +371,7 @@
                 </Ellipse.Style>
             </Ellipse>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
-                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
                     <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
                 </Border>
 
