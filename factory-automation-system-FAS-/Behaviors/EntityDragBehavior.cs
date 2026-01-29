@@ -41,13 +41,14 @@ namespace factory_automation_system_FAS_.Behaviors
             public bool IsDragging;
             public bool HasMoved;
 
-            public Point StartMouseInCanvasVisual; // e.GetPosition(canvas) (visual coords, affected by transform)
-            public double StartX;                  // VM logical coords
+            // ✅ View space (relative to ViewportHost)
+            public Point StartMouseInHostView;
+            public FrameworkElement? ViewportHost;
+
+            // ✅ World space (VM logical coords, seed 기준)
+            public double StartX;
             public double StartY;
 
-            public double StartScale;              // Viewport.Scale at drag start
-
-            public Canvas? Canvas;
             public MapEntityVM? Vm;
             public MainViewModel? MainVm;
         }
@@ -82,34 +83,27 @@ namespace factory_automation_system_FAS_.Behaviors
             // 장비만 드래그 (레이아웃/패스 등은 IsInteractive=false로 들어오므로 차단)
             if (!vm.IsInteractive) return;
 
-            var canvas = FindAncestorCanvas(fe);
-            if (canvas is null) return;
+            // ✅ 입력 좌표는 ViewportHost 기준으로만 받는다.
+            var host = FindViewportHost(fe);
+            if (host is null) return;
 
-            // Canvas의 DataContext는 MainViewModel이어야 함 (MapView가 MainVM에 바인딩)
-            var mainVm = canvas.DataContext as MainViewModel;
+            // ViewportHost의 DataContext는 MainViewModel이어야 함 (MapView가 MainVM에 바인딩)
+            var mainVm = host.DataContext as MainViewModel;
 
             // ViewMode면 드래그 자체 금지
             if (mainVm != null && !mainVm.IsEditMode)
                 return;
 
-            double scale = 1.0;
-            if (mainVm != null)
-            {
-                scale = mainVm.Viewport?.Scale ?? 1.0;
-                if (scale <= 0.000001) scale = 1.0;
-            }
-
             var st = new DragState
             {
                 IsDragging = true,
                 HasMoved = false,
-                Canvas = canvas,
+                ViewportHost = host,
                 Vm = vm,
                 MainVm = mainVm,
-                StartMouseInCanvasVisual = e.GetPosition(canvas),
+                StartMouseInHostView = e.GetPosition(host),
                 StartX = vm.X,
-                StartY = vm.Y,
-                StartScale = scale
+                StartY = vm.Y
             };
 
             fe.SetValue(DragStateProperty, st);
@@ -124,7 +118,7 @@ namespace factory_automation_system_FAS_.Behaviors
             if (sender is not FrameworkElement fe) return;
 
             var st = fe.GetValue(DragStateProperty) as DragState;
-            if (st is null || !st.IsDragging || st.Canvas is null || st.Vm is null) return;
+            if (st is null || !st.IsDragging || st.ViewportHost is null || st.Vm is null) return;
             if (!fe.IsMouseCaptured) return;
 
             // 혹시 드래그 도중 ViewMode로 전환되면 즉시 종료
@@ -134,26 +128,27 @@ namespace factory_automation_system_FAS_.Behaviors
                 return;
             }
 
-            var now = e.GetPosition(st.Canvas);
+            // ✅ ViewportHost 기준 View 좌표
+            var nowView = e.GetPosition(st.ViewportHost);
 
-            var dxVisual = now.X - st.StartMouseInCanvasVisual.X;
-            var dyVisual = now.Y - st.StartMouseInCanvasVisual.Y;
+            var dxView = nowView.X - st.StartMouseInHostView.X;
+            var dyView = nowView.Y - st.StartMouseInHostView.Y;
 
             // 작은 흔들림은 드래그로 안 봄
-            if (!st.HasMoved && (Math.Abs(dxVisual) + Math.Abs(dyVisual)) < 2.0)
+            if (!st.HasMoved && (Math.Abs(dxView) + Math.Abs(dyView)) < 2.0)
                 return;
 
             st.HasMoved = true;
 
-            // ✅ 핵심: Visual delta -> Logical delta
-            double scale = st.StartScale;
+            // ✅ 딱 한 번: View delta -> World delta
+            double scale = st.MainVm?.Viewport?.Scale ?? 1.0;
             if (scale <= 0.000001) scale = 1.0;
 
-            double dx = dxVisual / scale;
-            double dy = dyVisual / scale;
+            double dxWorld = dxView / scale;
+            double dyWorld = dyView / scale;
 
-            double newX = st.StartX + dx;
-            double newY = st.StartY + dy;
+            double newX = st.StartX + dxWorld;
+            double newY = st.StartY + dyWorld;
 
             // ✅ EditMode Grid Snap (있으면 적용)
             if (st.MainVm != null && st.MainVm.IsEditMode)
@@ -217,12 +212,14 @@ namespace factory_automation_system_FAS_.Behaviors
             return Math.Round(v / grid) * grid;
         }
 
-        private static Canvas? FindAncestorCanvas(DependencyObject start)
+        private static FrameworkElement? FindViewportHost(DependencyObject start)
         {
             DependencyObject? cur = start;
             while (cur != null)
             {
-                if (cur is Canvas c) return c;
+                if (cur is FrameworkElement fe && fe.Name == "ViewportHost")
+                    return fe;
+
                 cur = VisualTreeHelper.GetParent(cur);
             }
             return null;
