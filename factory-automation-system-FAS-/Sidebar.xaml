@@ -1,0 +1,15 @@
+﻿<Page x:Class="SmartFactory100.Sidebar"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:SmartFactory100"
+      mc:Ignorable="d" 
+      d:DesignHeight="980" d:DesignWidth="420"
+      Title="Sidebar">
+
+    <Grid>
+        <Label Content="Label" HorizontalAlignment="Left" Margin="87,578,0,0" VerticalAlignment="Top"  />
+        <Image HorizontalAlignment="Left" VerticalAlignment="Top" Height="200" Width="400" Source="/image_3.jpg" />
+    </Grid>
+</Page>
