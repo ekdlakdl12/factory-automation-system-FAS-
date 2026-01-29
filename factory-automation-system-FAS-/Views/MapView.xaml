@@ -5,22 +5,6 @@
              
              Background="Transparent"
              Focusable="True">
-
-    <!-- ✅ 키보드 nudge -->
-    <UserControl.InputBindings>
-        <!-- 1px 이동 -->
-        <KeyBinding Key="Left"  Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="Left"/>
-        <KeyBinding Key="Right" Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="Right"/>
-        <KeyBinding Key="Up"    Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="Up"/>
-        <KeyBinding Key="Down"  Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="Down"/>
-
-        <!-- 10px 이동 (Shift) -->
-        <KeyBinding Key="Left"  Modifiers="Shift" Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="ShiftLeft"/>
-        <KeyBinding Key="Right" Modifiers="Shift" Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="ShiftRight"/>
-        <KeyBinding Key="Up"    Modifiers="Shift" Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="ShiftUp"/>
-        <KeyBinding Key="Down"  Modifiers="Shift" Command="{Binding NudgeSelectedEntityCommand}" CommandParameter="ShiftDown"/>
-    </UserControl.InputBindings>
-
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -91,7 +75,8 @@
                         Background="#CC000000"
                         CornerRadius="8"
                         Padding="10"
-                        Panel.ZIndex="9999">
+                        Panel.ZIndex="9999"
+                        Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Foreground="White" FontSize="18" FontWeight="Bold"
                                    Text="{Binding MapEntityCount, StringFormat=Entities: {0}}"/>

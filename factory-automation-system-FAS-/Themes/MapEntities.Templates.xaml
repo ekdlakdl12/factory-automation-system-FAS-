@@ -15,15 +15,21 @@
                 Padding="0"
                 Focusable="False"
                 Cursor="Hand"
-                b:EntityDragBehavior.IsEnabled="True"
                 Command="{Binding DataContext.SelectEntityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}">
             <Grid Width="{Binding Width}" Height="{Binding Height}"
                   RenderTransformOrigin="0.5,0.5"
                   ToolTip="{Binding TooltipText}">
                 <Grid.RenderTransform>
-                    <RotateTransform Angle="{Binding Rotation}"/>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                        <RotateTransform Angle="{Binding Rotation}"/>
+                    </TransformGroup>
                 </Grid.RenderTransform>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
 
                 <Border CornerRadius="3" BorderThickness="1">
                     <Border.Style>
@@ -75,6 +81,11 @@
                 CornerRadius="{Binding CornerRadius}"
                 IsHitTestVisible="{Binding IsInteractive}">
             <Grid>
+
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
                 <TextBlock Text="{Binding DisplayName}"
                            FontSize="{Binding LabelFontSize}"
                            FontWeight="Bold"
@@ -90,9 +101,17 @@
          Conveyor Block (레이아웃용)
          ========================= -->
     <DataTemplate DataType="{x:Type me:ConveyorBlockVM}">
-        <Grid Width="{Binding Width}"
+        <Grid RenderTransformOrigin="0.5,0.5" Width="{Binding Width}"
               Height="{Binding Height}"
               IsHitTestVisible="{Binding IsInteractive}">
+            <Grid.RenderTransform>
+                <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+            </Grid.RenderTransform>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
+
 
             <Border Background="{Binding Fill}"
                     BorderBrush="{Binding Stroke}"
@@ -139,7 +158,6 @@
                 Padding="0"
                 Focusable="False"
                 Cursor="Hand"
-                b:EntityDragBehavior.IsEnabled="True"
                 Command="{Binding DataContext.SelectEntityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}">
 
@@ -147,8 +165,15 @@
                   RenderTransformOrigin="0.5,0.5"
                   ToolTip="{Binding TooltipText}">
                 <Grid.RenderTransform>
-                    <RotateTransform Angle="{Binding Rotation}"/>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                        <RotateTransform Angle="{Binding Rotation}"/>
+                    </TransformGroup>
                 </Grid.RenderTransform>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
 
                 <Ellipse Stroke="{DynamicResource MapOverlayStrokeSoft}"
                          StrokeThickness="2"
@@ -188,15 +213,21 @@
                 Padding="0"
                 Focusable="False"
                 Cursor="Hand"
-                b:EntityDragBehavior.IsEnabled="True"
                 Command="{Binding DataContext.SelectEntityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}">
             <Grid Width="{Binding Width}" Height="{Binding Height}"
                   RenderTransformOrigin="0.5,0.5"
                   ToolTip="{Binding TooltipText}">
                 <Grid.RenderTransform>
-                    <RotateTransform Angle="{Binding Rotation}"/>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                        <RotateTransform Angle="{Binding Rotation}"/>
+                    </TransformGroup>
                 </Grid.RenderTransform>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
 
                 <Polygon Points="0.5,0  1,0.5  0.5,1  0,0.5"
                          Stretch="Fill"
@@ -238,20 +269,30 @@
                 Padding="0"
                 Focusable="False"
                 Cursor="Hand"
-                b:EntityDragBehavior.IsEnabled="True"
                 Command="{Binding DataContext.SelectEntityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}">
             <Grid Width="{Binding Width}" Height="{Binding Height}"
                   RenderTransformOrigin="0.5,0.5"
                   ToolTip="{Binding TooltipText}">
                 <Grid.RenderTransform>
-                    <RotateTransform Angle="{Binding Rotation}"/>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                        <RotateTransform Angle="{Binding Rotation}"/>
+                    </TransformGroup>
                 </Grid.RenderTransform>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
 
                 <Grid RenderTransformOrigin="0.5,0.5">
                     <Grid.RenderTransform>
                         <SkewTransform AngleX="-20"/>
                     </Grid.RenderTransform>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
 
                     <Border CornerRadius="2"
                             BorderThickness="1"
@@ -306,9 +347,14 @@
                 Padding="0"
                 Focusable="False"
                 Cursor="Hand"
-                b:EntityDragBehavior.IsEnabled="True"
                 Command="{Binding DataContext.SelectEntityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 CommandParameter="{Binding}">
+
+            <Grid RenderTransformOrigin="0.5,0.5">
+                <Grid.RenderTransform>
+                    <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                </Grid.RenderTransform>
+
             <Ellipse Width="{Binding Width}"
                      Height="{Binding Height}"
                      StrokeThickness="1"
@@ -331,6 +377,13 @@
                     </Style>
                 </Ellipse.Style>
             </Ellipse>
+                <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-26,0,0" Panel.ZIndex="999">
+                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                </Border>
+
+            </Grid>
+
         </Button>
     </DataTemplate>
 
