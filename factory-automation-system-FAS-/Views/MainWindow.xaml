@@ -6,6 +6,7 @@
         xmlns:m="clr-namespace:factory_automation_system_FAS_.Models"
         xmlns:views="clr-namespace:factory_automation_system_FAS_.Views"
         xmlns:me="clr-namespace:factory_automation_system_FAS_.ViewModels.MapEntities"
+         Closing="MainWindow_OnClosing"
         Title="DT Control Center"
         Width="1920" Height="1080"
         WindowStartupLocation="CenterScreen"

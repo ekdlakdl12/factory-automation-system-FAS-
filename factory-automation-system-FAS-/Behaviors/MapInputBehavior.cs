@@ -2,6 +2,9 @@
 using factory_automation_system_FAS_.Models;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using factory_automation_system_FAS_.ViewModels.MapEntities;
+
 
 namespace factory_automation_system_FAS_.Behaviors
 {
@@ -108,6 +111,19 @@ namespace factory_automation_system_FAS_.Behaviors
 
             var cmd = GetBeginPanCommand(host);
             if (cmd is null) return;
+
+            // ✅ 엔티티(Interactive) 위에서 클릭한 경우: Pan 시작하지 말고 엔티티 드래그가 먹게 둔다
+            if (e.OriginalSource is DependencyObject dep)
+            {
+                var cur = dep;
+                while (cur != null)
+                {
+                    if (cur is FrameworkElement fe && fe.DataContext is MapEntityVM vm && vm.IsInteractive)
+                        return;
+
+                    cur = VisualTreeHelper.GetParent(cur);
+                }
+            }
 
             // Host 기준 좌표 (this 말고 host)
             var posOnHost = e.GetPosition(ui);

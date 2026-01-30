@@ -66,10 +66,12 @@
                 </Canvas.RenderTransform>
 
                 <!-- Background -->
+                <!-- Visibility="Collapsed 하면 맵 지워짐  -->
                 <Image Canvas.Left="0" Canvas.Top="0"
                        Width="3100" Height="1700"
                        Source="{StaticResource MapBg}"
-                       Stretch="Fill" />
+                       Stretch="Fill"
+                       Visibility="Collapsed"/>
 
                 <!-- DEBUG -->
                 <Border Canvas.Left="20" Canvas.Top="20"
@@ -103,8 +105,20 @@
                             <Setter Property="Canvas.Left" Value="{Binding X}"/>
                             <Setter Property="Canvas.Top" Value="{Binding Y}"/>
                             <Setter Property="Panel.ZIndex" Value="{Binding ZIndex}"/>
+                                         <!-- ✅ 엔티티 드래그 활성화 -->
+                            <Setter Property="b:EntityDragBehavior.IsEnabled" Value="True"/>
                         </Style>
                     </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.RenderTransform>
+                        <TransformGroup>
+                            <!-- center pivot (map size: 3100x1700) -->
+                            <TranslateTransform X="-1550" Y="-850"/>
+                            <!-- spread factor: 1.0 = 원래 / 1.2~1.6 추천 -->
+                            <ScaleTransform ScaleX="1.35" ScaleY="1.35"/>
+                            <TranslateTransform X="1550" Y="850"/>
+                        </TransformGroup>
+                    </ItemsControl.RenderTransform>
+
 
                     <!-- ✅ 템플릿은 Themes/MapEntities.Templates.xaml 안에 있음 -->
                 </ItemsControl>

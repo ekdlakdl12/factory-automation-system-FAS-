@@ -7,6 +7,12 @@ namespace factory_automation_system_FAS_.ViewModels.MapEntities
 {
     // ===== 공통 Enum =====
 
+    public enum LabelOrientation
+    {
+        Horizontal = 0,
+        Vertical = 1
+    }
+
     public enum EntityStatus
     {
         Offline = 0,
@@ -78,7 +84,16 @@ namespace factory_automation_system_FAS_.ViewModels.MapEntities
             set => SetProperty(ref _displayName, value);
         }
 
-        // ===== Geometry (크롭 기준 좌표계) =====
+        
+
+        // Label orientation for DisplayName (UI rotation)
+        private LabelOrientation _labelOrientation = LabelOrientation.Horizontal;
+        public LabelOrientation LabelOrientation
+        {
+            get => _labelOrientation;
+            set => SetProperty(ref _labelOrientation, value);
+        }
+// ===== Geometry (크롭 기준 좌표계) =====
         private double _x;
         public double X { get => _x; set => SetProperty(ref _x, value); }
 

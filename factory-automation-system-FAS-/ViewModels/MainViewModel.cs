@@ -472,6 +472,7 @@ namespace factory_automation_system_FAS_.ViewModels
                 "sensor" => new SensorVM(id),
                 "camera" => new CameraVM(id),
                 "barcode" => new BarcodeScannerVM(id),
+                "qr" => new BarcodeScannerVM(id),
                 _ => new DeviceVMImpl(id)
             };
 
@@ -482,6 +483,22 @@ namespace factory_automation_system_FAS_.ViewModels
             vm.Width = dto.Width <= 0 ? vm.Width : dto.Width;
             vm.Height = dto.Height <= 0 ? vm.Height : dto.Height;
             vm.ZIndex = dto.ZIndex;
+            vm.LabelOrientation = ParseLabelOrientation(dto.LabelOrientation);
+            // ===== TEMP: Output(Out_*) coordinate correction (do not touch viewport) =====
+            if (id.StartsWith("Out_", StringComparison.OrdinalIgnoreCase))
+            {
+                const double ax = 2.3820026466696116;
+                const double bx = -922.8695059550137;
+                const double ay = 0.6259361098070776;
+                const double by = 410.84950036885516;
+
+                vm.X = ax * vm.X + bx;
+                vm.Y = ay * vm.Y + by;
+
+                // If size mismatch is visible (your measurements show it is), scale size too:
+                vm.Width = ax * vm.Width;
+                vm.Height = ay * vm.Height;
+            }
 
             // 대부분은 편집 가능
             vm.IsInteractive = true;
@@ -595,13 +612,48 @@ namespace factory_automation_system_FAS_.ViewModels
             };
         }
 
+
+        private static LabelOrientation ParseLabelOrientation(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return LabelOrientation.Horizontal;
+            return s.Trim().ToLowerInvariant() switch
+            {
+                "v" => LabelOrientation.Vertical,
+                "vert" => LabelOrientation.Vertical,
+                "vertical" => LabelOrientation.Vertical,
+                "h" => LabelOrientation.Horizontal,
+                "horiz" => LabelOrientation.Horizontal,
+                "horizontal" => LabelOrientation.Horizontal,
+                _ => LabelOrientation.Horizontal
+            };
+        }
+
         private static double Snap(double v, int grid)
         {
             if (grid <= 1) return v;
             return Math.Round(v / grid) * grid;
         }
+        private static (double x, double y, double w, double h) ToSeedSpace(MapEntityVM vm)
+{
+    double x = vm.X, y = vm.Y, w = vm.Width, h = vm.Height;
 
-        private void ExportMapEntitiesToJson()
+    if (vm.Id.StartsWith("Out_", StringComparison.OrdinalIgnoreCase))
+    {
+        const double ax = 2.3820026466696116;
+        const double bx = -922.8695059550137;
+        const double ay = 0.6259361098070776;
+        const double by = 410.84950036885516;
+
+        x = (x - bx) / ax;
+        y = (y - by) / ay;
+        w = w / ax;
+        h = h / ay;
+    }
+
+    return (x, y, w, h);
+}
+
+        public void ExportMapEntitiesToJson()
         {
             try
             {
@@ -672,15 +724,18 @@ namespace factory_automation_system_FAS_.ViewModels
                     // Equipment / Device
                     if (vm is ConveyorVM c)
                     {
+                        var (x, y, w, h) = ToSeedSpace(c);
+
                         list.Add(new
                         {
                             type = "conveyor",
                             id = c.Id,
                             displayName = c.DisplayName,
-                            x = c.X,
-                            y = c.Y,
-                            width = c.Width,
-                            height = c.Height,
+                            x = x,
+                            y = y,
+                            width = w,
+                            height = h,
+                            labelOrientation = c.LabelOrientation.ToString(),
                             direction = c.Direction.ToString(),
                             lane = c.Lane,
                             status = c.Status.ToString(),
@@ -691,17 +746,21 @@ namespace factory_automation_system_FAS_.ViewModels
                         continue;
                     }
 
+
                     if (vm is SensorVM s)
                     {
+                        var (x, y, w, h) = ToSeedSpace(s);
+
                         list.Add(new
                         {
                             type = "sensor",
                             id = s.Id,
                             displayName = s.DisplayName,
-                            x = s.X,
-                            y = s.Y,
-                            width = s.Width,
-                            height = s.Height,
+                            x = x,
+                            y = y,
+                            width = w,
+                            height = h,
+                            labelOrientation = s.LabelOrientation.ToString(),
                             sensorType = s.SensorType.ToString(),
                             status = s.Status.ToString(),
                             isTriggered = s.IsTriggered,
@@ -710,17 +769,21 @@ namespace factory_automation_system_FAS_.ViewModels
                         continue;
                     }
 
+
                     if (vm is CameraVM cam)
                     {
+                        var (x, y, w, h) = ToSeedSpace(cam);
+
                         list.Add(new
                         {
                             type = "camera",
                             id = cam.Id,
                             displayName = cam.DisplayName,
-                            x = cam.X,
-                            y = cam.Y,
-                            width = cam.Width,
-                            height = cam.Height,
+                            x = x,
+                            y = y,
+                            width = w,
+                            height = h,
+                            labelOrientation = cam.LabelOrientation.ToString(),
                             status = cam.Status.ToString(),
                             isStreaming = cam.IsStreaming,
                             zIndex = cam.ZIndex
@@ -728,17 +791,21 @@ namespace factory_automation_system_FAS_.ViewModels
                         continue;
                     }
 
+
                     if (vm is BarcodeScannerVM b)
                     {
+                        var (x, y, w, h) = ToSeedSpace(b);
+
                         list.Add(new
                         {
                             type = "barcode",
                             id = b.Id,
                             displayName = b.DisplayName,
-                            x = b.X,
-                            y = b.Y,
-                            width = b.Width,
-                            height = b.Height,
+                            x = x,
+                            y = y,
+                            width = w,
+                            height = h,
+                            labelOrientation = b.LabelOrientation.ToString(),
                             status = b.Status.ToString(),
                             lastCode = b.LastCode,
                             zIndex = b.ZIndex
@@ -746,20 +813,25 @@ namespace factory_automation_system_FAS_.ViewModels
                         continue;
                     }
 
+
                     // fallback
+                    var (x0, y0, w0, h0) = ToSeedSpace(vm);
+
                     list.Add(new
                     {
                         type = "device",
                         id = vm.Id,
                         displayName = vm.DisplayName,
-                        x = vm.X,
-                        y = vm.Y,
-                        width = vm.Width,
-                        height = vm.Height,
+                        x = x0,
+                        y = y0,
+                        width = w0,
+                        height = h0,
+                        labelOrientation = vm.LabelOrientation.ToString(),
                         status = vm.Status.ToString(),
                         zIndex = vm.ZIndex,
                         hasItem = vm.HasItem
                     });
+
                 }
 
                 var json = JsonSerializer.Serialize(list, new JsonSerializerOptions
@@ -790,7 +862,9 @@ namespace factory_automation_system_FAS_.ViewModels
             public double Height { get; set; }
             public int ZIndex { get; set; }
 
-            // LayoutZone
+            
+            public string? LabelOrientation { get; set; }
+// LayoutZone
             public string? Kind { get; set; }
             public int LabelFontSize { get; set; }
 

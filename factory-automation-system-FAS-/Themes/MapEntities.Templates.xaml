@@ -6,6 +6,37 @@
 
     <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
+    <!-- Entity label: rotate only when LabelOrientation=Vertical -->
+    <Style x:Key="EntityLabelTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+
+        <!-- Horizontal default: allow multi-line instead of clipping -->
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="TextTrimming" Value="None"/>
+
+        <!-- IMPORTANT: use LayoutTransform (not RenderTransform) so rotated text measures correctly and won't be clipped -->
+        <Setter Property="LayoutTransform">
+            <Setter.Value>
+                <RotateTransform Angle="0"/>
+            </Setter.Value>
+        </Setter>
+
+        <Style.Triggers>
+            <!-- Vertical label: rotate -90; keep single line (wrapping looks weird when rotated) -->
+            <DataTrigger Binding="{Binding LabelOrientation}" Value="{x:Static me:LabelOrientation.Vertical}">
+                <Setter Property="TextWrapping" Value="NoWrap"/>
+                <Setter Property="LayoutTransform">
+                    <Setter.Value>
+                        <RotateTransform Angle="-90"/>
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- =========================
          Conveyor: 바디 + 중앙 라인 + 화살표 + Rotation
          ========================= -->
@@ -28,7 +59,7 @@
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
                 <Border CornerRadius="3" BorderThickness="1">
@@ -60,11 +91,37 @@
 
                 <Path Data="M 0 0 L 10 6 L 0 12 Z"
                       Width="10" Height="12"
-                      HorizontalAlignment="Right"
                       VerticalAlignment="Center"
-                      Margin="0,0,6,0"
                       Fill="{DynamicResource MapOverlayStrokeSoft}"
-                      Opacity="0.75"/>
+                      Opacity="0.75"
+                      RenderTransformOrigin="0.5,0.5">
+                    <Path.RenderTransform>
+                        <!-- 기본(오른쪽) -->
+                        <ScaleTransform ScaleX="1"/>
+                    </Path.RenderTransform>
+
+                    <Path.Style>
+                        <Style TargetType="Path">
+                            <!-- 기본: 오른쪽(→) -->
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Margin" Value="0,0,6,0"/>
+
+                            <Style.Triggers>
+                                <!-- 왼쪽(←)이면: 왼쪽에 붙이고 좌우 반전 -->
+                                <DataTrigger Binding="{Binding Direction}" Value="{x:Static me:Direction.Left}">
+                                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                                    <Setter Property="Margin" Value="6,0,0,0"/>
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="-1"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
+
             </Grid>
         </Button>
     </DataTemplate>
@@ -84,7 +141,7 @@
 
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
             </Grid>
         </Border>
@@ -102,7 +159,7 @@
             </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
 
@@ -165,7 +222,7 @@
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
                 <Ellipse Stroke="{DynamicResource MapOverlayStrokeSoft}"
@@ -219,7 +276,7 @@
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
                 <Polygon Points="0.5,0  1,0.5  0.5,1  0,0.5"
@@ -275,7 +332,7 @@
                 </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
                 <Grid RenderTransformOrigin="0.5,0.5">
@@ -284,7 +341,7 @@
                     </Grid.RenderTransform>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
                     <Border CornerRadius="2"
@@ -372,7 +429,7 @@
             </Ellipse>
                 <Border Background="#CC000000" CornerRadius="6" Padding="6,2"
                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0" Panel.ZIndex="999">
-                    <TextBlock Text="{Binding DisplayName}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource EntityLabelTextStyle}"/>
                 </Border>
 
             </Grid>
