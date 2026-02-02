@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:factory_automation_system_FAS_.Views"
         mc:Ignorable="d"
-        Title="FAS 통합 모니터링 시스템" Height="900" Width="1200" WindowStartupLocation="CenterScreen">
+        Title="FAS 통합 시스템" Height="900" Width="1200" WindowStartupLocation="CenterScreen">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,8 +15,7 @@
         </Grid.RowDefinitions>
 
         <GroupBox Header="데이터베이스 관리" Grid.Row="0" Margin="0,0,0,10">
-            <Button x:Name="BtnImportJson" Content="JSON 데이터 DB 가져오기 (OpenCV 연동)" 
-                    Click="BtnImportJson_Click" Height="35" Margin="10"/>
+            <Button x:Name="BtnImportJson" Content="JSON 데이터 DB 가져오기" Click="BtnImportJson_Click" Height="35" Margin="10"/>
         </GroupBox>
 
         <GroupBox Header="PLC Modbus TCP 연결" Grid.Row="1" Margin="0,0,0,10">
@@ -38,14 +37,14 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="시작 주소 (Address)"/>
+                    <TextBlock Text="주소"/>
                     <TextBox x:Name="TxtAddr" Text="0" Margin="0,5"/>
-                    <Button x:Name="BtnModbusRead" Content="데이터 읽기" Click="BtnModbusRead_Click"/>
+                    <Button x:Name="BtnModbusRead" Content="읽기" Click="BtnModbusRead_Click"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="쓰기 값 (Value)"/>
+                    <TextBlock Text="값"/>
                     <TextBox x:Name="TxtWriteVal" Text="1" Margin="0,5"/>
-                    <Button x:Name="BtnModbusWrite" Content="데이터 쓰기" Click="BtnModbusWrite_Click"/>
+                    <Button x:Name="BtnModbusWrite" Content="쓰기" Click="BtnModbusWrite_Click"/>
                 </StackPanel>
             </Grid>
         </GroupBox>
@@ -53,9 +52,6 @@
         <TabControl Grid.Row="3">
             <TabItem Header="FAS 실시간 모니터링">
                 <views:FasMainView x:Name="MainControl"/>
-            </TabItem>
-            <TabItem Header="비전 이벤트 로그 (DB)">
-                <DataGrid x:Name="dgVisionLogs" AutoGenerateColumns="True" IsReadOnly="True"/>
             </TabItem>
             <TabItem Header="실시간 통신 로그">
                 <TextBox x:Name="TxtLog" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Background="#F9F9F9"/>
