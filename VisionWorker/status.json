@@ -1,7 +1,5 @@
 {
-  "ok": true,
-  "last_label": 1,
-  "last_x": 59.289,
-  "last_y": 58.259,
-  "last_ms": 1.634
+  "ok": false,
+  "reason": "camera open failed",
+  "hint": "Try deviceIndex 0/1/2 or remove CAP_DSHOW"
 }

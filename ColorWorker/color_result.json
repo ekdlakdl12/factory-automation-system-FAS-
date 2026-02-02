@@ -43,5 +43,10 @@
     "label": 1,
     "color": "GREEN",
     "ms": 55.196
+  },
+  {
+    "label": 1,
+    "color": "GREEN",
+    "ms": 63.771
   }
 ]
