@@ -71,7 +71,7 @@
                        Width="3100" Height="1700"
                        Source="{StaticResource MapBg}"
                        Stretch="Fill"
-                       Visibility="Collapsed"/>
+                       Visibility="Visible"/>
 
                 <!-- DEBUG -->
                 <Border Canvas.Left="20" Canvas.Top="20"
@@ -109,15 +109,7 @@
                             <Setter Property="b:EntityDragBehavior.IsEnabled" Value="True"/>
                         </Style>
                     </ItemsControl.ItemContainerStyle>
-                    <ItemsControl.RenderTransform>
-                        <TransformGroup>
-                            <!-- center pivot (map size: 3100x1700) -->
-                            <TranslateTransform X="-1550" Y="-850"/>
-                            <!-- spread factor: 1.0 = 원래 / 1.2~1.6 추천 -->
-                            <ScaleTransform ScaleX="1.35" ScaleY="1.35"/>
-                            <TranslateTransform X="1550" Y="850"/>
-                        </TransformGroup>
-                    </ItemsControl.RenderTransform>
+                    
 
 
                     <!-- ✅ 템플릿은 Themes/MapEntities.Templates.xaml 안에 있음 -->

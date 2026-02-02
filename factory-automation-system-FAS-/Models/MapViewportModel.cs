@@ -8,8 +8,8 @@ namespace factory_automation_system_FAS_.Models
     public sealed class MapViewportModel : INotifyPropertyChanged
     {
         // ===== Settings =====
-        public double MinZoom { get; set; } = 0.5;
-        public double MaxZoom { get; set; } = 3.0;
+        public double MinZoom { get; set; } = 0.05;
+        public double MaxZoom { get; set; } = 6.0;
         public double ZoomStep { get; set; } = 1.12;
 
         // ===== Fit-to-View Settings =====
