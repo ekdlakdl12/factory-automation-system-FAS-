@@ -1,4 +1,4 @@
-#include <opencv2/opencv.hpp>
+Ôªø#include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <iostream>
 #include <vector>
@@ -20,26 +20,24 @@ using namespace cv;
 using namespace std;
 
 // =====================
-// MODBUS CONFIG (200π¯¥Î)
+// MODBUS CONFIG
 // =====================
 static const char* PLC_IP = "192.168.0.202";
 static const int   PLC_PORT = 502;
 
-static const int START_COIL = 200;   // PLC -> PC ∆Æ∏Æ∞≈(∞°¡§: 200)
-static const int COIL_BASE = 202;   // PC -> PLC ∞·∞˙(∆ﬁΩ∫): BASE
-static const int COIL_TOP = 201;   // PC -> PLC ∞·∞˙(∆ﬁΩ∫): TOP
-static const int PULSE_MS = 100;   // ∆ﬁΩ∫ ∆¯(ms)
+static const int START_COIL = 200;  // PLC -> PC Ìä∏Î¶¨Í±∞
+static const int COIL_BASE = 202;   // PC -> PLC Í≤∞Í≥º(ÌéÑÏä§): BASE
+static const int COIL_TOP = 201;    // PC -> PLC Í≤∞Í≥º(ÌéÑÏä§): TOP
+static const int PULSE_MS = 100;    // ÌéÑÏä§ Ìè≠(ms)
 
 // =====================
-// ∆«¡§ ¡∂∞« (x∏∏ ∫∏∞Ì BASE/TOP/defect)
+// ÌåêÏ†ï Ï°∞Í±¥ (xÎßå Î≥¥Í≥† BASE/TOP/defect)
 // =====================
 static inline string DecideTypeByX(double xMm) {
     const double baseCenter = 60.0;
     const double tol = 3.0;
     const double defectCut = baseCenter - tol; // 57
 
-    // °ÿ ªÁøÎ¿⁄∞° √÷±Ÿø° TOP/BASE∏¶ µ⁄¡˝æÓµ– ªÛ≈¬∏¶ ±◊¥Î∑Œ ¿Ø¡ˆ«ﬂΩ¿¥œ¥Ÿ.
-    // « ø‰«œ∏È ø©±‚∏∏ πŸ≤Ÿººø‰.
     if (xMm >= baseCenter - tol && xMm <= baseCenter + tol) {
         return "TOP";
     }
@@ -52,20 +50,17 @@ static inline string DecideTypeByX(double xMm) {
 }
 
 // =====================
-// ms ≈∏¿”Ω∫≈∆«¡(«•Ω√øÎ)
+// ms ÌÉÄÏûÑÏä§ÌÉ¨ÌîÑ(ÌëúÏãúÏö©)
 // =====================
-static inline long long NowMillis()
-{
+static inline long long NowMillis() {
     using clock = chrono::system_clock;
     return chrono::duration_cast<chrono::milliseconds>(clock::now().time_since_epoch()).count();
 }
 
 // =====================
-// ªÁ∂˜¿Ã ¿–¥¬ KST Ω√∞£ πÆ¿⁄ø≠ ∏∏µÈ±‚
-// - Ω√Ω∫≈€ ≈∏¿”¡∏¿Ã KST(«—±π PC)∏È OK
+// ÏÇ¨ÎûåÏù¥ ÏùΩÎäî KST ÏãúÍ∞Ñ Î¨∏ÏûêÏó¥ ÎßåÎì§Í∏∞
 // =====================
-static inline string NowKstString()
-{
+static inline string NowKstString() {
     using clock = chrono::system_clock;
     auto now = clock::now();
     auto ms = chrono::duration_cast<chrono::milliseconds>(now.time_since_epoch()) % 1000;
@@ -87,19 +82,7 @@ static inline string NowKstString()
 }
 
 // =====================
-// UIøÎ ≈ÎΩ≈/√‚∑¬ ªÛ≈¬ «•Ω√
-// =====================
-static bool      g_mbOnline = false;
-static long long g_lastMbOkMs = 0;
-static long long g_lastMbFailMs = 0;
-
-static string g_lastType = "-";
-static int    g_lastCoil = -1;
-static string g_lastTimeKst = "-";
-static double g_lastX = 0.0, g_lastY = 0.0, g_lastMs = 0.0;
-
-// =====================
-// Non-blocking ∆ﬁΩ∫ ªÛ≈¬
+// Non-blocking ÌéÑÏä§ ÏÉÅÌÉú
 // =====================
 static bool      g_pulseActive = false;
 static int       g_pulseAddr = -1;
@@ -108,12 +91,10 @@ static long long g_pulseStartMs = 0;
 // =====================
 // Modbus helpers
 // =====================
-static modbus_t* ConnectModbus(const char* ip, int port)
-{
+static modbus_t* ConnectModbus(const char* ip, int port) {
     modbus_t* ctx = modbus_new_tcp(ip, port);
     if (!ctx) return nullptr;
 
-    // ¿¿¥‰ ≈∏¿”æ∆øÙ 300ms
     modbus_set_response_timeout(ctx, 0, 300000);
 
     if (modbus_connect(ctx) == -1) {
@@ -123,36 +104,32 @@ static modbus_t* ConnectModbus(const char* ip, int port)
     return ctx;
 }
 
-static bool ReadCoil(modbus_t* ctx, int addr, bool& outVal)
-{
+static bool ReadCoil(modbus_t* ctx, int addr, bool& outVal) {
     uint8_t bit = 0;
-    int rc = modbus_read_bits(ctx, addr, 1, &bit); // FC1
+    int rc = modbus_read_bits(ctx, addr, 1, &bit);
     if (rc != 1) return false;
     outVal = (bit != 0);
     return true;
 }
 
-static bool WriteCoil(modbus_t* ctx, int addr, bool val)
-{
-    int rc = modbus_write_bit(ctx, addr, val ? 1 : 0); // FC5
+static bool WriteCoil(modbus_t* ctx, int addr, bool val) {
+    int rc = modbus_write_bit(ctx, addr, val ? 1 : 0);
     return (rc == 1);
 }
 
-// ---- («ŸΩ…) ΩΩ∏≥ æ¯¥¬ ∆ﬁΩ∫ Ω√¿€ ----
-static bool StartPulse(modbus_t* ctx, int addr)
-{
-    // ±‚¡∏ ∆ﬁΩ∫∞° ƒ—¡Æ¿÷¥Ÿ∏È ¿œ¥‹ ≤Ù∞Ì ªı∑Œ Ω√¿€(¡ﬂ√∏ πÊ¡ˆ)
+static bool StartPulse(modbus_t* ctx, int addr) {
+    // Í∏∞Ï°¥ ÌéÑÏä§Í∞Ä ÏºúÏ†∏ÏûàÎã§Î©¥ ÏùºÎã® ÎÅÑÍ≥† ÏÉàÎ°ú ÏãúÏûë(Ï§ëÏ≤© Î∞©ÏßÄ)
     if (g_pulseActive && g_pulseAddr >= 0) {
         WriteCoil(ctx, g_pulseAddr, false);
         g_pulseActive = false;
         g_pulseAddr = -1;
     }
 
-    // µŒ ƒ⁄¿œ OFF ∏’¿˙(ø¯-«÷ ¿Ø¡ˆ)
+    // Îëê ÏΩîÏùº OFF Î®ºÏ†Ä(Ïõê-Ìï´ Ïú†ÏßÄ)
     if (!WriteCoil(ctx, COIL_BASE, false)) return false;
-    if (!WriteCoil(ctx, COIL_TOP, false))  return false;
+    if (!WriteCoil(ctx, COIL_TOP, false)) return false;
 
-    // ∏Ò«• ƒ⁄¿œ ON (¡ÔΩ√)
+    // Î™©Ìëú ÏΩîÏùº ON (Ï¶âÏãú)
     if (!WriteCoil(ctx, addr, true)) return false;
 
     g_pulseActive = true;
@@ -161,9 +138,7 @@ static bool StartPulse(modbus_t* ctx, int addr)
     return true;
 }
 
-// ---- («ŸΩ…) ∏≈ «¡∑π¿”∏∂¥Ÿ ∆ﬁΩ∫ OFF ≈∏¿Ãπ÷ √º≈© ----
-static void UpdatePulse(modbus_t* ctx)
-{
+static void UpdatePulse(modbus_t* ctx) {
     if (!g_pulseActive || g_pulseAddr < 0) return;
 
     long long now = NowMillis();
@@ -201,7 +176,9 @@ static bool AppendJsonArray(const string& path, const string& recordJson) {
             content = ss.str();
             ifs.close();
         }
-        else content = "[]";
+        else {
+            content = "[]";
+        }
     }
 
     auto rtrim = [&](string& s) { while (!s.empty() && isspace((unsigned char)s.back())) s.pop_back(); };
@@ -238,37 +215,6 @@ static bool FileExists(const string& path) {
     return ifs.is_open();
 }
 
-static double Avg(const vector<double>& v) {
-    if (v.empty()) return 0.0;
-    double s = 0.0;
-    for (double x : v) s += x;
-    return s / (double)v.size();
-}
-
-static bool SaveScaleYaml(
-    const string& path,
-    double mmPerPx,
-    double realMm,
-    int samples,
-    const string& method,
-    const vector<double>& mmPerPxList
-) {
-    FileStorage fs(path, FileStorage::WRITE);
-    if (!fs.isOpened()) return false;
-
-    fs << "mmPerPx" << mmPerPx;
-    fs << "realMm" << realMm;
-    fs << "samples" << samples;
-    fs << "method" << method;
-
-    fs << "mmPerPx_list" << "[";
-    for (double v : mmPerPxList) fs << v;
-    fs << "]";
-
-    fs.release();
-    return true;
-}
-
 // =====================
 // Sharpness score
 // =====================
@@ -286,26 +232,174 @@ static double SharpnessScore(const Mat& bgrOrGray) {
 }
 
 // =====================
-// Mouse Calibration State
+// Ï†ÄÏû• Ìè¥Îçî/ÌååÏùºÎ™Ö
 // =====================
-static bool g_calibActive = false;
-static const int g_calibNeed = 5;
-static vector<Point2f> g_pairPts;
-static vector<double> g_mmPerPxCandList;
-static double g_lastDistPx = 0.0;
-static double g_lastCand = 0.0;
-static bool g_pairDoneJustNow = false;
+static string g_captureDir = "captures";
 
-static void OnMouse(int event, int x, int y, int flags, void* userdata) {
-    (void)flags; (void)userdata;
-    if (!g_calibActive) return;
+static inline string NowFileStamp() {
+    using clock = chrono::system_clock;
+    auto now = clock::now();
+    auto ms = chrono::duration_cast<chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-    if (event == EVENT_LBUTTONDOWN) {
-        if ((int)g_mmPerPxCandList.size() >= g_calibNeed) return;
-        if (g_pairPts.size() >= 2) g_pairPts.clear();
-        g_pairPts.push_back(Point2f((float)x, (float)y));
-        g_pairDoneJustNow = false;
+    time_t tt = clock::to_time_t(now);
+    tm tmLocal{};
+#if defined(_WIN32)
+    localtime_s(&tmLocal, &tt);
+#else
+    localtime_r(&tt, &tmLocal);
+#endif
+
+    ostringstream ss;
+    ss << put_time(&tmLocal, "%Y%m%d_%H%M%S")
+        << '_' << setw(3) << setfill('0') << ms.count();
+    return ss.str();
+}
+
+// ‚úÖ Í∞ùÏ≤¥ ÌöåÏ†Ñ Ï†ïÎ†¨ + ÌÅ¨Î°≠ + ÏπòÏàò ÌëúÍ∏∞
+static string SaveMeasuredCroppedJpg_CadStyle(
+    const Mat& roiFrame,
+    bool detected,
+    const RotatedRect& rr,
+    double xMm,
+    double yMm,
+    int labelNo,
+    const string& type,
+    double mmPerPx
+) {
+    std::error_code ec;
+    filesystem::create_directories(g_captureDir, ec);
+
+    const int MARGIN = 5;
+
+    float rotationAngle = rr.angle;
+
+    if (rotationAngle < -45) {
+        rotationAngle += 90;
     }
+
+    Point2f center = rr.center;
+    Mat rotationMatrix = getRotationMatrix2D(center, rotationAngle, 1.0);
+
+    Mat rotatedFrame;
+    warpAffine(roiFrame, rotatedFrame, rotationMatrix, roiFrame.size(), INTER_LINEAR, BORDER_CONSTANT, Scalar(255, 255, 255));
+
+    Point2f pts[4];
+    rr.points(pts);
+
+    Point2f rotatedPts[4];
+    float cosA = cos(rotationAngle * CV_PI / 180.0);
+    float sinA = sin(rotationAngle * CV_PI / 180.0);
+
+    for (int i = 0; i < 4; i++) {
+        float x = pts[i].x - center.x;
+        float y = pts[i].y - center.y;
+
+        rotatedPts[i].x = center.x + (x * cosA - y * sinA);
+        rotatedPts[i].y = center.y + (x * sinA + y * cosA);
+    }
+
+    float minX = rotatedPts[0].x, maxX = rotatedPts[0].x;
+    float minY = rotatedPts[0].y, maxY = rotatedPts[0].y;
+
+    for (int i = 1; i < 4; i++) {
+        minX = min(minX, rotatedPts[i].x);
+        maxX = max(maxX, rotatedPts[i].x);
+        minY = min(minY, rotatedPts[i].y);
+        maxY = max(maxY, rotatedPts[i].y);
+    }
+
+    int cropX = max(0, (int)minX - MARGIN);
+    int cropY = max(0, (int)minY - MARGIN);
+    int cropW = min(rotatedFrame.cols - cropX, (int)(maxX - minX) + 2 * MARGIN);
+    int cropH = min(rotatedFrame.rows - cropY, (int)(maxY - minY) + 2 * MARGIN);
+
+    Rect cropRect(cropX, cropY, cropW, cropH);
+
+    Mat croppedImg = rotatedFrame(cropRect).clone();
+
+    float objLeft = minX - cropX;
+    float objRight = maxX - cropX;
+    float objTop = minY - cropY;
+    float objBottom = maxY - cropY;
+    float objCenterX = (objLeft + objRight) / 2.0;
+    float objCenterY = (objTop + objBottom) / 2.0;
+
+    const int CANVAS_MARGIN = 80;
+    int finalW = croppedImg.cols + 2 * CANVAS_MARGIN;
+    int finalH = croppedImg.rows + 2 * CANVAS_MARGIN;
+
+    Mat canvas = Mat::ones(finalH, finalW, croppedImg.type()) * 255;
+
+    croppedImg.copyTo(canvas(Rect(CANVAS_MARGIN, CANVAS_MARGIN, croppedImg.cols, croppedImg.rows)));
+
+    float canvasObjLeft = objLeft + CANVAS_MARGIN;
+    float canvasObjRight = objRight + CANVAS_MARGIN;
+    float canvasObjTop = objTop + CANVAS_MARGIN;
+    float canvasObjBottom = objBottom + CANVAS_MARGIN;
+    float canvasObjCenterX = objCenterX + CANVAS_MARGIN;
+    float canvasObjCenterY = objCenterY + CANVAS_MARGIN;
+
+    int baseLine = 0;
+    int textThickness = 1;
+    double fontSize = 0.6;
+
+    // X ÏπòÏàò
+    {
+        ostringstream ss;
+        ss << fixed << setprecision(2) << xMm << "mm";
+        string xLabel = ss.str();
+        Size xSz = getTextSize(xLabel, FONT_HERSHEY_SIMPLEX, fontSize, textThickness, &baseLine);
+
+        float textX = canvasObjCenterX - xSz.width / 2;
+        float textY = canvasObjBottom + 30;
+
+        Rect bgRect((int)textX - 4, (int)textY - xSz.height - 4, xSz.width + 8, xSz.height + 8);
+        rectangle(canvas, bgRect, Scalar(255, 255, 255), FILLED);
+        rectangle(canvas, bgRect, Scalar(0, 0, 0), 2);
+
+        putText(canvas, xLabel, Point((int)textX, (int)textY), FONT_HERSHEY_SIMPLEX, fontSize, Scalar(0, 0, 0), textThickness);
+    }
+
+    // Y ÏπòÏàò
+    {
+        ostringstream ss;
+        ss << fixed << setprecision(2) << yMm << "mm";
+        string yLabel = ss.str();
+        Size ySz = getTextSize(yLabel, FONT_HERSHEY_SIMPLEX, fontSize, textThickness, &baseLine);
+
+        float textX = canvasObjRight + 15;
+        float textY = canvasObjCenterY + ySz.height / 2;
+
+        Rect bgRect((int)textX - 4, (int)textY - ySz.height - 4, ySz.width + 8, ySz.height + 8);
+        rectangle(canvas, bgRect, Scalar(255, 255, 255), FILLED);
+        rectangle(canvas, bgRect, Scalar(0, 0, 0), 2);
+
+        putText(canvas, yLabel, Point((int)textX, (int)textY), FONT_HERSHEY_SIMPLEX, fontSize, Scalar(0, 0, 0), textThickness);
+    }
+
+    // Type ÎùºÎ≤®
+    {
+        ostringstream ss;
+        ss << "Type: " << type;
+        string typeLabel = ss.str();
+
+        Size typeSz = getTextSize(typeLabel, FONT_HERSHEY_SIMPLEX, 0.8, 1, &baseLine);
+        Rect bgRect(10, 10, typeSz.width + 4, typeSz.height + 4);
+        rectangle(canvas, bgRect, Scalar(255, 255, 255), FILLED);
+        rectangle(canvas, bgRect, Scalar(0, 0, 0), 1);
+
+        putText(canvas, typeLabel, Point(12, 10 + typeSz.height), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 0), 1);
+    }
+
+    ostringstream fn;
+    fn << "measure_" << NowFileStamp() << "_L" << labelNo << ".jpg";
+    filesystem::path outPath = filesystem::path(g_captureDir) / fn.str();
+
+    vector<int> params = { IMWRITE_JPEG_QUALITY, 92 };
+    bool ok = imwrite(outPath.string(), canvas, params);
+    if (!ok) return "";
+
+    return outPath.generic_string();
 }
 
 // =====================
@@ -316,6 +410,11 @@ struct Cand {
     double wMm = 0.0;
     double hMm = 0.0;
     double ms = 0.0;
+
+    RotatedRect rr;
+    bool detected = false;
+
+    Mat roiImg;
 };
 
 static void KeepTopK(vector<Cand>& v, int K) {
@@ -336,9 +435,6 @@ int main() {
 
     int deviceIndex = 1;
 
-    // === Ω«ºº∞Ë ±‚¡ÿ(mm): ¿⁄∑Œ 50mm ===
-    double realMm = 50.0;
-
     double mmPerPx = 0.0;
     string yamlPath = "scale.yaml";
 
@@ -348,18 +444,13 @@ int main() {
 
     EnsureJsonArrayFile(jsonPath);
 
-    // ===== YAML ∑ŒµÂ =====
+    // ===== YAML Î°úÎìú =====
     if (FileExists(yamlPath)) {
         FileStorage fs(yamlPath, FileStorage::READ);
         if (fs.isOpened()) {
             double loadedMmPerPx = 0.0;
             fs["mmPerPx"] >> loadedMmPerPx;
             if (loadedMmPerPx > 0.0) mmPerPx = loadedMmPerPx;
-
-            double loadedRealMm = 0.0;
-            if (!fs["realMm"].empty()) fs["realMm"] >> loadedRealMm;
-            if (loadedRealMm > 0.0) realMm = loadedRealMm;
-
             fs.release();
         }
     }
@@ -367,8 +458,8 @@ int main() {
         WriteTextFile(statusPath,
             "{\n"
             "  \"ok\": true,\n"
-            "  \"note\": \"scale.yaml not found. Press 'w' and click 2 points x5 to create it.\",\n"
-            "  \"hint\": \"w -> click A,B (50mm) repeat 5 times\"\n"
+            "  \"note\": \"scale.yaml not found. Please create scale.yaml (mmPerPx) before measurement.\",\n"
+            "  \"hint\": \"Create scale.yaml with key mmPerPx\"\n"
             "}\n");
     }
 
@@ -387,11 +478,21 @@ int main() {
     cap.set(CAP_PROP_FRAME_WIDTH, 1920);
     cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
 
+    int actualWidth = (int)cap.get(CAP_PROP_FRAME_WIDTH);
+    int actualHeight = (int)cap.get(CAP_PROP_FRAME_HEIGHT);
+    cout << "[CAMERA] Actual resolution: " << actualWidth << "x" << actualHeight << "\n";
+
     Rect roi(710, 50, 550, 1000);
 
-    namedWindow("roi_view", WINDOW_NORMAL);
-    resizeWindow("roi_view", 700, 700);
-    setMouseCallback("roi_view", OnMouse, nullptr);
+    if (roi.x + roi.width > actualWidth) {
+        roi.width = actualWidth - roi.x;
+    }
+    if (roi.y + roi.height > actualHeight) {
+        roi.height = actualHeight - roi.y;
+    }
+
+    cout << "[ROI] Adjusted ROI: x=" << roi.x << " y=" << roi.y
+        << " width=" << roi.width << " height=" << roi.height << "\n";
 
     // ===== Modbus connect =====
     modbus_t* ctx = ConnectModbus(PLC_IP, PLC_PORT);
@@ -401,19 +502,17 @@ int main() {
     }
     cout << "[MODBUS] connected\n";
 
-    // æ»¿¸ OFF
+    // ÏïàÏ†Ñ OFF
     WriteCoil(ctx, COIL_BASE, false);
     WriteCoil(ctx, COIL_TOP, false);
 
     Mat frame;
 
-    // «¡∑π¿” ≈∏¿”æ∆øÙ
     int64 startTicks = getTickCount();
     double freq = getTickFrequency();
 
     int invalidRoiStreak = 0;
 
-    // TOP-K ∆Ú±’
     const int TOP_K = 1;
     vector<Cand> buf;
 
@@ -423,16 +522,14 @@ int main() {
     const int presentNeed = 2;
     const int absentNeed = 1;
 
-    // ===== ∆Æ∏Æ∞≈ ªÛ≈¬ =====
     bool prevStart = false;
     bool busyWaitStartLow = false;
-    bool armed = false; // rising-edge ¿Ã»ƒ √¯¡§ «„øÎ
+    bool armed = false;
 
-    cout << "[RUN] waiting START rising-edge... (q/ESC quit)\n";
+    cout << "[RUN] waiting START rising-edge... (CTRL+C to quit)\n";
 
     for (;;) {
-
-        // («ŸΩ…) ∆ﬁΩ∫ OFF ≈∏¿Ãπ÷ √º≈© (ΩΩ∏≥ æ¯¿Ω)
+        // ÌéÑÏä§ OFF ÌÉÄÏù¥Î∞ç Ï≤¥ÌÅ¨
         UpdatePulse(ctx);
 
         cap >> frame;
@@ -446,24 +543,18 @@ int main() {
                     "  \"reason\": \"frame empty timeout\",\n"
                     "  \"hint\": \"Capture card may not be delivering frames yet\"\n"
                     "}\n");
-                return -1;
+                break;
             }
             continue;
         }
         startTicks = getTickCount();
 
-        // ===== PLC START ¿–±‚ + ≈ÎΩ≈ ªÛ≈¬ «•Ω√øÎ æ˜µ•¿Ã∆Æ =====
+        // ===== PLC START ÏùΩÍ∏∞ =====
         bool start = false;
         if (!ReadCoil(ctx, START_COIL, start)) {
-            g_mbOnline = false;
-            g_lastMbFailMs = NowMillis();
             cerr << "[MODBUS] read START failed: " << modbus_strerror(errno) << "\n";
             this_thread::sleep_for(chrono::milliseconds(5));
             continue;
-        }
-        else {
-            g_mbOnline = true;
-            g_lastMbOkMs = NowMillis();
         }
 
         bool rising = (start && !prevStart);
@@ -485,6 +576,7 @@ int main() {
             absentStreak = 0;
         }
 
+        // ‚úÖ ROI Î≤îÏúÑ Ï≤¥ÌÅ¨
         Rect r = roi & Rect(0, 0, frame.cols, frame.rows);
         if (r.width <= 0 || r.height <= 0) {
             invalidRoiStreak++;
@@ -498,7 +590,7 @@ int main() {
                     << "  \"roi\": [" << roi.x << "," << roi.y << "," << roi.width << "," << roi.height << "]\n"
                     << "}\n";
                 WriteTextFile(statusPath, ss.str());
-                return -1;
+                break;
             }
             continue;
         }
@@ -506,10 +598,9 @@ int main() {
 
         int64 t0 = getTickCount();
 
-        // NOTE: clone¥¬ ∫ÒøÎ ≈≠. «œ¡ˆ∏∏ »≠∏È «•Ω√/±◊∏Æ±‚ ∂ßπÆø° ¿Ø¡ˆ.
         Mat roiFrame = frame(r).clone();
 
-        // ===== ±‚¡∏ ≈Ω¡ˆ ∆ƒ¿Ã«¡∂Û¿Œ ¿Ø¡ˆ =====
+        // ===== ÌÉêÏßÄ ÌååÏù¥ÌîÑÎùºÏù∏ =====
         Mat hsv;
         cvtColor(roiFrame, hsv, COLOR_BGR2HSV);
 
@@ -568,69 +659,14 @@ int main() {
             }
         }
 
-        if (detected) {
-            Point2f pts[4];
-            rr.points(pts);
-            for (int k = 0; k < 4; k++) {
-                line(roiFrame, pts[k], pts[(k + 1) % 4], Scalar(0, 255, 0), 2);
-            }
-        }
-
         int64 t1 = getTickCount();
         double elapsedMs = (t1 - t0) * 1000.0 / freq;
 
-        // present/absent
         if (detected) { presentStreak++; absentStreak = 0; }
         else { absentStreak++; presentStreak = 0; }
 
-        // ===== ƒ∂∏Æ∫Í∑π¿Ãº«(±‚¡∏ ¿Ø¡ˆ) =====
-        if (g_calibActive && g_pairPts.size() == 2) {
-            double dx = (double)g_pairPts[0].x - (double)g_pairPts[1].x;
-            double dy = (double)g_pairPts[0].y - (double)g_pairPts[1].y;
-            double distPx = sqrt(dx * dx + dy * dy);
-
-            if (distPx > 1.0) {
-                double cand = realMm / distPx;
-
-                g_lastDistPx = distPx;
-                g_lastCand = cand;
-                g_mmPerPxCandList.push_back(cand);
-                g_pairDoneJustNow = true;
-
-                cout << "[CALIB] " << g_mmPerPxCandList.size() << "/" << g_calibNeed
-                    << " distPx=" << fixed << setprecision(3) << distPx
-                    << " cand=" << fixed << setprecision(12) << cand << "\n";
-
-                g_pairPts.clear();
-
-                if ((int)g_mmPerPxCandList.size() >= g_calibNeed) {
-                    double newMmPerPx = Avg(g_mmPerPxCandList);
-
-                    bool ok = SaveScaleYaml(yamlPath, newMmPerPx, realMm,
-                        (int)g_mmPerPxCandList.size(),
-                        "avg", g_mmPerPxCandList);
-
-                    if (ok) {
-                        mmPerPx = newMmPerPx;
-                        cout << "[CALIB] DONE. mmPerPx=" << fixed << setprecision(12) << mmPerPx << "\n";
-                    }
-                    else {
-                        cout << "[CALIB] Failed to write scale.yaml\n";
-                    }
-
-                    g_calibActive = false;
-                    g_pairPts.clear();
-                    g_mmPerPxCandList.clear();
-                }
-            }
-            else {
-                cout << "[CALIB] distPx too small.\n";
-                g_pairPts.clear();
-            }
-        }
-
         // ==========================
-        // ∆Æ∏Æ∞≈ ±‚π› √¯¡§/¿˙¿Â/√‚∑¬
+        // Ï∏°Ï†ï/Ï†ÄÏû•/Ï∂úÎ†•
         // ==========================
         if (armed && mmPerPx > 0.0) {
             if (inCooldown) {
@@ -648,6 +684,9 @@ int main() {
                     c.wMm = wOut;
                     c.hMm = hOut;
                     c.ms = elapsedMs;
+                    c.rr = rr;
+                    c.detected = detected;
+                    c.roiImg = roiFrame.clone();
 
                     buf.push_back(c);
                     KeepTopK(buf, TOP_K);
@@ -666,14 +705,26 @@ int main() {
                         string type = DecideTypeByX(avgW);
                         labelCounter++;
 
-                        // ===== PLC ∆ﬁΩ∫ ∏’¿˙ (¡Ô∞¢ π›¿¿) =====
-                        int targetCoil = (type == "BASE") ? COIL_BASE : COIL_TOP; // TOP/defect -> TOPƒ⁄¿œ
+                        // ===== PLC ÌéÑÏä§ =====
+                        int targetCoil = (type == "BASE") ? COIL_BASE : COIL_TOP;
                         bool pulseOk = StartPulse(ctx, targetCoil);
                         if (!pulseOk) {
                             cerr << "[MODBUS] StartPulse failed: " << modbus_strerror(errno) << "\n";
                         }
 
-                        // ===== JSON ¿˙¿Â: time_kst, x, y, ms, type =====
+                        // ===== Ïù¥ÎØ∏ÏßÄ Ï†ÄÏû• =====
+                        string imgPath = SaveMeasuredCroppedJpg_CadStyle(
+                            buf[0].roiImg,
+                            buf[0].detected,
+                            buf[0].rr,
+                            avgW,
+                            avgH,
+                            labelCounter,
+                            type,
+                            mmPerPx
+                        );
+
+                        // ===== JSON Ï†ÄÏû• =====
                         string timeKst = NowKstString();
 
                         ostringstream rec;
@@ -682,7 +733,8 @@ int main() {
                         rec << "    \"x\": " << fixed << setprecision(3) << avgW << ",\n";
                         rec << "    \"y\": " << fixed << setprecision(3) << avgH << ",\n";
                         rec << "    \"ms\": " << fixed << setprecision(3) << avgMs << ",\n";
-                        rec << "    \"type\": \"" << type << "\"\n";
+                        rec << "    \"type\": \"" << type << "\",\n";
+                        rec << "    \"image\": \"" << imgPath << "\"\n";
                         rec << "  }";
 
                         bool ok = AppendJsonArray(jsonPath, rec.str());
@@ -695,18 +747,11 @@ int main() {
                                 << "  \"x\": " << fixed << setprecision(3) << avgW << ",\n"
                                 << "  \"y\": " << fixed << setprecision(3) << avgH << ",\n"
                                 << "  \"ms\": " << fixed << setprecision(3) << avgMs << ",\n"
-                                << "  \"type\": \"" << type << "\"\n"
+                                << "  \"type\": \"" << type << "\",\n"
+                                << "  \"image\": \"" << imgPath << "\"\n"
                                 << "}\n";
                             WriteTextFile(statusPath, ss.str());
                         }
-
-                        // UI ∏∂¡ˆ∏∑ ∞·∞˙ ∞ªΩ≈
-                        g_lastType = type;
-                        g_lastTimeKst = timeKst;
-                        g_lastX = avgW;
-                        g_lastY = avgH;
-                        g_lastMs = avgMs;
-                        g_lastCoil = targetCoil;
 
                         cout << "[SAVED] label=" << labelCounter
                             << " time_kst=" << timeKst
@@ -715,121 +760,29 @@ int main() {
                             << " type=" << type
                             << " ms=" << fixed << setprecision(3) << avgMs
                             << " pulse=" << (pulseOk ? "OK" : "FAIL")
+                            << " image=" << imgPath
                             << "\n";
 
-                        // ¿Ãπ¯ ∆Æ∏Æ∞≈ ¡æ∑·: START∞° 0¿Ã µ… ∂ß±Ó¡ˆ ¿ÁΩ««‡ ±›¡ˆ
                         armed = false;
                         busyWaitStartLow = true;
-
                         inCooldown = true;
+
                         buf.clear();
                     }
                 }
             }
         }
-
-        // ==========================
-        // UI ≈ÿΩ∫∆Æ
-        // ==========================
-        {
-            int tx = 10, ty = 24;
-
-            ostringstream ss;
-            ss << "START=" << (start ? 1 : 0)
-                << "  state=" << (busyWaitStartLow ? "BUSY(wait START=0)" : (armed ? "ARMED" : "IDLE"))
-                << "  mmPerPx=" << fixed << setprecision(12) << mmPerPx
-                << "  buf=" << (int)buf.size() << "/" << TOP_K
-                << "  pulse=" << (g_pulseActive ? "ON" : "OFF");
-            putText(roiFrame, ss.str(), Point(tx, ty), FONT_HERSHEY_SIMPLEX, 0.65, Scalar(255, 255, 255), 2);
-
-            putText(roiFrame, "[w] calib  [q/ESC] quit", Point(tx, ty + 28),
-                FONT_HERSHEY_SIMPLEX, 0.56, Scalar(255, 255, 255), 2);
-
-            if (detected) {
-                ostringstream ss4;
-                ss4 << "px: long=" << fixed << setprecision(1) << longSidePx
-                    << " short=" << fixed << setprecision(1) << shortSidePx;
-                putText(roiFrame, ss4.str(), Point(tx, ty + 56), FONT_HERSHEY_SIMPLEX, 0.56, Scalar(0, 255, 0), 2);
-
-                if (mmPerPx > 0.0) {
-                    ostringstream ss5;
-                    ss5 << "mm: W(long)=" << fixed << setprecision(2) << wOut
-                        << " H(short)=" << fixed << setprecision(2) << hOut;
-                    putText(roiFrame, ss5.str(), Point(tx, ty + 84), FONT_HERSHEY_SIMPLEX, 0.56, Scalar(0, 255, 0), 2);
-                }
-            }
-            else {
-                putText(roiFrame, "No detection", Point(tx, ty + 56),
-                    FONT_HERSHEY_SIMPLEX, 0.62, Scalar(0, 0, 255), 2);
-            }
-
-            // ≈ÎΩ≈ ªÛ≈¬ + ∏∂¡ˆ∏∑ √‚∑¬∞™ «•Ω√
-            {
-                long long nowMs = NowMillis();
-
-                ostringstream sMb;
-                sMb << "MODBUS=" << (g_mbOnline ? "ONLINE" : "OFFLINE");
-                if (g_mbOnline && g_lastMbOkMs > 0) sMb << "  lastOK(msAgo)=" << (nowMs - g_lastMbOkMs);
-                if (!g_mbOnline && g_lastMbFailMs > 0) sMb << "  lastFail(msAgo)=" << (nowMs - g_lastMbFailMs);
-
-                putText(roiFrame, sMb.str(), Point(tx, ty + 112),
-                    FONT_HERSHEY_SIMPLEX, 0.56,
-                    g_mbOnline ? Scalar(0, 255, 0) : Scalar(0, 0, 255), 2);
-
-                ostringstream sOut;
-                sOut << "LAST: type=" << g_lastType
-                    << " coil=" << g_lastCoil
-                    << " x=" << fixed << setprecision(2) << g_lastX
-                    << " y=" << fixed << setprecision(2) << g_lastY
-                    << " ms=" << fixed << setprecision(2) << g_lastMs;
-
-                putText(roiFrame, sOut.str(), Point(tx, ty + 140),
-                    FONT_HERSHEY_SIMPLEX, 0.56, Scalar(255, 255, 0), 2);
-
-                ostringstream sTime;
-                sTime << "time_kst=" << g_lastTimeKst;
-                putText(roiFrame, sTime.str(), Point(tx, ty + 168),
-                    FONT_HERSHEY_SIMPLEX, 0.56, Scalar(255, 255, 0), 2);
-            }
-        }
-
-        imshow("roi_view", roiFrame);
-
-        int key = waitKey(1);
-        if (key == 'q' || key == 27) break;
-
-        if (key == 'w') {
-            g_calibActive = true;
-            g_pairPts.clear();
-            g_mmPerPxCandList.clear();
-            g_lastDistPx = 0.0;
-            g_lastCand = 0.0;
-            cout << "[CALIB] START: click 2 points for 50mm, repeat 5 times.\n";
-        }
-        if (key == 'r') {
-            if (g_calibActive) {
-                g_pairPts.clear();
-                cout << "[CALIB] current pair reset.\n";
-            }
-        }
-        if (key == 'c') {
-            g_calibActive = false;
-            g_pairPts.clear();
-            g_mmPerPxCandList.clear();
-            cout << "[CALIB] canceled.\n";
-        }
-
-        // ≥ π´ ≈´ ΩΩ∏≥ ±›¡ˆ. « ø‰«œ∏È 0~1ms ¡§µµ∏∏
-        // this_thread::sleep_for(chrono::milliseconds(1));
     }
 
     // cleanup
-    WriteCoil(ctx, COIL_BASE, false);
-    WriteCoil(ctx, COIL_TOP, false);
+    if (ctx) {
+        WriteCoil(ctx, COIL_BASE, false);
+        WriteCoil(ctx, COIL_TOP, false);
 
-    modbus_close(ctx);
-    modbus_free(ctx);
-    ctx = nullptr;
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = nullptr;
+    }
 
     cap.release();
     return 0;

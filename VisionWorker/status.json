@@ -1,5 +1,9 @@
 {
-  "ok": false,
-  "reason": "camera open failed",
-  "hint": "Try deviceIndex 0/1/2 or remove CAP_DSHOW"
+  "ok": true,
+  "time_kst": "2026-02-03 12:32:52.363+09:00",
+  "x": 59.740,
+  "y": 58.939,
+  "ms": 3.497,
+  "type": "TOP",
+  "image": "captures/measure_20260203_123252_358_L1.jpg"
 }
