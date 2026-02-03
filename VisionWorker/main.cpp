@@ -234,7 +234,7 @@ static double SharpnessScore(const Mat& bgrOrGray) {
 // =====================
 // 저장 폴더/파일명
 // =====================
-static string g_captureDir = "captures";
+static string g_captureDir = "Visioncaptures";
 
 static inline string NowFileStamp() {
     using clock = chrono::system_clock;

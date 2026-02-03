@@ -37,7 +37,7 @@ static const int COIL_BLUE = 103;
 static const int COIL_NONE = 104;
 
 // Project paths
-static const string CAPTURE_DIR = "./captures";
+static const string CAPTURE_DIR = "./Colorcaptures";
 static const string HISTORY_JSON = "./color_history.json";
 static const string CURRENT_JSON = "./color_current.json";
 
