@@ -22,7 +22,13 @@ namespace factory_automation_system_FAS_.Services
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            _connStr = config.GetSection("ConnectionStrings")["MariaDbConnection"];
+            // [노란 줄 해결] null 방어 코드
+            _connStr = config.GetSection("ConnectionStrings")["MariaDbConnection"] ?? "";
+
+            if (string.IsNullOrEmpty(_connStr))
+            {
+                System.Diagnostics.Debug.WriteLine("경고: MariaDbConnection 설정이 appsettings.json에 없습니다.");
+            }
         }
 
         // 1. DB 연결 상태 체크
@@ -35,22 +41,20 @@ namespace factory_automation_system_FAS_.Services
             }
         }
 
-        // 2. JSON 파일을 읽어 VisionEvent 테이블에 저장 (사용자 지정 경로 사용)
+        // 2. [신규/수정] 새 테이블 구조에 맞춰 JSON 데이터 저장
         public async Task<bool> InsertVisionEventFromJsonAsync(int convId)
         {
-            // [팩트체크] 파일 탐색기 경로 뒤에 파일명을 명시해야 합니다.
-            string jsonPath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\output.json";
+            // 실제 파일 경로 (VisionWorker 결과물)
+            string jsonPath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\result.json";
 
             try
             {
-                // 파일 존재 여부 확인
                 if (!File.Exists(jsonPath))
                 {
                     System.Diagnostics.Debug.WriteLine($"파일이 없습니다: {jsonPath}");
                     return false;
                 }
 
-                // [권장] C++ 프로그램과 충돌 방지를 위한 공유 읽기 모드
                 string jsonContent;
                 using (var stream = new FileStream(jsonPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(stream))
@@ -58,21 +62,32 @@ namespace factory_automation_system_FAS_.Services
                     jsonContent = await reader.ReadToEndAsync();
                 }
 
-                var data = Newtonsoft.Json.Linq.JObject.Parse(jsonContent);
+                // [팩트체크] 제공해주신 JSON은 배열 형태이므로 JArray로 파싱 후 마지막(최신) 항목 추출
+                var jsonArray = JArray.Parse(jsonContent);
+                var data = jsonArray.Last;
+
+                if (data == null) return false;
 
                 using (var conn = new MySqlConnection(_connStr))
                 {
-                    string sql = @"INSERT INTO VisionEvent (conv_id, image_ref, detected_class, confidence, ts, meta) 
-                           VALUES (@convId, @imageRef, @class, @conf, @ts, @meta)";
+                    // 새로 생성하신 CREATE TABLE 구조와 1:1 매칭되는 SQL
+                    string sql = @"INSERT INTO VisionEvent 
+                                   (conv_id, time_kst, x, y, ms, type, image, detected_class, confidence, meta) 
+                                   VALUES 
+                                   (@convId, @timeKst, @x, @y, @ms, @type, @image, @class, @conf, @meta)";
 
                     var parameters = new
                     {
                         convId = convId,
-                        imageRef = data["source"]?.ToString(),
-                        @class = data["detected_color"]?.ToString() ?? "Box",
-                        conf = 1.0,
-                        ts = DateTime.Parse(data["ts"]?.ToString() ?? DateTime.Now.ToString()),
-                        meta = jsonContent
+                        timeKst = DateTime.Parse(data["time_kst"]?.ToString() ?? DateTime.Now.ToString()),
+                        x = data["x"]?.ToObject<double>() ?? 0,
+                        y = data["y"]?.ToObject<double>() ?? 0,
+                        ms = data["ms"]?.ToObject<double>() ?? 0,
+                        type = data["type"]?.ToString(),
+                        image = data["image"]?.ToString(),
+                        @class = "NORMAL", // 필요 시 분석 로직 추가
+                        conf = 1.0f,
+                        meta = data.ToString() // 해당 JSON 오브젝트만 백업
                     };
 
                     return (await conn.ExecuteAsync(sql, parameters)) > 0;
@@ -80,17 +95,18 @@ namespace factory_automation_system_FAS_.Services
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"상세 에러: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"상세 에러: {ex.Message}");
                 return false;
             }
         }
 
-        // 3. 비전 검사 최신 데이터 가져오기
+        // 3. 비전 검사 최신 데이터 가져오기 (WPF 리스트 출력용)
         public async Task<List<VisionEvent>> GetRecentVisionEventsAsync(int limit = 50)
         {
             using (var conn = new MySqlConnection(_connStr))
             {
-                string sql = "SELECT * FROM VisionEvent ORDER BY ts DESC LIMIT @limit";
+                // 최근 순으로 정렬하여 새 필드들을 포함해 가져옴
+                string sql = "SELECT * FROM VisionEvent ORDER BY time_kst DESC LIMIT @limit";
                 return (await conn.QueryAsync<VisionEvent>(sql, new { limit })).ToList();
             }
         }
