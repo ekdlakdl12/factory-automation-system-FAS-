@@ -7,7 +7,9 @@ using System.Windows;
 using System.Windows.Media;
 using factory_automation_system_FAS_.ViewModels;
 using factory_automation_system_FAS_.Models;
+using factory_automation_system_FAS_.Views; // VisionWindow 참조를 위해 추가
 using WpfAppModbus;
+using System.Linq; // Window 제어를 위한 Linq 추가
 
 namespace factory_automation_system_FAS_
 {
@@ -30,11 +32,34 @@ namespace factory_automation_system_FAS_
             _modbusService = new ModbusService();
         }
 
-        // [팩트체크] 프로그램 종료 시 백그라운드 프로세스까지 확실히 종료하여 '파일 잠금' 에러 방지
+        // [추가] 비전 창 열기 버튼 이벤트
+        private void BtnOpenVision_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 이미 열려있는 창이 있는지 확인
+                var existingWindow = Application.Current.Windows.OfType<VisionWindow>().FirstOrDefault();
+                if (existingWindow != null)
+                {
+                    existingWindow.Activate(); // 이미 있으면 앞으로 가져옴
+                    return;
+                }
+
+                // 새 비전 창 생성 및 출력
+                VisionWindow visionWin = new VisionWindow();
+                visionWin.Owner = this; // 메인 창이 닫히면 함께 종료됨
+                visionWin.Show();
+                AppendLog("비전 모니터링 창 활성화");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"비전 창 열기 실패: {ex.Message}");
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
-
             try
             {
                 _monitoringCts?.Cancel();
@@ -45,7 +70,6 @@ namespace factory_automation_system_FAS_
             catch { }
             finally
             {
-                // 프로세스를 완전히 종료하여 빌드 오류 재발 방지
                 Application.Current.Shutdown();
                 System.Diagnostics.Process.GetCurrentProcess().Kill();
             }
@@ -84,7 +108,6 @@ namespace factory_automation_system_FAS_
                     try
                     {
                         ushort[] outputs = await _modbusService.ReadRegistersAsync(2000, 130);
-
                         if (outputs != null)
                         {
                             Dispatcher.Invoke(() => {
@@ -126,8 +149,6 @@ namespace factory_automation_system_FAS_
                     line_name = "Main_Line_A",
                     status = _viewModel.IsALineRunning ? "RUNNING" : "IDLE"
                 };
-
-                // 실제 DB 저장 로직 (DbContext 등) 필요 시 여기에 추가
             }
             catch (Exception ex) { AppendLog($"DB 모델 저장 실패: {ex.Message}"); }
         }
