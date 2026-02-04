@@ -1,0 +1,46 @@
+[
+  {
+    "time": "2026-02-04 13:50:17.810",
+    "label": "r1",
+    "color": "RED",
+    "count": 1,
+    "image": "./Colorcaptures/color_r1.jpg"
+  ,
+    "time_kst": "2026-02-04 13:52:08.128+09:00",
+    "x": 59.801,
+    "y": 46.416,
+    "ms": 4.131,
+    "type": "TOP"
+},
+  {
+    "time": "2026-02-04 13:50:23.809",
+    "label": "g1",
+    "color": "GREEN",
+    "count": 1,
+    "image": "./Colorcaptures/color_g1.jpg"
+  },
+  {
+    "time": "2026-02-04 13:50:41.791",
+    "label": "r2",
+    "color": "RED",
+    "count": 2,
+    "image": "./Colorcaptures/color_r2.jpg",
+    "x": 135.198,
+    "y": 66.639,
+    "ms": 3.527,
+    "type": "BASE"
+  },
+  {
+    "time": "2026-02-04 13:50:51.794",
+    "label": "r3",
+    "color": "RED",
+    "count": 3,
+    "image": "./Colorcaptures/color_r3.jpg"
+  ,
+    "time_kst": "2026-02-04 13:52:51.833+09:00",
+    "x": 59.825,
+    "y": 46.696,
+    "ms": 3.444,
+    "type": "TOP"
+}
+]

@@ -11,10 +11,8 @@
 #include <chrono>
 #include <thread>
 #include <cstdlib>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 
-#pragma comment(lib, "ws2_32.lib")
+#include <modbus/modbus.h>
 
 using namespace cv;
 using namespace std;
@@ -22,24 +20,34 @@ using namespace std;
 // =====================
 // USER CONFIG
 // =====================
+static const char* PLC_IP = "192.168.0.202";
+static const int   PLC_PORT = 502;
+
+// PLC -> PC 트리거 코일
+static const int START_COIL = 100;
+
+// PC -> PLC 원-핫 출력 코일(색상)
+static const int BASE_ADDR_100 = 100;
+static const int COIL_GREEN = BASE_ADDR_100 + 1; // 101
+static const int COIL_BLUE = BASE_ADDR_100 + 2; // 102
+static const int COIL_RED = BASE_ADDR_100 + 3; // 103
+static const int COIL_NONE = BASE_ADDR_100 + 4; // 104
+
+static const int PULSE_MS = 2000; // 코일 ON 유지 시간(ms)
+
+// 재접속 정책
+static const int RECONNECT_MIN_MS = 5000;
+static const int RECONNECT_MAX_MS = 10000;
+
+// Camera
 static int  DEVICE_INDEX = 1;
 static bool USE_DSHOW = true;
 static int  CAM_W = 1280;
 static int  CAM_H = 720;
 
-// Modbus TCP Configuration
-static const char* PLC_IP = "192.168.0.202";
-static const int   PLC_PORT = 502;
-static const int COIL_TRIGGER = 100;
-static const int COIL_RED = 101;
-static const int COIL_GREEN = 102;
-static const int COIL_BLUE = 103;
-static const int COIL_NONE = 104;
-
-// Project paths
+// Project paths (✅ JSON은 하나만)
 static const string CAPTURE_DIR = "./Colorcaptures";
-static const string HISTORY_JSON = "./color_history.json";
-static const string CURRENT_JSON = "./color_current.json";
+static const string TOTAL_JSON = "./total.json";
 
 // Object ROI detection tuning
 static double MIN_CONTOUR_AREA = 2000.0;
@@ -48,162 +56,6 @@ static int ROI_PAD = 10;
 // Color decision tuning
 static int MIN_COLOR_PIXELS = 100;
 static double MIN_COLOR_RATIO = 0.01;
-
-// =====================
-// Modbus TCP Communication
-// =====================
-class ModbusTcpClient {
-private:
-    SOCKET sock;
-    bool connected;
-    int transactionId;
-
-public:
-    ModbusTcpClient() : sock(INVALID_SOCKET), connected(false), transactionId(0) {
-        WSADATA wsaData;
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            cerr << "[MODBUS] WSAStartup failed\n";
-        }
-    }
-
-    ~ModbusTcpClient() {
-        Disconnect();
-        WSACleanup();
-    }
-
-    bool Connect(const char* ip, int port) {
-        if (connected) return true;
-
-        sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (sock == INVALID_SOCKET) {
-            cerr << "[MODBUS] socket creation failed\n";
-            return false;
-        }
-
-        sockaddr_in serverAddr{};
-        serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(port);
-
-        if (inet_pton(AF_INET, ip, &serverAddr.sin_addr) <= 0) {
-            cerr << "[MODBUS] Invalid IP address\n";
-            closesocket(sock);
-            return false;
-        }
-
-        if (::connect(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-            cerr << "[MODBUS] Connection failed to " << ip << ":" << port << "\n";
-            closesocket(sock);
-            sock = INVALID_SOCKET;
-            return false;
-        }
-
-        connected = true;
-        cout << "[MODBUS] Connected to " << ip << ":" << port << "\n";
-        return true;
-    }
-
-    void Disconnect() {
-        if (sock != INVALID_SOCKET) {
-            closesocket(sock);
-            sock = INVALID_SOCKET;
-        }
-        connected = false;
-    }
-
-    bool IsConnected() const {
-        return connected;
-    }
-
-    bool ReadCoil(int coilAddress, bool& outValue) {
-        if (!connected) {
-            if (!Connect(PLC_IP, PLC_PORT)) {
-                return false;
-            }
-        }
-
-        transactionId++;
-        unsigned char request[12];
-        int idx = 0;
-
-        request[idx++] = (transactionId >> 8) & 0xFF;
-        request[idx++] = transactionId & 0xFF;
-        request[idx++] = 0x00;
-        request[idx++] = 0x00;
-        request[idx++] = 0x00;
-        request[idx++] = 0x06;
-
-        request[idx++] = 0x01;
-        request[idx++] = 0x01;
-        request[idx++] = (coilAddress >> 8) & 0xFF;
-        request[idx++] = coilAddress & 0xFF;
-        request[idx++] = 0x00;
-        request[idx++] = 0x01;
-
-        if (send(sock, (const char*)request, idx, 0) == SOCKET_ERROR) {
-            cerr << "[MODBUS] Send failed\n";
-            Disconnect();
-            return false;
-        }
-
-        unsigned char response[20];
-        int recvLen = recv(sock, (char*)response, sizeof(response), 0);
-        if (recvLen <= 0) {
-            cerr << "[MODBUS] Receive failed\n";
-            Disconnect();
-            return false;
-        }
-
-        if (recvLen >= 9) {
-            outValue = (response[7] & 0x01) != 0;
-            return true;
-        }
-
-        return false;
-    }
-
-    bool WriteCoil(int coilAddress, bool value) {
-        if (!connected) {
-            if (!Connect(PLC_IP, PLC_PORT)) {
-                return false;
-            }
-        }
-
-        transactionId++;
-        unsigned char request[12];
-        int idx = 0;
-
-        request[idx++] = (transactionId >> 8) & 0xFF;
-        request[idx++] = transactionId & 0xFF;
-        request[idx++] = 0x00;
-        request[idx++] = 0x00;
-        request[idx++] = 0x00;
-        request[idx++] = 0x06;
-
-        request[idx++] = 0x01;
-        request[idx++] = 0x05;
-        request[idx++] = (coilAddress >> 8) & 0xFF;
-        request[idx++] = coilAddress & 0xFF;
-        request[idx++] = value ? 0xFF : 0x00;
-        request[idx++] = 0x00;
-
-        if (send(sock, (const char*)request, idx, 0) == SOCKET_ERROR) {
-            cerr << "[MODBUS] Send failed\n";
-            Disconnect();
-            return false;
-        }
-
-        unsigned char response[12];
-        int recvLen = recv(sock, (char*)response, sizeof(response), 0);
-        if (recvLen <= 0) {
-            cerr << "[MODBUS] Receive failed\n";
-            Disconnect();
-            return false;
-        }
-
-        cout << "[MODBUS] Write Coil " << coilAddress << " = " << (value ? "ON" : "OFF") << "\n";
-        return true;
-    }
-};
 
 // =====================
 // File helpers
@@ -250,10 +102,17 @@ static bool AppendJsonArray(const string& path, const string& recordJson)
         else content = "[]";
     }
 
-    auto rtrim = [&](string& s) { while (!s.empty() && isspace((unsigned char)s.back())) s.pop_back(); };
-    auto ltrim = [&](string& s) { size_t i = 0; while (i < s.size() && isspace((unsigned char)s[i])) i++; s.erase(0, i); };
+    auto rtrim = [&](string& s) {
+        while (!s.empty() && isspace((unsigned char)s.back())) s.pop_back();
+        };
+    auto ltrim = [&](string& s) {
+        size_t i = 0;
+        while (i < s.size() && isspace((unsigned char)s[i])) i++;
+        s.erase(0, i);
+        };
 
-    rtrim(content); ltrim(content);
+    rtrim(content);
+    ltrim(content);
     if (content.empty()) content = "[]";
     if (content.front() != '[' || content.back() != ']') content = "[]";
 
@@ -279,61 +138,146 @@ static bool AppendJsonArray(const string& path, const string& recordJson)
 static string NowTimeString()
 {
     using namespace chrono;
-
     auto now = system_clock::now();
     auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-
     time_t t = system_clock::to_time_t(now);
     tm lt{};
-
 #ifdef _WIN32
     localtime_s(&lt, &t);
 #else
     lt = *localtime(&t);
 #endif
-
     ostringstream ss;
     ss << put_time(&lt, "%Y-%m-%d %H:%M:%S")
         << "." << setw(3) << setfill('0') << (int)ms.count();
     return ss.str();
 }
 
-static inline string NowFileStamp()
+static long long NowMillis()
 {
     using clock = chrono::system_clock;
-    auto now = clock::now();
-    auto ms = chrono::duration_cast<chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    return chrono::duration_cast<chrono::milliseconds>(
+        clock::now().time_since_epoch()).count();
+}
 
-    time_t tt = clock::to_time_t(now);
-    tm tmLocal{};
-#ifdef _WIN32
-    localtime_s(&tmLocal, &tt);
-#else
-    localtime_r(&tt, &tmLocal);
-#endif
-
+// =====================
+// Label/Count helpers (✅ total.json 기준으로 color별 count 이어가기)
+// =====================
+static bool ReadAllText(const string& path, string& out)
+{
+    ifstream ifs(path, ios::in);
+    if (!ifs.is_open()) return false;
     ostringstream ss;
-    ss << put_time(&tmLocal, "%Y%m%d_%H%M%S")
-        << '_' << setw(3) << setfill('0') << (int)ms.count();
-    return ss.str();
+    ss << ifs.rdbuf();
+    out = ss.str();
+    return true;
+}
+
+static bool ExtractQuotedValueAt(const string& s, size_t keyPos, string& outVal)
+{
+    // keyPos는 "color" 같은 키가 시작되는 위치라고 가정
+    size_t colon = s.find(':', keyPos);
+    if (colon == string::npos) return false;
+
+    size_t q1 = s.find('"', colon + 1);
+    if (q1 == string::npos) return false;
+    size_t q2 = s.find('"', q1 + 1);
+    if (q2 == string::npos) return false;
+
+    outVal = s.substr(q1 + 1, q2 - (q1 + 1));
+    return true;
+}
+
+static bool ExtractIntValueAfterKey(const string& s, size_t keyPos, int& outInt)
+{
+    size_t colon = s.find(':', keyPos);
+    if (colon == string::npos) return false;
+
+    size_t p = colon + 1;
+    while (p < s.size() && isspace((unsigned char)s[p])) p++;
+
+    bool neg = false;
+    if (p < s.size() && s[p] == '-') { neg = true; p++; }
+
+    if (p >= s.size() || !isdigit((unsigned char)s[p])) return false;
+
+    long long v = 0;
+    while (p < s.size() && isdigit((unsigned char)s[p])) {
+        v = v * 10 + (s[p] - '0');
+        p++;
+    }
+    if (neg) v = -v;
+    outInt = (int)v;
+    return true;
+}
+
+static int GetNextCountFromTotalJson(const string& path, const string& color)
+{
+    // total.json에 누적된 "count" 중 같은 color의 최대값 찾아서 +1
+    // (외부 JSON 라이브러리 없이, 문자열 스캔 방식)
+
+    string s;
+    if (!ReadAllText(path, s)) return 1; // 파일 없으면 1부터
+
+    int maxCount = 0;
+    size_t pos = 0;
+
+    while (true) {
+        size_t colorKey = s.find("\"color\"", pos);
+        if (colorKey == string::npos) break;
+
+        string cval;
+        if (!ExtractQuotedValueAt(s, colorKey, cval)) {
+            pos = colorKey + 7;
+            continue;
+        }
+
+        // 같은 오브젝트 블록 안에서 "count"를 찾기 위해
+        // colorKey 이후 일정 구간(예: 다음 '}'까지)에서 count 탐색
+        size_t objEnd = s.find('}', colorKey);
+        if (objEnd == string::npos) objEnd = min(s.size(), colorKey + 400);
+
+        if (cval == color) {
+            size_t countKey = s.find("\"count\"", colorKey);
+            if (countKey != string::npos && countKey < objEnd) {
+                int cnt = 0;
+                if (ExtractIntValueAfterKey(s, countKey, cnt)) {
+                    if (cnt > maxCount) maxCount = cnt;
+                }
+            }
+        }
+
+        pos = colorKey + 7;
+    }
+
+    return maxCount + 1;
+}
+
+static string MakeLabel(const string& color, int count)
+{
+    char prefix = 'n';
+    if (color == "RED") prefix = 'r';
+    else if (color == "GREEN") prefix = 'g';
+    else if (color == "BLUE") prefix = 'b';
+    else prefix = 'n';
+
+    return string(1, prefix) + to_string(count); // 예: b1, r3, g10
 }
 
 // =====================
 // HSV thresholds
 // =====================
-struct HsvRange {
-    Scalar L;
-    Scalar U;
-};
+struct HsvRange { Scalar L; Scalar U; };
 
 struct ColorThresholds {
-    HsvRange R1{ Scalar(0,   60,  40),  Scalar(12,  255, 255) };
-    HsvRange R2{ Scalar(168, 60,  40),  Scalar(179, 255, 255) };
-    HsvRange G{ Scalar(30,  40,  40),  Scalar(95,  255, 255) };
-    HsvRange B{ Scalar(85,  40,  40),  Scalar(140, 255, 255) };
+    HsvRange R1{ Scalar(0,   60,  40), Scalar(12,  255, 255) };
+    HsvRange R2{ Scalar(168, 60,  40), Scalar(179, 255, 255) };
+    HsvRange G{ Scalar(30,  40,  40), Scalar(95,  255, 255) };
+    HsvRange B{ Scalar(85,  40,  40), Scalar(140, 255, 255) };
 };
 
-static void BuildMasksRGB(const Mat& hsv, Mat& maskR, Mat& maskG, Mat& maskB, const ColorThresholds& th)
+static void BuildMasksRGB(const Mat& hsv, Mat& maskR, Mat& maskG, Mat& maskB,
+    const ColorThresholds& th)
 {
     Mat rA, rB;
     inRange(hsv, th.R1.L, th.R1.U, rA);
@@ -346,28 +290,18 @@ static void BuildMasksRGB(const Mat& hsv, Mat& maskR, Mat& maskG, Mat& maskB, co
     Mat k = getStructuringElement(MORPH_RECT, Size(5, 5));
     morphologyEx(maskR, maskR, MORPH_OPEN, k, Point(-1, -1), 1);
     morphologyEx(maskR, maskR, MORPH_CLOSE, k, Point(-1, -1), 2);
-
     morphologyEx(maskG, maskG, MORPH_OPEN, k, Point(-1, -1), 1);
     morphologyEx(maskG, maskG, MORPH_CLOSE, k, Point(-1, -1), 2);
-
     morphologyEx(maskB, maskB, MORPH_OPEN, k, Point(-1, -1), 1);
     morphologyEx(maskB, maskB, MORPH_CLOSE, k, Point(-1, -1), 2);
 }
 
-static int CountMaskPixels(const Mat& mask) { return countNonZero(mask); }
-
-static int NormalizePixelValue(int pixelCount, int roiPixels)
-{
-    if (roiPixels <= 0) return 1;
-    double ratio = (double)pixelCount / (double)roiPixels;
-    int normalized = (int)(ratio * 255.0) + 1;
-    if (normalized > 256) normalized = 256;
-    if (normalized < 1) normalized = 1;
-    return normalized;
+static int CountMaskPixels(const Mat& mask) {
+    return countNonZero(mask);
 }
 
 // =====================
-// Object ROI by contour
+// Object ROI detection (그대로)
 // =====================
 static bool FindObjectROI(const Mat& bgr, Rect& outRoi)
 {
@@ -396,9 +330,10 @@ static bool FindObjectROI(const Mat& bgr, Rect& outRoi)
     if (bestArea < MIN_CONTOUR_AREA) return false;
 
     Rect br = boundingRect(contours[best]);
-
-    br.x -= ROI_PAD; br.y -= ROI_PAD;
-    br.width += ROI_PAD * 2; br.height += ROI_PAD * 2;
+    br.x -= ROI_PAD;
+    br.y -= ROI_PAD;
+    br.width += ROI_PAD * 2;
+    br.height += ROI_PAD * 2;
 
     Rect imgRect(0, 0, bgr.cols, bgr.rows);
     br = br & imgRect;
@@ -409,57 +344,52 @@ static bool FindObjectROI(const Mat& bgr, Rect& outRoi)
 }
 
 // =====================
-// Image save (크롭된 이미지만)
+// Image save (✅ B안: color_<label>.jpg)
 // =====================
-static string SaveColorCroppedJpg(
+static string SaveColorCroppedJpg_ByLabel(
     const Mat& roiBgr,
-    int rPix,
-    int gPix,
-    int bPix,
-    int labelNo,
-    const string& color
-)
+    const string& label,
+    const string& color)
 {
     std::error_code ec;
     filesystem::create_directories(CAPTURE_DIR, ec);
 
+    // ✅ B안: label만으로 파일명 고정 (timestamp 없음)
+    // 예: Colorcaptures/color_b12.jpg
     ostringstream fn;
-    fn << "color_" << NowFileStamp() << "_L" << labelNo << ".jpg";
+    fn << "color_" << label << ".jpg";
     filesystem::path outPath = filesystem::path(CAPTURE_DIR) / fn.str();
 
     Mat canvas = roiBgr.clone();
-
     int baseLine = 0;
-    ostringstream ss_color;
-    ss_color << "Color: " << color;
-    string colorLabel = ss_color.str();
-    Size colorSz = getTextSize(colorLabel, FONT_HERSHEY_SIMPLEX, 0.8, 1, &baseLine);
 
-    ostringstream ss_pix;
-    ss_pix << "Pixels(R,G,B)=(" << rPix << "," << gPix << "," << bPix << ")";
-    string pixLabel = ss_pix.str();
-    Size pixSz = getTextSize(pixLabel, FONT_HERSHEY_SIMPLEX, 0.6, 1, &baseLine);
+    string t1 = "Label: " + label;
+    string t2 = "Color: " + color;
 
-    Rect bgRect1(10, 10, colorSz.width + 4, colorSz.height + 4);
-    rectangle(canvas, bgRect1, Scalar(255, 255, 255), FILLED);
-    rectangle(canvas, bgRect1, Scalar(0, 0, 0), 1);
+    Size s1 = getTextSize(t1, FONT_HERSHEY_SIMPLEX, 0.8, 1, &baseLine);
+    Size s2 = getTextSize(t2, FONT_HERSHEY_SIMPLEX, 0.8, 1, &baseLine);
 
-    Rect bgRect2(10, 40, pixSz.width + 4, pixSz.height + 4);
-    rectangle(canvas, bgRect2, Scalar(255, 255, 255), FILLED);
-    rectangle(canvas, bgRect2, Scalar(0, 0, 0), 1);
+    Rect bg1(10, 10, s1.width + 6, s1.height + 6);
+    Rect bg2(10, 45, s2.width + 6, s2.height + 6);
 
-    putText(canvas, colorLabel, Point(12, 10 + colorSz.height), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 0), 1);
-    putText(canvas, pixLabel, Point(12, 40 + pixSz.height), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(0, 0, 0), 1);
+    rectangle(canvas, bg1, Scalar(255, 255, 255), FILLED);
+    rectangle(canvas, bg1, Scalar(0, 0, 0), 1);
+    rectangle(canvas, bg2, Scalar(255, 255, 255), FILLED);
+    rectangle(canvas, bg2, Scalar(0, 0, 0), 1);
+
+    putText(canvas, t1, Point(13, 10 + s1.height),
+        FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 0), 1);
+    putText(canvas, t2, Point(13, 45 + s2.height),
+        FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 0), 1);
 
     vector<int> params = { IMWRITE_JPEG_QUALITY, 92 };
-    bool ok = imwrite(outPath.string(), canvas, params);
-    if (!ok) return "";
+    if (!imwrite(outPath.string(), canvas, params)) return "";
 
     return outPath.generic_string();
 }
 
 // =====================
-// Color classify on ROI
+// Color classification (그대로)
 // =====================
 static string ClassifyColorROI(const Mat& roiBgr, const ColorThresholds& th,
     int& outRpix, int& outGpix, int& outBpix)
@@ -471,36 +401,114 @@ static string ClassifyColorROI(const Mat& roiBgr, const ColorThresholds& th,
     Mat maskR, maskG, maskB;
     BuildMasksRGB(hsv, maskR, maskG, maskB, th);
 
-    int rawRPix = CountMaskPixels(maskR);
-    int rawGPix = CountMaskPixels(maskG);
-    int rawBPix = CountMaskPixels(maskB);
+    int rPix = CountMaskPixels(maskR);
+    int gPix = CountMaskPixels(maskG);
+    int bPix = CountMaskPixels(maskB);
 
-    int roiPixels = roiBgr.rows * roiBgr.cols;
-
-    outRpix = NormalizePixelValue(rawRPix, roiPixels);
-    outGpix = NormalizePixelValue(rawGPix, roiPixels);
-    outBpix = NormalizePixelValue(rawBPix, roiPixels);
+    outRpix = rPix;
+    outGpix = gPix;
+    outBpix = bPix;
 
     int bestPix = 0;
     string color = "NONE";
 
-    if (rawRPix > bestPix && rawRPix > rawGPix && rawRPix > rawBPix) {
-        bestPix = rawRPix;
+    if (rPix > bestPix && rPix > gPix && rPix > bPix) {
+        bestPix = rPix;
         color = "RED";
     }
-    else if (rawGPix > bestPix && rawGPix > rawRPix && rawGPix > rawBPix) {
-        bestPix = rawGPix;
+    else if (gPix > bestPix && gPix > rPix && gPix > bPix) {
+        bestPix = gPix;
         color = "GREEN";
     }
-    else if (rawBPix > bestPix && rawBPix > rawRPix && rawBPix > rawGPix) {
-        bestPix = rawBPix;
+    else if (bPix > bestPix && bPix > rPix && bPix > gPix) {
+        bestPix = bPix;
         color = "BLUE";
     }
 
+    int roiPixels = roiBgr.rows * roiBgr.cols;
     double ratio = (roiPixels > 0) ? (double)bestPix / (double)roiPixels : 0.0;
 
-    if (bestPix < MIN_COLOR_PIXELS || ratio < MIN_COLOR_RATIO) return "NONE";
+    if (bestPix < MIN_COLOR_PIXELS || ratio < MIN_COLOR_RATIO)
+        return "NONE";
+
     return color;
+}
+
+// =====================
+// Modbus helpers (그대로)
+// =====================
+static modbus_t* ConnectModbus(const char* ip, int port)
+{
+    modbus_t* ctx = modbus_new_tcp(ip, port);
+    if (!ctx) return nullptr;
+
+    modbus_set_response_timeout(ctx, 0, 300000); // 300ms
+
+    if (modbus_connect(ctx) == -1) {
+        modbus_free(ctx);
+        return nullptr;
+    }
+    return ctx;
+}
+
+static bool WriteCoil(modbus_t* ctx, int addr, bool val)
+{
+    int rc = modbus_write_bit(ctx, addr, val ? 1 : 0);
+    return (rc == 1);
+}
+
+static bool ReadCoil(modbus_t* ctx, int addr, bool& outVal)
+{
+    uint8_t bit = 0;
+    int rc = modbus_read_bits(ctx, addr, 1, &bit);
+    if (rc != 1) return false;
+    outVal = (bit != 0);
+    return true;
+}
+
+static bool SendColorPulse(modbus_t* ctx, const string& color)
+{
+    // 먼저 모두 OFF
+    if (!WriteCoil(ctx, COIL_GREEN, false)) return false;
+    if (!WriteCoil(ctx, COIL_BLUE, false)) return false;
+    if (!WriteCoil(ctx, COIL_RED, false)) return false;
+    if (!WriteCoil(ctx, COIL_NONE, false)) return false;
+
+    int target = COIL_NONE;
+    if (color == "GREEN") target = COIL_GREEN;
+    else if (color == "BLUE") target = COIL_BLUE;
+    else if (color == "RED")  target = COIL_RED;
+
+    // ON
+    if (!WriteCoil(ctx, target, true)) return false;
+    this_thread::sleep_for(chrono::milliseconds(PULSE_MS));
+
+    // OFF
+    if (!WriteCoil(ctx, target, false)) return false;
+
+    return true;
+}
+
+static int NextReconnectDelayMs()
+{
+    static bool seeded = false;
+    if (!seeded) {
+        seeded = true;
+        srand((unsigned int)chrono::high_resolution_clock::now()
+            .time_since_epoch().count());
+    }
+    int span = RECONNECT_MAX_MS - RECONNECT_MIN_MS;
+    return RECONNECT_MIN_MS + (span > 0 ? (rand() % (span + 1)) : 0);
+}
+
+static void MarkDisconnected(modbus_t*& ctx, long long& nextReconnectMs)
+{
+    if (ctx) {
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = nullptr;
+    }
+    nextReconnectMs = NowMillis() + NextReconnectDelayMs();
 }
 
 // =====================
@@ -509,14 +517,22 @@ static string ClassifyColorROI(const Mat& roiBgr, const ColorThresholds& th,
 int main()
 {
     cout << "[CWD] " << filesystem::current_path().string() << "\n";
-    cout << "[MODE] RGB Detection + Modbus TCP (Trigger-Based)\n";
-    cout << "[MODBUS] PLC IP=" << PLC_IP << " PORT=" << PLC_PORT << "\n";
+    cout << "[MODE] RGB Detection + Modbus TCP (libmodbus)\n";
+    cout << "[MODBUS] " << PLC_IP << ":" << PLC_PORT
+        << " | TRIGGER=Coil " << START_COIL << " (rising edge)\n";
+    cout << "[OUTPUT] Results -> G=" << COIL_GREEN
+        << " B=" << COIL_BLUE
+        << " R=" << COIL_RED
+        << " N=" << COIL_NONE
+        << " (pulse=" << PULSE_MS << "ms)\n";
+    cout << "[JSON] " << TOTAL_JSON << " (single file)\n";
+    cout << "[IMG]  " << CAPTURE_DIR << "/color_<label>.jpg\n\n";
 
     std::error_code ec;
     filesystem::create_directories(CAPTURE_DIR, ec);
 
-    if (!EnsureJsonArrayFile(HISTORY_JSON)) {
-        cerr << "EnsureJsonArrayFile failed\n";
+    if (!EnsureJsonArrayFile(TOTAL_JSON)) {
+        cerr << "EnsureJsonArrayFile failed: " << TOTAL_JSON << "\n";
         return -1;
     }
 
@@ -525,142 +541,170 @@ int main()
     else cap.open(DEVICE_INDEX);
 
     if (!cap.isOpened()) {
-        cerr << "camera open failed\n";
+        cerr << "Camera open failed\n";
         return -1;
     }
+
     cap.set(CAP_PROP_FRAME_WIDTH, CAM_W);
     cap.set(CAP_PROP_FRAME_HEIGHT, CAM_H);
+    cout << "[CAMERA] Opened (device " << DEVICE_INDEX << ")\n";
 
-    cout << "[CAMERA] Opened\n";
+    // Modbus 연결
+    modbus_t* ctx = ConnectModbus(PLC_IP, PLC_PORT);
+    long long nextReconnectMs = 0;
 
-    ModbusTcpClient modbus;
+    if (!ctx) {
+        cerr << "[MODBUS] Initial connect failed, will retry...\n";
+        nextReconnectMs = NowMillis() + NextReconnectDelayMs();
+    }
+    else {
+        cout << "[MODBUS] Connected\n";
+        // 안전 OFF
+        WriteCoil(ctx, COIL_GREEN, false);
+        WriteCoil(ctx, COIL_BLUE, false);
+        WriteCoil(ctx, COIL_RED, false);
+        WriteCoil(ctx, COIL_NONE, false);
+    }
+
     ColorThresholds th;
-    int captureCounter = 0;
 
-    cout << "[RUN] Waiting for Modbus trigger (Coil " << COIL_TRIGGER << ")...\n";
+    bool prevStart = false;
+    bool busyWaitStartLow = false;
 
-    bool lastTrigger = false;
-    bool modbusConnected = false;
-    bool initialStateKnown = false;
+    cout << "[READY] Waiting for trigger...\n\n";
 
-    // 프로그램 시작 시에는 절대 촬영 금지.
-    // 한 번이라도 PLC와 연결 후 초기 코일 상태를 읽어 lastTrigger만 초기화한다.
     while (true) {
         Mat frame;
         if (!cap.read(frame) || frame.empty()) {
-            this_thread::sleep_for(chrono::milliseconds(50));
+            this_thread::sleep_for(chrono::milliseconds(10));
             continue;
         }
 
-        // 연결이 되어있지 않다면 연결 시도
-        if (!modbusConnected) {
-            if (modbus.Connect(PLC_IP, PLC_PORT)) {
-                modbusConnected = true;
-                // 연결 직후 초기 코일 상태 읽기 (저장 동작 불발)
-                bool initVal = false;
-                if (modbus.ReadCoil(COIL_TRIGGER, initVal)) {
-                    lastTrigger = initVal;
-                    initialStateKnown = true;
-                    cout << "[MODBUS] Initial trigger state read: " << (lastTrigger ? "ON" : "OFF") << "\n";
-                } else {
-                    // 읽기 실패하면 연결 초기화하고 재시도
-                    modbus.Disconnect();
-                    modbusConnected = false;
-                    initialStateKnown = false;
-                    cout << "[MODBUS] Initial read failed, will retry connect...\n";
-                    this_thread::sleep_for(chrono::milliseconds(1000));
-                    continue;
+        // OFFLINE: 재접속 시도
+        if (!ctx) {
+            long long nowMs = NowMillis();
+            if (nowMs >= nextReconnectMs) {
+                modbus_t* newCtx = ConnectModbus(PLC_IP, PLC_PORT);
+                if (newCtx) {
+                    ctx = newCtx;
+                    cout << "[MODBUS] Reconnected successfully\n";
+
+                    WriteCoil(ctx, COIL_GREEN, false);
+                    WriteCoil(ctx, COIL_BLUE, false);
+                    WriteCoil(ctx, COIL_RED, false);
+                    WriteCoil(ctx, COIL_NONE, false);
+
+                    prevStart = false;
+                    busyWaitStartLow = false;
                 }
-            } else {
-                this_thread::sleep_for(chrono::milliseconds(1000));
-                continue;
+                else {
+                    nextReconnectMs = NowMillis() + NextReconnectDelayMs();
+                }
+            }
+
+            this_thread::sleep_for(chrono::milliseconds(100));
+            continue;
+        }
+
+        // START 코일 읽기
+        bool start = false;
+        if (!ReadCoil(ctx, START_COIL, start)) {
+            cerr << "[MODBUS] Read failed, disconnecting...\n";
+            MarkDisconnected(ctx, nextReconnectMs);
+            continue;
+        }
+
+        bool rising = (start && !prevStart);
+        prevStart = start;
+
+        // Busy 상태: START가 0으로 돌아올 때까지 대기
+        if (busyWaitStartLow) {
+            if (!start) {
+                busyWaitStartLow = false;
             }
         }
 
-        // 연결 및 초기 상태가 확보되었을 때만 트리거 감시
-        if (modbusConnected && initialStateKnown) {
-            bool triggerNow = false;
-            if (!modbus.ReadCoil(COIL_TRIGGER, triggerNow)) {
-                // 읽기 실패 -> 재연결 플로우
-                cout << "[MODBUS] ReadCoil failed, reconnecting...\n";
-                modbus.Disconnect();
-                modbusConnected = false;
-                initialStateKnown = false;
-                this_thread::sleep_for(chrono::milliseconds(500));
-                continue;
+        // Rising Edge 감지 + IDLE 상태
+        if (rising && !busyWaitStartLow) {
+            cout << "[TRIGGER] Detected! Processing...\n";
+
+            Rect objRoi;
+            bool found = FindObjectROI(frame, objRoi);
+
+            string color = "NONE";
+            int rPix = 0, gPix = 0, bPix = 0;
+
+            string label = "";
+            int count = 0;
+            string imgPath = "";
+
+            if (found) {
+                Mat roiBgr = frame(objRoi).clone();
+                color = ClassifyColorROI(roiBgr, th, rPix, gPix, bPix);
+
+                // ✅ color별 count: total.json에서 읽어서 이어가기 (초기화 X)
+                count = GetNextCountFromTotalJson(TOTAL_JSON, color);
+
+                // ✅ label 생성 (b1/r1/g1/n1...)
+                label = MakeLabel(color, count);
+
+                // ✅ B안: 이미지 파일명 = color_<label>.jpg
+                imgPath = SaveColorCroppedJpg_ByLabel(roiBgr, label, color);
+            }
+            else {
+                // 객체 자체를 못 찾았을 때도 로그를 남기고 싶으면 아래 유지
+                // (원치 않으면 found==false일 때는 저장 안 하셔도 됩니다)
+                color = "NONE";
+                count = GetNextCountFromTotalJson(TOTAL_JSON, color);
+                label = MakeLabel(color, count);
+                imgPath = "";
             }
 
-            // OFF -> ON 전환에서만 동작 (최초 실행의 초기 상태는 무시됨)
-            if (triggerNow && !lastTrigger) {
-                cout << "[TRIGGER] Coil " << COIL_TRIGGER << " OFF->ON detected -> Measuring...\n";
+            string tsStr = NowTimeString();
 
-                Rect objRoi;
-                bool found = FindObjectROI(frame, objRoi);
-
-                string color = "NONE";
-                int rPix = 0, gPix = 0, bPix = 0;
-                string imgPath = "";
-
-                if (found) {
-                    Mat roiBgr = frame(objRoi).clone();
-                    color = ClassifyColorROI(roiBgr, th, rPix, gPix, bPix);
-
-                    // 트리거 받았을 때만 이미지 저장
-                    captureCounter++;
-                    imgPath = SaveColorCroppedJpg(roiBgr, rPix, gPix, bPix, captureCounter, color);
-                }
-
-                string tsStr = NowTimeString();
-
-                // 결과 코일 신호 (필요 시 PLC에 알림)
-                int resultCoil = COIL_NONE;
-                if (color == "RED") resultCoil = COIL_RED;
-                else if (color == "GREEN") resultCoil = COIL_GREEN;
-                else if (color == "BLUE") resultCoil = COIL_BLUE;
-
-                // 결과 전송 (성공 여부는 내부에서 로그)
-                modbus.WriteCoil(resultCoil, true);
-
-                // 기록 저장 (이미지 경로 포함)
-                {
-                    ostringstream rec;
-                    rec << "  {\n";
-                    rec << "    \"time\": \"" << tsStr << "\",\n";
-                    rec << "    \"color\": \"" << color << "\",\n";
-                    rec << "    \"pix\": {\"r\": " << rPix << ", \"g\": " << gPix << ", \"b\": " << bPix << "},\n";
-                    rec << "    \"image\": \"" << imgPath << "\"\n";
-                    rec << "  }";
-                    AppendJsonArray(HISTORY_JSON, rec.str());
-                }
-
-                {
-                    ostringstream cur;
-                    cur << "{\n";
-                    cur << "  \"time\": \"" << tsStr << "\",\n";
-                    cur << "  \"color\": \"" << color << "\",\n";
-                    cur << "  \"pix\": {\"r\": " << rPix << ", \"g\": " << gPix << ", \"b\": " << bPix << "},\n";
-                    cur << "  \"image\": \"" << imgPath << "\"\n";
-                    cur << "}\n";
-                    WriteTextFileAtomic(CURRENT_JSON, cur.str());
-                }
-
-                cout << "[MEASUREMENT] #" << captureCounter
-                    << " time=" << tsStr
-                    << " color=" << color
-                    << " pix(r,g,b)=(" << rPix << "," << gPix << "," << bPix << ")"
-                    << " image=" << imgPath
-                    << " result_coil=" << resultCoil << "\n";
+            // ✅ total.json 하나만 저장 (time, color, count, label, image)
+            {
+                ostringstream rec;
+                rec << "  {\n";
+                rec << "    \"time\": \"" << tsStr << "\",\n";
+                rec << "    \"label\": \"" << label << "\",\n";
+                rec << "    \"color\": \"" << color << "\",\n";
+                rec << "    \"count\": " << count << ",\n";
+                rec << "    \"image\": \"" << imgPath << "\"\n";
+                rec << "  }";
+                AppendJsonArray(TOTAL_JSON, rec.str());
             }
 
-            // 상태 갱신
-            lastTrigger = triggerNow;
+            cout << "[RESULT] label=" << label
+                << " | color=" << color
+                << " | count=" << count
+                << " | image=" << imgPath << "\n";
+
+            // PLC로 결과 전송 (그대로)
+            if (!SendColorPulse(ctx, color)) {
+                cerr << "[MODBUS] Pulse send failed\n";
+                MarkDisconnected(ctx, nextReconnectMs);
+            }
+
+            // 다음 트리거 대기
+            busyWaitStartLow = true;
         }
 
         this_thread::sleep_for(chrono::milliseconds(50));
     }
 
+    // Cleanup
+    if (ctx) {
+        WriteCoil(ctx, COIL_GREEN, false);
+        WriteCoil(ctx, COIL_BLUE, false);
+        WriteCoil(ctx, COIL_RED, false);
+        WriteCoil(ctx, COIL_NONE, false);
+
+        modbus_close(ctx);
+        modbus_free(ctx);
+        ctx = nullptr;
+    }
+
     cap.release();
-    modbus.Disconnect();
-    cout << "[EXIT] Program closed normally\n";
     return 0;
 }

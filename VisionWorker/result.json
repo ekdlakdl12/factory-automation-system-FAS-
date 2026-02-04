@@ -1366,5 +1366,85 @@
     "ms": 3.497,
     "type": "TOP",
     "image": "captures/measure_20260203_123252_358_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:08:06.793+09:00",
+    "x": 85.414,
+    "y": 54.076,
+    "ms": 5.243,
+    "type": "BASE",
+    "image": "Visioncaptures/measure_20260204_110806_787_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:23:29.175+09:00",
+    "x": 60.449,
+    "y": 48.359,
+    "ms": 3.055,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_112329_171_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:24:11.004+09:00",
+    "x": 60.328,
+    "y": 59.422,
+    "ms": 2.978,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_112411_000_L2.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:25:46.248+09:00",
+    "x": 60.478,
+    "y": 59.349,
+    "ms": 3.473,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_112546_241_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:27:20.337+09:00",
+    "x": 18.239,
+    "y": 10.718,
+    "ms": 3.179,
+    "type": "defect",
+    "image": "Visioncaptures/measure_20260204_112720_334_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:28:02.837+09:00",
+    "x": 18.167,
+    "y": 10.718,
+    "ms": 3.498,
+    "type": "defect",
+    "image": "Visioncaptures/measure_20260204_112802_835_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:28:34.010+09:00",
+    "x": 60.403,
+    "y": 59.367,
+    "ms": 4.299,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_112834_005_L2.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 11:29:50.335+09:00",
+    "x": 60.335,
+    "y": 59.438,
+    "ms": 2.813,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_112950_330_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 12:28:44.054+09:00",
+    "x": 59.795,
+    "y": 58.986,
+    "ms": 5.968,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_122844_048_L1.jpg"
+  },
+  {
+    "time_kst": "2026-02-04 12:28:52.849+09:00",
+    "x": 59.718,
+    "y": 59.052,
+    "ms": 4.059,
+    "type": "TOP",
+    "image": "Visioncaptures/measure_20260204_122852_844_L2.jpg"
   }
 ]

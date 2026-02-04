@@ -1,0 +1,30 @@
+[
+  {
+    "time": "2026-02-04 13:50:17.810",
+    "label": "r1",
+    "color": "RED",
+    "count": 1,
+    "image": "./Colorcaptures/color_r1.jpg"
+  },
+  {
+    "time": "2026-02-04 13:50:23.809",
+    "label": "g1",
+    "color": "GREEN",
+    "count": 1,
+    "image": "./Colorcaptures/color_g1.jpg"
+  },
+  {
+    "time": "2026-02-04 13:50:41.791",
+    "label": "r2",
+    "color": "RED",
+    "count": 2,
+    "image": "./Colorcaptures/color_r2.jpg"
+  },
+  {
+    "time": "2026-02-04 13:50:51.794",
+    "label": "r3",
+    "color": "RED",
+    "count": 3,
+    "image": "./Colorcaptures/color_r3.jpg"
+  }
+]

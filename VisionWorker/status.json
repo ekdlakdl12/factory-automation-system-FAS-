@@ -1,9 +1,5 @@
 {
-  "ok": true,
-  "time_kst": "2026-02-03 12:32:52.363+09:00",
-  "x": 59.740,
-  "y": 58.939,
-  "ms": 3.497,
-  "type": "TOP",
-  "image": "captures/measure_20260203_123252_358_L1.jpg"
+  "ok": false,
+  "reason": "measure failed or label not found or color=NONE",
+  "hint": "Check total.json has matching label (rN/gN/bN) and color thresholds"
 }
