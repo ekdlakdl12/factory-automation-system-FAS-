@@ -52,11 +52,11 @@ namespace factory_automation_system_FAS_.Services
                 {
                     try
                     {
-                        // JSON 데이터의 필드명과 DB 컬럼명을 1:1로 매칭
+                        // SQL문에 color 컬럼 추가
                         string sql = @"INSERT IGNORE INTO VisionEvent 
-                                       (conv_id, time_kst, x, y, ms, type, image, detected_class, confidence, meta) 
+                                       (conv_id, time_kst, x, y, ms, type, image, color, detected_class, confidence, meta) 
                                        VALUES 
-                                       (@conv_id, @time_kst, @x, @y, @ms, @type, @image, @detected_class, @confidence, @meta)";
+                                       (@conv_id, @time_kst, @x, @y, @ms, @type, @image, @color, @detected_class, @confidence, @meta)";
 
                         foreach (var ev in events)
                         {
@@ -69,6 +69,7 @@ namespace factory_automation_system_FAS_.Services
                                 ms = ev.ms,
                                 type = ev.type ?? "TOP",
                                 image = ev.image,
+                                color = ev.color ?? "NONE", // 추가된 필드
                                 detected_class = ev.detected_class ?? "NORMAL",
                                 confidence = ev.confidence == 0 ? 1.0f : ev.confidence,
                                 meta = ev.meta ?? ""
@@ -89,6 +90,7 @@ namespace factory_automation_system_FAS_.Services
         {
             using (var conn = new MySqlConnection(_connStr))
             {
+                // SELECT 문에 *를 사용하므로 모델(VisionEvent)에 color 프로퍼티가 있다면 자동으로 매핑됩니다.
                 string sql = "SELECT * FROM VisionEvent ORDER BY time_kst DESC LIMIT @limit";
                 var result = await conn.QueryAsync<VisionEvent>(sql, new { limit });
                 return result.ToList();

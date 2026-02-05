@@ -11,7 +11,7 @@ namespace factory_automation_system_FAS_.Models
         [JsonProperty("conv_id")]
         public int conv_id { get; set; }
 
-        [JsonProperty("time_kst")]
+        [JsonProperty("time")] // JSON의 "time" 매핑
         public DateTime time_kst { get; set; }
 
         public double x { get; set; }
@@ -20,7 +20,11 @@ namespace factory_automation_system_FAS_.Models
         public string? type { get; set; }
         public string? image { get; set; }
 
-        [JsonProperty("detected_class")]
+        // 추가: JSON의 "color" 값을 저장
+        [JsonProperty("color")]
+        public string? color { get; set; }
+
+        [JsonProperty("label")] // JSON의 "label" 매핑
         public string? detected_class { get; set; }
 
         public float confidence { get; set; }
@@ -31,8 +35,9 @@ namespace factory_automation_system_FAS_.Models
             get
             {
                 if (string.IsNullOrEmpty(image)) return null;
+                string cleanPath = image.Replace("./", "").Replace("/", @"\");
                 string basePath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\";
-                return Path.Combine(basePath, image.Replace("/", @"\"));
+                return Path.Combine(basePath, cleanPath);
             }
         }
     }

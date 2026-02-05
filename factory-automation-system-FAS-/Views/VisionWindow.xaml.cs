@@ -17,7 +17,9 @@ namespace factory_automation_system_FAS_.Views
     public partial class VisionWindow : Window
     {
         private readonly DatabaseService _dbService = new DatabaseService();
-        private readonly string _jsonPath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\result.json";
+        private readonly string _jsonPath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\total.json";
+
+        // UI와 바인딩되는 컬렉션
         public ObservableCollection<VisionEvent> VisionList { get; set; } = new ObservableCollection<VisionEvent>();
 
         public VisionWindow()
@@ -33,35 +35,42 @@ namespace factory_automation_system_FAS_.Views
             {
                 if (!File.Exists(_jsonPath)) return;
 
-                // 1. JSON 읽기
+                // 1. JSON 파일 로드
                 string jsonContent = await File.ReadAllTextAsync(_jsonPath);
 
-                // 2. 특수 날짜 형식 처리를 위한 컨버터 설정
+                // 2. 날짜 및 시간 포맷 설정 (밀리초 포함)
                 var settings = new JsonSerializerSettings();
-                settings.Converters.Add(new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFK" });
+                settings.Converters.Add(new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff" });
 
+                // 3. 역직렬화 (color 포함된 모델로 변환)
                 var jsonData = JsonConvert.DeserializeObject<List<VisionEvent>>(jsonContent, settings);
 
-                // 3. DB 작업
                 if (jsonData != null && jsonData.Any())
                 {
-                    // DB 연결 확인 (잘못된 DB명 사용 시 여기서 에러 감지)
+                    // 4. DB 저장 (DatabaseService 내부에 color 컬럼 처리가 되어 있어야 함)
                     await _dbService.SaveVisionEventsToDbAsync(jsonData);
 
+                    // 5. DB에서 최신 데이터 50건 조회
                     var dbData = await _dbService.GetRecentVisionEventsAsync(50);
 
+                    // 6. UI 스레드에서 리스트 갱신
                     Application.Current.Dispatcher.Invoke(() => {
                         VisionList.Clear();
-                        foreach (var item in dbData) VisionList.Add(item);
+                        foreach (var item in dbData)
+                        {
+                            VisionList.Add(item);
+                        }
                     });
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"오류 발생: {ex.Message}\n\n[도움말] appsettings.json의 Database 이름이 'fas_monitoring_db'인지 확인하세요.");
+                // DB명 'fas_monitoring_db' 확인 메시지 포함
+                MessageBox.Show($"오류 발생: {ex.Message}\n\n[알림] DB 이름이 'fas_monitoring_db'인지, 'color' 컬럼이 생성되어 있는지 확인하세요.");
             }
         }
 
+        // 데이터 그리드 행 선택 시 이미지 미리보기
         private void dgVisionEvents_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (dgVisionEvents.SelectedItem is VisionEvent selected)
@@ -78,11 +87,19 @@ namespace factory_automation_system_FAS_.Views
                         bitmap.EndInit();
                         imgPreview.Source = bitmap;
                     }
+                    else
+                    {
+                        imgPreview.Source = null;
+                    }
                 }
-                catch { imgPreview.Source = null; }
+                catch
+                {
+                    imgPreview.Source = null;
+                }
             }
         }
 
+        // 새로고침 버튼 클릭 이벤트
         private async void btnRefresh_Click(object sender, RoutedEventArgs e) => await RefreshData();
     }
 }
