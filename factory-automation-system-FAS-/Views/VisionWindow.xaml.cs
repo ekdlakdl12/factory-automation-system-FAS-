@@ -1,9 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using factory_automation_system_FAS_.Models;
 using factory_automation_system_FAS_.Services;
 
@@ -12,39 +17,48 @@ namespace factory_automation_system_FAS_.Views
     public partial class VisionWindow : Window
     {
         private readonly DatabaseService _dbService = new DatabaseService();
-
-        // 데이터 바인딩을 위한 컬렉션
+        private readonly string _jsonPath = @"C:\Users\JUNYEONG\Desktop\VisionWorker\VisionWorker\result.json";
         public ObservableCollection<VisionEvent> VisionList { get; set; } = new ObservableCollection<VisionEvent>();
 
         public VisionWindow()
         {
             InitializeComponent();
-
-            // XAML 바인딩을 위한 Context 연결
             this.DataContext = this;
-
-            // 초기 데이터 로딩
-            LoadData();
+            this.Loaded += async (s, e) => await RefreshData();
         }
 
-        private async void LoadData()
+        private async Task RefreshData()
         {
             try
             {
-                var data = await _dbService.GetRecentVisionEventsAsync(50);
+                if (!File.Exists(_jsonPath)) return;
 
-                VisionList.Clear();
-                if (data != null)
+                // 1. JSON 읽기
+                string jsonContent = await File.ReadAllTextAsync(_jsonPath);
+
+                // 2. 특수 날짜 형식 처리를 위한 컨버터 설정
+                var settings = new JsonSerializerSettings();
+                settings.Converters.Add(new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFK" });
+
+                var jsonData = JsonConvert.DeserializeObject<List<VisionEvent>>(jsonContent, settings);
+
+                // 3. DB 작업
+                if (jsonData != null && jsonData.Any())
                 {
-                    foreach (var item in data)
-                    {
-                        VisionList.Add(item);
-                    }
+                    // DB 연결 확인 (잘못된 DB명 사용 시 여기서 에러 감지)
+                    await _dbService.SaveVisionEventsToDbAsync(jsonData);
+
+                    var dbData = await _dbService.GetRecentVisionEventsAsync(50);
+
+                    Application.Current.Dispatcher.Invoke(() => {
+                        VisionList.Clear();
+                        foreach (var item in dbData) VisionList.Add(item);
+                    });
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[LoadData 에러] {ex.Message}");
+                MessageBox.Show($"오류 발생: {ex.Message}\n\n[도움말] appsettings.json의 Database 이름이 'fas_monitoring_db'인지 확인하세요.");
             }
         }
 
@@ -55,36 +69,20 @@ namespace factory_automation_system_FAS_.Views
                 try
                 {
                     string path = selected.FullImagePath;
-
                     if (!string.IsNullOrEmpty(path) && File.Exists(path))
                     {
-                        // [팩트체크] 비전 프로그램과 충돌 방지를 위해 메모리에 로드 후 파일 연결 해제
                         BitmapImage bitmap = new BitmapImage();
                         bitmap.BeginInit();
                         bitmap.UriSource = new Uri(path, UriKind.Absolute);
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
-
                         imgPreview.Source = bitmap;
-                        txtImagePath.Text = path;
-                    }
-                    else
-                    {
-                        imgPreview.Source = null;
-                        txtImagePath.Text = "파일을 찾을 수 없습니다: " + path;
                     }
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[이미지 로드 에러] {ex.Message}");
-                    imgPreview.Source = null;
-                }
+                catch { imgPreview.Source = null; }
             }
         }
 
-        private void btnRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            LoadData();
-        }
+        private async void btnRefresh_Click(object sender, RoutedEventArgs e) => await RefreshData();
     }
 }
