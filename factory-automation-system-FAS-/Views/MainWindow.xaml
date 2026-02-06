@@ -13,11 +13,9 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-
         <GroupBox Header="데이터베이스 관리" Grid.Row="0" Margin="0,0,0,10">
             <Button x:Name="BtnImportJson" Content="JSON 데이터 DB 가져오기" Click="BtnImportJson_Click" Height="35" Margin="10"/>
         </GroupBox>
-
         <GroupBox Header="PLC Modbus TCP 연결" Grid.Row="1" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Margin="10">
                 <TextBlock Text="IP:" VerticalAlignment="Center" Margin="0,0,5,0"/>
@@ -27,12 +25,10 @@
                 <Button x:Name="BtnPlcConnect" Content="연결" Width="80" Margin="20,0,0,0" Click="BtnPlcConnect_Click"/>
                 <Button x:Name="BtnPlcDisconnect" Content="해제" Width="80" Margin="5,0,0,0" Click="BtnPlcDisconnect_Click" IsEnabled="False"/>
                 <Ellipse x:Name="LedConn" Width="15" Height="15" Fill="Gray" Margin="15,0,0,0"/>
-
                 <Separator Margin="20,0" Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"/>
                 <Button x:Name="BtnOpenVision" Content="비전 모니터링 열기" Width="140" Background="#FF5722" Foreground="White" Click="BtnOpenVision_Click"/>
             </StackPanel>
         </GroupBox>
-
         <GroupBox Header="PLC 레지스터 제어" Grid.Row="2" Margin="0,0,0,10">
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
@@ -51,7 +47,6 @@
                 </StackPanel>
             </Grid>
         </GroupBox>
-
         <TabControl Grid.Row="3">
             <TabItem Header="FAS 실시간 모니터링">
                 <views:FasMainView x:Name="MainControl"/>

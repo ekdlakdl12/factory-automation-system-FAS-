@@ -16,18 +16,13 @@ namespace factory_automation_system_FAS_.Services
 
         public DatabaseService()
         {
-            // appsettings.json에서 연결 문자열 로드
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
-
             _connStr = config.GetSection("ConnectionStrings")["MariaDbConnection"] ?? "";
         }
 
-        /// <summary>
-        /// DB 연결 상태를 확인합니다. (현재 발생한 빌드 에러 해결 포인트)
-        /// </summary>
         public bool CheckConnection()
         {
             try
@@ -45,13 +40,9 @@ namespace factory_automation_system_FAS_.Services
             }
         }
 
-        /// <summary>
-        /// 비전 검사 이벤트 리스트를 DB에 저장합니다.
-        /// </summary>
         public async Task SaveVisionEventsToDbAsync(List<VisionEvent> events)
         {
             if (events == null || !events.Any()) return;
-
             using (var conn = new MySqlConnection(_connStr))
             {
                 await conn.OpenAsync();
@@ -59,12 +50,10 @@ namespace factory_automation_system_FAS_.Services
                 {
                     try
                     {
-                        // SQL문에 barcode 및 color 포함
                         string sql = @"INSERT IGNORE INTO VisionEvent 
                                        (conv_id, barcode, time_kst, x, y, ms, type, image, color, detected_class, confidence) 
                                        VALUES 
                                        (@conv_id, @barcode, @time_kst, @x, @y, @ms, @type, @image, @color, @detected_class, @confidence)";
-
                         foreach (var ev in events)
                         {
                             await conn.ExecuteAsync(sql, new
@@ -93,9 +82,6 @@ namespace factory_automation_system_FAS_.Services
             }
         }
 
-        /// <summary>
-        /// 최근 검사 이력을 조회합니다.
-        /// </summary>
         public async Task<List<VisionEvent>> GetRecentVisionEventsAsync(int limit = 50)
         {
             try

@@ -8,7 +8,7 @@ using System.Windows.Media;
 using factory_automation_system_FAS_.ViewModels;
 using factory_automation_system_FAS_.Models;
 using factory_automation_system_FAS_.Views;
-using factory_automation_system_FAS_.Services; // DatabaseService 사용을 위해 추가
+using factory_automation_system_FAS_.Services;
 using WpfAppModbus;
 using System.Linq;
 
@@ -16,20 +16,19 @@ namespace factory_automation_system_FAS_
 {
     public partial class MainWindow : Window
     {
-        private readonly DatabaseService _dbService = new DatabaseService(); // DB 저장을 위한 서비스 객체
+        private readonly DatabaseService _dbService = new DatabaseService();
         private ModbusService? _modbusService;
         private MainViewModel _viewModel;
         private TcpClient? _arduinoClient;
         private NetworkStream? _arduinoStream;
         private CancellationTokenSource? _monitoringCts;
-        private int _dbSaveCounter = 0; // 주기적 저장을 위한 카운터 (0.5초 * 10 = 5초)
+        private int _dbSaveCounter = 0;
 
         public MainWindow()
         {
             InitializeComponent();
             _viewModel = new MainViewModel();
             this.DataContext = _viewModel;
-
             if (MainControl != null) MainControl.DataContext = _viewModel;
             _modbusService = new ModbusService();
         }
@@ -39,23 +38,17 @@ namespace factory_automation_system_FAS_
         {
             try
             {
-                // 중복 창 열림 방지: 이미 열려있는 VisionWindow가 있는지 확인
                 var existingWindow = Application.Current.Windows.OfType<VisionWindow>().FirstOrDefault();
                 if (existingWindow != null)
                 {
                     existingWindow.Activate();
                     return;
                 }
-
-                VisionWindow visionWin = new VisionWindow();
-                visionWin.Owner = this; // 메인창 종료 시 비전창도 자동 종료되도록 설정
+                VisionWindow visionWin = new VisionWindow { Owner = this };
                 visionWin.Show();
                 AppendLog("비전 모니터링 시스템 활성화");
             }
-            catch (Exception ex)
-            {
-                AppendLog($"비전 창 열기 실패: {ex.Message}");
-            }
+            catch (Exception ex) { AppendLog($"비전 창 열기 실패: {ex.Message}"); }
         }
         #endregion
 
@@ -64,18 +57,13 @@ namespace factory_automation_system_FAS_
         {
             try
             {
-                // PLC Modbus TCP 연결 (사용자 입력 IP/PORT 사용)
                 if (_modbusService != null && await _modbusService.ConnectAsync(TxtIp.Text, int.Parse(TxtPort.Text)))
                 {
                     LedConn.Fill = Brushes.LimeGreen;
                     BtnPlcConnect.IsEnabled = false;
                     BtnPlcDisconnect.IsEnabled = true;
-
-                    // 1. PLC 모니터링 루프 시작
                     StartMonitoring();
-                    // 2. 아두이노 이더넷 연결 시작
                     await ConnectArduinoEthernet("192.168.0.220", 8080);
-
                     AppendLog("시스템 통합 모니터링 프로세스 가동");
                 }
             }
@@ -84,9 +72,8 @@ namespace factory_automation_system_FAS_
 
         private void BtnPlcDisconnect_Click(object sender, RoutedEventArgs e)
         {
-            _monitoringCts?.Cancel(); // 모니터링 작업 취소
+            _monitoringCts?.Cancel();
             _modbusService?.Disconnect();
-
             LedConn.Fill = Brushes.Gray;
             BtnPlcConnect.IsEnabled = true;
             BtnPlcDisconnect.IsEnabled = false;
@@ -98,7 +85,6 @@ namespace factory_automation_system_FAS_
         private void StartMonitoring()
         {
             _monitoringCts = new CancellationTokenSource();
-            // 백그라운드 스레드에서 무한 루프 실행 (UI 멈춤 방지)
             Task.Run(() => MonitorLoop(_monitoringCts.Token));
         }
 
@@ -110,23 +96,14 @@ namespace factory_automation_system_FAS_
                 {
                     try
                     {
-                        // [중요] PLC 주소 2000번부터 130개의 레지스터를 읽어옴
                         ushort[] outputs = await _modbusService.ReadRegistersAsync(2000, 130);
-
                         if (outputs != null)
                         {
                             Dispatcher.Invoke(() => {
-                                // 1. PLC 신호를 ViewModel 상태에 반영 (1이면 가동중)
                                 _viewModel.IsALineRunning = (outputs[0] == 1);
                                 _viewModel.IsBLineRunning = (outputs[100] == 1);
                                 _viewModel.IsCLineRunning = (outputs[120] == 1);
-
-                                // 2. 현재 활성화된 컨베이어 ID 판단 (A:1, B:2, C:3)
-                                int activeConvId = 1; // 기본값
-                                if (_viewModel.IsBLineRunning) activeConvId = 2;
-                                else if (_viewModel.IsCLineRunning) activeConvId = 3;
-
-                                // 3. 주기적 DB 저장 로직 (카운터가 10이 되면 저장, 약 5초 주기)
+                                int activeConvId = _viewModel.IsBLineRunning ? 2 : (_viewModel.IsCLineRunning ? 3 : 1);
                                 _dbSaveCounter++;
                                 if (_dbSaveCounter >= 10)
                                 {
@@ -136,25 +113,18 @@ namespace factory_automation_system_FAS_
                             });
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"PLC 수집 에러: {ex.Message}");
-                    }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"PLC 수집 에러: {ex.Message}"); }
                 }
-                await Task.Delay(500); // 0.5초 대기
+                await Task.Delay(500);
             }
         }
         #endregion
 
         #region [DB 저장] 모델 가공 및 저장
-        /// <summary>
-        /// 현재 가동 중인 컨베이어 ID를 받아 로그 및 상태 정보를 DB에 저장합니다.
-        /// </summary>
         private async void SaveDataToModels(int currentConvId)
         {
             try
             {
-                // 1. 환경 데이터 로그 생성 (TraceLog 모델)
                 var traceLog = new TraceLog
                 {
                     entity_type = "ENVIRONMENT",
@@ -163,8 +133,6 @@ namespace factory_automation_system_FAS_
                     ts = DateTime.Now,
                     detail = $"{{\"temp\": \"{_viewModel.Temp}\", \"humi\": \"{_viewModel.Humi}\", \"co2\": \"{_viewModel.Co2}\"}}"
                 };
-
-                // 2. 컨베이어 상태 정보 생성 (Conveyor 모델)
                 var conveyor = new Conveyor
                 {
                     conv_id = currentConvId,
@@ -173,10 +141,6 @@ namespace factory_automation_system_FAS_
                              (currentConvId == 2 && _viewModel.IsBLineRunning) ||
                              (currentConvId == 3 && _viewModel.IsCLineRunning) ? "RUNNING" : "IDLE"
                 };
-
-                // [참고] 실제로 DB에 반영하려면 아래와 같이 서비스를 호출해야 합니다.
-                // await _dbService.InsertTraceLogAsync(traceLog);
-                // await _dbService.UpdateConveyorStatusAsync(conveyor);
             }
             catch (Exception ex) { AppendLog($"DB 저장 실패: {ex.Message}"); }
         }
@@ -207,7 +171,6 @@ namespace factory_automation_system_FAS_
                     if (bytesRead > 0)
                     {
                         string data = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
-                        // 데이터 형식 가정: "25.4,60.2,450" (온도,습도,CO2)
                         string[] split = data.Split(',');
                         if (split.Length >= 3)
                         {
@@ -238,7 +201,6 @@ namespace factory_automation_system_FAS_
             catch { }
             finally
             {
-                // 모든 백그라운드 프로세스 강제 종료
                 Application.Current.Shutdown();
                 System.Diagnostics.Process.GetCurrentProcess().Kill();
             }
@@ -246,8 +208,6 @@ namespace factory_automation_system_FAS_
         #endregion
 
         private void AppendLog(string msg) => Dispatcher.Invoke(() => TxtLog.AppendText($"[{DateTime.Now:T}] {msg}\n"));
-
-        // 미사용 이벤트 핸들러 유지
         private void BtnImportJson_Click(object sender, RoutedEventArgs e) { }
         private void BtnModbusRead_Click(object sender, RoutedEventArgs e) { }
         private void BtnModbusWrite_Click(object sender, RoutedEventArgs e) { }
