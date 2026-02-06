@@ -12,33 +12,10 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="250"/>
         </Grid.ColumnDefinitions>
-
-        <!-- ===========================
-             LEFT AREA
-             =========================== -->
         <Grid Grid.Column="0">
-
-            <!-- =========================================================
-                 MAIN MONITOR (여기에 Page 도형 전체 이식)
-                 - Ellipse 전부 삭제 완료
-                 - Viewbox로 "도형만" 창 크기에 맞춰 동일 비율(Uniform)로 확대/축소
-                 ========================================================= -->
             <Grid x:Name="MainMonitorSection" Visibility="Collapsed" Margin="20">
-
-                <!-- [배율 고정 핵심]
-                     Stretch="Uniform" : 큰창/작은창에서도 "비율(가로:세로)" 동일하게 유지
-                     StretchDirection="Both" : 확대/축소 둘 다 허용
-                -->
                 <Viewbox Stretch="Uniform" StretchDirection="Both"
                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-
-                    <!-- [기준 캔버스 크기]
-                         원본 Page 기준: 전체 가로 520 + 300 + 600 = 1420, 세로 880
-
-                         ✅ 도형 "전체 크기"를 더 작게/더 크게 하고 싶으면 여기 조절하세요.
-                         - 더 작게 보이게: Width/Height를 더 크게(예: 1600/1000)
-                         - 더 크게 보이게: Width/Height를 더 작게(예: 1200/750)
-                    -->
                     <Grid Width="1420" Height="880" Background="White"
                           SnapsToDevicePixels="True" UseLayoutRounding="True">
 
