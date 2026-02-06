@@ -12,10 +12,10 @@
     "color": "GREEN",
     "count": 1,
     "image": "./Colorcaptures/color_g1.jpg",
-    "x": 87.262,
-    "y": 42.756,
-    "ms": 5.590,
-    "type": "BASE"
+    "x": 60.214,
+    "y": 59.753,
+    "ms": 5.914,
+    "type": "TOP"
   },
   {
     "time": "2026-02-05 12:47:25.669",
@@ -30,9 +30,9 @@
     "color": "BLUE",
     "count": 1,
     "image": "./Colorcaptures/color_b1.jpg",
-    "x": 60.460,
-    "y": 58.046,
-    "ms": 5.631,
+    "x": 60.482,
+    "y": 58.096,
+    "ms": 5.945,
     "type": "TOP"
   },
   {
@@ -48,9 +48,9 @@
     "color": "RED",
     "count": 1,
     "image": "./Colorcaptures/color_r1.jpg",
-    "x": 60.593,
-    "y": 59.446,
-    "ms": 5.646,
+    "x": 60.439,
+    "y": 59.717,
+    "ms": 7.285,
     "type": "TOP"
   },
   {
@@ -77,10 +77,10 @@
     "color": "BLUE",
     "count": 2,
     "image": "./Colorcaptures/color_b2.jpg",
-    "x": 87.391,
-    "y": 44.083,
-    "ms": 5.547,
-    "type": "BASE"
+    "x": 60.454,
+    "y": 58.130,
+    "ms": 6.416,
+    "type": "TOP"
   },
   {
     "time": "2026-02-05 12:48:10.729",
@@ -160,10 +160,10 @@
     "color": "BLUE",
     "count": 3,
     "image": "./Colorcaptures/color_b3.jpg",
-    "x": 88.488,
-    "y": 43.824,
-    "ms": 7.210,
-    "type": "BASE"
+    "x": 60.453,
+    "y": 58.131,
+    "ms": 7.097,
+    "type": "TOP"
   },
   {
     "time": "2026-02-05 12:49:05.707",
@@ -200,9 +200,9 @@
     "color": "BLUE",
     "count": 4,
     "image": "./Colorcaptures/color_b4.jpg",
-    "x": 60.922,
-    "y": 58.412,
-    "ms": 5.843,
+    "x": 60.482,
+    "y": 58.096,
+    "ms": 7.755,
     "type": "TOP"
   },
   {
