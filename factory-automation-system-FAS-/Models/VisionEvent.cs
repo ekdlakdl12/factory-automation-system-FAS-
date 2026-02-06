@@ -6,29 +6,29 @@ namespace factory_automation_system_FAS_.Models
 {
     public class VisionEvent
     {
-        public int id { get; set; }
+        public int event_id { get; set; } // DB의 event_id와 매핑
 
         [JsonProperty("conv_id")]
         public int conv_id { get; set; }
 
-        [JsonProperty("time")] // JSON의 "time" 매핑
+        [JsonProperty("time")]
         public DateTime time_kst { get; set; }
+
+        [JsonProperty("barcode")] // JSON에 barcode가 있다면 매핑
+        public string? barcode { get; set; }
 
         public double x { get; set; }
         public double y { get; set; }
         public double ms { get; set; }
         public string? type { get; set; }
         public string? image { get; set; }
-
-        // 추가: JSON의 "color" 값을 저장
-        [JsonProperty("color")]
         public string? color { get; set; }
 
-        [JsonProperty("label")] // JSON의 "label" 매핑
+        [JsonProperty("label")]
         public string? detected_class { get; set; }
 
         public float confidence { get; set; }
-        public string? meta { get; set; }
+        public DateTime ts { get; set; } // DB에 있는 ts 컬럼 대응
 
         public string FullImagePath
         {
