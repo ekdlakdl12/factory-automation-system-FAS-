@@ -1,4 +1,14 @@
-﻿#include <opencv2/opencv.hpp>
+﻿// VisionWorker.cpp
+// - START_COIL=200 트리거(읽기)
+// - ROI(710,50,550,1000) 내에서 컨투어 탐지/시각화
+// - 측정 시 total.json에서 label 찾아 x/y/ms/type "덮어쓰기" 저장
+// - 결과 코일 전송: TOP=201, BASE=202, NONE(or defect)=203 (펄스)
+// - total.json 없으면 자동 생성: [] 로 생성
+//
+// 빌드: OpenCV + libmodbus 필요
+// 주의: ADDR_OFFSET 필요하면 0 -> -1 등 조절
+
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -12,6 +22,7 @@
 #include <cerrno>
 #include <chrono>
 #include <thread>
+#include <cstdlib>
 
 #include <modbus/modbus.h>
 
@@ -19,17 +30,23 @@ using namespace cv;
 using namespace std;
 
 // =====================
-// MODBUS CONFIG (읽기만)
+// MODBUS CONFIG
 // =====================
 static const char* PLC_IP = "192.168.0.202";
 static const int   PLC_PORT = 502;
 
-// PLC -> PC 트리거 코일 (읽기만)
+// PLC -> PC 트리거 코일 (읽기)
 static const int START_COIL = 200;
 
 // 주소 오프셋(안 맞으면 -1 테스트)
 static const int ADDR_OFFSET = 0;
 static inline int A(int addr) { return addr + ADDR_OFFSET; }
+
+// PC -> PLC 결과 코일 (쓰기)
+static const int COIL_TOP = 201;
+static const int COIL_BASE = 202;
+static const int COIL_NONE = 203;
+static const int PULSE_MS = 300;   // 펄스 유지 시간(ms)
 
 // 연결 재시도
 static const int RECONNECT_EVERY_MS = 2000;
@@ -67,7 +84,7 @@ static inline long long NowMillis() {
 }
 
 // =====================
-// File helpers (atomic write)
+// File helpers (atomic write + ensure json)
 // =====================
 static bool ReadAllText(const string& path, string& out) {
     ifstream ifs(path, ios::in);
@@ -88,7 +105,6 @@ static bool WriteTextFileAtomic(const string& path, const string& text) {
     }
     ::remove(path.c_str());
     if (::rename(tmp.c_str(), path.c_str()) != 0) {
-        // fallback
         ofstream ofs(path, ios::out | ios::trunc);
         if (!ofs.is_open()) { ::remove(tmp.c_str()); return false; }
         ofs << text;
@@ -101,6 +117,12 @@ static bool WriteTextFileAtomic(const string& path, const string& text) {
 
 static inline void TrimRight(string& s) {
     while (!s.empty() && isspace((unsigned char)s.back())) s.pop_back();
+}
+
+static bool EnsureJsonArrayFile(const string& path) {
+    ifstream ifs(path);
+    if (ifs.is_open()) return true;
+    return WriteTextFileAtomic(path, "[]\n");
 }
 
 // =====================
@@ -120,13 +142,12 @@ static string MakeLabel(const string& color, int count) {
 // =====================
 struct HsvRange { Scalar L; Scalar U; };
 struct ColorThresholds {
-    HsvRange R1{ Scalar(0,   60,  40), Scalar(12,  255, 255) };
-    HsvRange R2{ Scalar(168, 60,  40), Scalar(179, 255, 255) };
-    HsvRange G{ Scalar(30,  40,  40), Scalar(95,  255, 255) };
-    HsvRange B{ Scalar(85,  40,  40), Scalar(140, 255, 255) };
+    HsvRange R1{ Scalar(0,   60,  60), Scalar(15,  255, 255) };
+    HsvRange R2{ Scalar(165, 60,  60), Scalar(179, 255, 255) };
+    HsvRange G{ Scalar(40,  60,  60), Scalar(80,  255, 255) };
+    HsvRange B{ Scalar(95,  60,  60), Scalar(125, 255, 255) };
 };
 
-// 색상 판별 민감도 (필요시 조절)
 static int MIN_COLOR_PIXELS = 100;
 static double MIN_COLOR_RATIO = 0.01;
 
@@ -178,15 +199,8 @@ static string ClassifyColorROI(const Mat& roiBgr, const ColorThresholds& th, int
 }
 
 // =====================
-// total.json 업데이트: label 찾아서 x,y,ms,type 추가
-// - label 없으면 실패
-// - 이미 "x"가 있으면(이미 측정됨) 실패
+// total.json 업데이트: label 찾아서 x,y,ms,type 추가/덮어쓰기
 // =====================
-static bool ObjectAlreadyHasX(const string& obj) {
-    return (obj.find("\"x\"") != string::npos);
-}
-
-// label 값 파싱: "\"label\": \"g1\"" 형태에서 g1 꺼내기
 static bool ExtractLabelValueNear(const string& s, size_t labelKeyPos, string& outLabel) {
     size_t colon = s.find(':', labelKeyPos);
     if (colon == string::npos) return false;
@@ -198,16 +212,16 @@ static bool ExtractLabelValueNear(const string& s, size_t labelKeyPos, string& o
     return true;
 }
 
-static bool UpdateTotalJson_AddMeasure(const string& path, const string& label,
+static bool UpdateTotalJson_OverwriteMeasure(const string& path, const string& label,
     double x, double y, double ms, const string& type,
-    string& outReason) {
+    string& outReason)
+{
     string s;
     if (!ReadAllText(path, s)) {
-        outReason = "total.json read failed (file missing?)";
+        outReason = "total.json read failed";
         return false;
     }
 
-    // label key들을 훑어서 해당 label 오브젝트를 찾음
     size_t pos = 0;
     while (true) {
         size_t labelKey = s.find("\"label\"", pos);
@@ -220,7 +234,6 @@ static bool UpdateTotalJson_AddMeasure(const string& path, const string& label,
         }
 
         if (foundLabel == label) {
-            // 이 label이 포함된 오브젝트 경계 찾기: 가까운 '{' (앞) ~ 다음 '}' (뒤)
             size_t objStart = s.rfind('{', labelKey);
             size_t objEnd = s.find('}', labelKey);
             if (objStart == string::npos || objEnd == string::npos || objEnd <= objStart) {
@@ -230,29 +243,57 @@ static bool UpdateTotalJson_AddMeasure(const string& path, const string& label,
 
             string obj = s.substr(objStart, objEnd - objStart + 1);
 
-            if (ObjectAlreadyHasX(obj)) {
-                outReason = "already measured (x exists)";
+            auto RemoveKeyLine = [&](string& o, const string& key) {
+                while (true) {
+                    size_t k = o.find("\"" + key + "\"");
+                    if (k == string::npos) break;
+
+                    size_t lineStart = o.rfind('\n', k);
+                    if (lineStart == string::npos) lineStart = 0;
+                    else lineStart += 1;
+
+                    size_t lineEnd = o.find('\n', k);
+                    if (lineEnd == string::npos) {
+                        o.erase(lineStart);
+                    }
+                    else {
+                        o.erase(lineStart, (lineEnd - lineStart) + 1);
+                    }
+                }
+                };
+
+            string cleaned = obj;
+            RemoveKeyLine(cleaned, "x");
+            RemoveKeyLine(cleaned, "y");
+            RemoveKeyLine(cleaned, "ms");
+            RemoveKeyLine(cleaned, "type");
+
+            size_t closePos = cleaned.rfind('}');
+            if (closePos == string::npos) {
+                outReason = "object close brace not found";
                 return false;
             }
 
-            // 닫는 '}' 바로 앞에 4개 필드 삽입
-            // 기존 obj가 "}"로 끝나므로, 마지막 '}'를 떼고 추가 후 다시 닫음
-            string objBody = obj.substr(0, obj.size() - 1);
-            TrimRight(objBody);
+            string body = cleaned.substr(0, closePos);
+            TrimRight(body);
+
+            // 콤마 보정
+            {
+                size_t i = body.size();
+                while (i > 0 && isspace((unsigned char)body[i - 1])) i--;
+                char last = (i > 0) ? body[i - 1] : '\0';
+                if (last != '{' && last != ',') body += ",";
+            }
 
             ostringstream add;
-            add << ",\n"
+            add << "\n"
                 << "    \"x\": " << fixed << setprecision(3) << x << ",\n"
                 << "    \"y\": " << fixed << setprecision(3) << y << ",\n"
                 << "    \"ms\": " << fixed << setprecision(3) << ms << ",\n"
                 << "    \"type\": \"" << type << "\"\n"
                 << "  }";
 
-            // 들여쓰기 2칸 기준(컬러 워커가 보통 "  {" 시작)일 때 깔끔하게 맞춤
-            // 만약 들여쓰기가 달라도 JSON 파싱엔 영향 없음
-            string newObj = objBody + add.str();
-
-            // 전체 텍스트에서 해당 오브젝트 부분만 교체
+            string newObj = body + add.str();
             string newS = s.substr(0, objStart) + newObj + s.substr(objEnd + 1);
 
             if (!WriteTextFileAtomic(path, newS)) {
@@ -260,7 +301,7 @@ static bool UpdateTotalJson_AddMeasure(const string& path, const string& label,
                 return false;
             }
 
-            outReason = "OK";
+            outReason = "OK(overwrite)";
             return true;
         }
 
@@ -272,14 +313,12 @@ static bool UpdateTotalJson_AddMeasure(const string& path, const string& label,
 }
 
 // =====================
-// Modbus helpers (읽기만)
+// Modbus helpers (읽기/쓰기)
 // =====================
 static modbus_t* ConnectModbus(const char* ip, int port) {
     modbus_t* ctx = modbus_new_tcp(ip, port);
     if (!ctx) return nullptr;
 
-    // 타임아웃 너무 짧으면 timed out 자주 뜹니다.
-    // 0.3s는 빡빡할 수 있어서 1초로 여유 주는 걸 권장합니다.
     modbus_set_response_timeout(ctx, 1, 0);
 
     if (modbus_connect(ctx) == -1) {
@@ -297,12 +336,37 @@ static bool ReadCoil(modbus_t* ctx, int addr, bool& outVal) {
     return true;
 }
 
+static bool WriteCoil(modbus_t* ctx, int addr, bool val) {
+    int rc = modbus_write_bit(ctx, A(addr), val ? 1 : 0);
+    return (rc == 1);
+}
+
 static void MarkDisconnected(modbus_t*& ctx) {
     if (ctx) {
         modbus_close(ctx);
         modbus_free(ctx);
         ctx = nullptr;
     }
+}
+
+static bool PulseCoil(modbus_t* ctx, int coilAddr, int pulseMs) {
+    // 안전하게 3개 코일 OFF 후 target만 ON
+    if (!WriteCoil(ctx, COIL_TOP, false)) return false;
+    if (!WriteCoil(ctx, COIL_BASE, false)) return false;
+    if (!WriteCoil(ctx, COIL_NONE, false)) return false;
+
+    if (!WriteCoil(ctx, coilAddr, true)) return false;
+    this_thread::sleep_for(chrono::milliseconds(pulseMs));
+    if (!WriteCoil(ctx, coilAddr, false)) return false;
+    return true;
+}
+
+static bool SendResultPulse(modbus_t* ctx, const string& type) {
+    int target = COIL_NONE;
+    if (type == "TOP") target = COIL_TOP;
+    else if (type == "BASE") target = COIL_BASE;
+    else target = COIL_NONE; // defect도 NONE로 보냄(요구사항)
+    return PulseCoil(ctx, target, PULSE_MS);
 }
 
 // =====================
@@ -337,6 +401,94 @@ static void KeepTopK(vector<Cand>& v, int K) {
 }
 
 // =====================
+// VISUALIZATION HELPERS
+// - ROI 안에서 가장 큰 컨투어 박스 표시
+// - mask도 창으로 보여줌
+// =====================
+static void DrawRoiAndLargestContourBox(
+    const Mat& fullFrame,
+    const Rect& roi,
+    Mat& outVisFrame,
+    Mat& outMaskVis
+) {
+    outVisFrame = fullFrame.clone();
+    outMaskVis = Mat();
+
+    Rect r = roi & Rect(0, 0, fullFrame.cols, fullFrame.rows);
+    if (r.width <= 0 || r.height <= 0) {
+        rectangle(outVisFrame, roi, Scalar(0, 0, 255), 2);
+        return;
+    }
+
+    rectangle(outVisFrame, r, Scalar(0, 255, 255), 2);
+
+    Mat roiFrame = fullFrame(r).clone();
+
+    Mat hsv;
+    cvtColor(roiFrame, hsv, COLOR_BGR2HSV);
+
+    Mat maskR1, maskR2, maskR, maskG, maskB, mask;
+
+    inRange(hsv, Scalar(0, 60, 60), Scalar(20, 255, 255), maskR1);
+    inRange(hsv, Scalar(160, 60, 60), Scalar(179, 255, 255), maskR2);
+    maskR = maskR1 | maskR2;
+
+    inRange(hsv, Scalar(40, 60, 60), Scalar(85, 255, 255), maskG);
+    inRange(hsv, Scalar(95, 60, 60), Scalar(125, 255, 255), maskB);
+
+    mask = maskR | maskG | maskB;
+
+    Mat blurred;
+    GaussianBlur(mask, blurred, Size(3, 3), 0);
+    threshold(blurred, blurred, 150, 255, THRESH_BINARY);
+
+    Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
+    morphologyEx(blurred, blurred, MORPH_OPEN, kernel, Point(-1, -1), 1);
+    morphologyEx(blurred, blurred, MORPH_CLOSE, kernel, Point(-1, -1), 1);
+
+    outMaskVis = blurred.clone();
+
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+    findContours(blurred, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+    int best = -1;
+    double bestArea = 0.0;
+    for (int i = 0; i < (int)contours.size(); i++) {
+        double a = contourArea(contours[i]);
+        if (a < 2000) continue;
+        if (a > bestArea) { bestArea = a; best = i; }
+    }
+
+    Point2f offset((float)r.x, (float)r.y);
+
+    if (best >= 0) {
+        Rect br = boundingRect(contours[best]);
+        Rect brFull(br.x + r.x, br.y + r.y, br.width, br.height);
+        rectangle(outVisFrame, brFull, Scalar(0, 255, 0), 2);
+
+        RotatedRect rr = minAreaRect(contours[best]);
+        Point2f pts[4];
+        rr.points(pts);
+
+        for (int k = 0; k < 4; k++) {
+            Point2f p1 = pts[k] + offset;
+            Point2f p2 = pts[(k + 1) % 4] + offset;
+            line(outVisFrame, p1, p2, Scalar(255, 0, 0), 2);
+        }
+
+        ostringstream ss;
+        ss << "area=" << fixed << setprecision(0) << bestArea;
+        putText(outVisFrame, ss.str(), Point(r.x + 10, r.y + 30),
+            FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 255, 255), 2);
+    }
+    else {
+        putText(outVisFrame, "no contour (area>=2000)", Point(r.x + 10, r.y + 30),
+            FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 0, 255), 2);
+    }
+}
+
+// =====================
 // 측정 루틴: 트리거 들어오면 측정 + 색상판별 + label 카운트
 // =====================
 static bool DoMeasureNow(
@@ -347,7 +499,9 @@ static bool DoMeasureNow(
     int& rCount,
     int& gCount,
     int& bCount,
-    int& nCount
+    int& nCount,
+    string& outLabel,
+    string& outType
 ) {
     const int TOP_K = 1;
     vector<Cand> buf;
@@ -389,11 +543,22 @@ static bool DoMeasureNow(
         Mat hsv;
         cvtColor(roiFrame, hsv, COLOR_BGR2HSV);
 
-        Scalar lower(0, 50, 80);
-        Scalar upper(70, 255, 255);
+        Mat maskR1, maskR2, maskR, maskG, maskB, mask;
 
-        Mat mask;
-        inRange(hsv, lower, upper, mask);
+        // 빨강 (H: 0~20, 160~179)
+        inRange(hsv, Scalar(0, 60, 60), Scalar(20, 255, 255), maskR1);
+        inRange(hsv, Scalar(160, 60, 60), Scalar(179, 255, 255), maskR2);
+        maskR = maskR1 | maskR2;
+
+        // 초록 (H: 40~85)
+        inRange(hsv, Scalar(40, 60, 60), Scalar(85, 255, 255), maskG);
+
+        // 파랑 (H: 95~125)
+        inRange(hsv, Scalar(95, 60, 60), Scalar(125, 255, 255), maskB);
+
+        // 3색 통합
+        mask = maskR | maskG | maskB;
+
 
         Mat blurred;
         GaussianBlur(mask, blurred, Size(3, 3), 0);
@@ -472,11 +637,9 @@ static bool DoMeasureNow(
                         double yMm = buf[0].hMm;
                         double ms = buf[0].ms;
 
-                        // ===== 여기서 색상 판별(측정 ROI 기준) =====
                         int rp = 0, gp = 0, bp = 0;
                         string color = ClassifyColorROI(buf[0].roiImg, colorTh, rp, gp, bp);
 
-                        // ===== 색상별 카운팅(런타임) =====
                         int curCount = 0;
                         if (color == "RED") { rCount++; curCount = rCount; }
                         else if (color == "GREEN") { gCount++; curCount = gCount; }
@@ -486,7 +649,6 @@ static bool DoMeasureNow(
                         string label = MakeLabel(color, curCount);
                         string type = DecideTypeByX(xMm);
 
-                        // 디버그 출력 (왜 FAIL인지 보이게)
                         cout << "[MEASURE] detected=1"
                             << " color=" << color
                             << " label=" << label
@@ -497,9 +659,8 @@ static bool DoMeasureNow(
                             << " type=" << type
                             << "\n";
 
-                        // ===== total.json에 label 찾아서 4개만 추가 =====
                         string reason;
-                        bool ok = UpdateTotalJson_AddMeasure(TOTAL_JSON, label, xMm, yMm, ms, type, reason);
+                        bool ok = UpdateTotalJson_OverwriteMeasure(TOTAL_JSON, label, xMm, yMm, ms, type, reason);
 
                         if (!ok) {
                             cout << "[MEASURE] SAVE FAIL: " << reason << " (label=" << label << ")\n";
@@ -508,7 +669,9 @@ static bool DoMeasureNow(
                             cout << "[MEASURE] SAVE OK -> total.json updated (label=" << label << ")\n";
                         }
 
-                        return ok; // 실패/성공 모두 이번 트리거는 종료
+                        outLabel = label;
+                        outType = type;
+                        return ok;
                     }
                 }
             }
@@ -524,18 +687,16 @@ static bool DoMeasureNow(
 int main() {
     cout << "[CWD] " << filesystem::current_path().string() << "\n";
     cout << "[MODBUS] " << PLC_IP << ":" << PLC_PORT
-        << " START=" << START_COIL << " (read only)\n";
+        << " START=" << START_COIL << " (read)\n";
     cout << "[MODBUS] ADDR_OFFSET=" << ADDR_OFFSET << " (If trigger fails, try -1)\n";
     cout << "[TRIG] poll=" << TRIG_POLL_MS << "ms\n";
     cout << "[JSON] only " << TOTAL_JSON << "\n";
+    cout << "[SEND] TOP=" << COIL_TOP << " BASE=" << COIL_BASE << " NONE=" << COIL_NONE << " pulse=" << PULSE_MS << "ms\n";
 
-    // total.json 없으면 측정 업데이트 자체가 불가능하므로 여기서 중단하는 편이 안전
-    {
-        ifstream ifs(TOTAL_JSON);
-        if (!ifs.is_open()) {
-            cerr << "[FATAL] total.json not found. Color worker must create it first.\n";
-            return -1;
-        }
+    // ✅ total.json 없으면 새로 생성
+    if (!EnsureJsonArrayFile(TOTAL_JSON)) {
+        cerr << "[FATAL] failed to create " << TOTAL_JSON << "\n";
+        return -1;
     }
 
     int deviceIndex = 1;
@@ -565,6 +726,7 @@ int main() {
     int actualHeight = (int)cap.get(CAP_PROP_FRAME_HEIGHT);
     cout << "[CAMERA] Actual resolution: " << actualWidth << "x" << actualHeight << "\n";
 
+    // ✅ ROI (요청대로 유지)
     Rect roi(710, 50, 550, 1000);
     if (roi.x + roi.width > actualWidth) roi.width = actualWidth - roi.x;
     if (roi.y + roi.height > actualHeight) roi.height = actualHeight - roi.y;
@@ -582,6 +744,12 @@ int main() {
         }
     }
     cout << "[MODBUS] connected\n";
+
+    // 초기 안전 OFF
+    WriteCoil(ctx, COIL_TOP, false);
+    WriteCoil(ctx, COIL_BASE, false);
+    WriteCoil(ctx, COIL_NONE, false);
+
     cout << "[RUN] waiting START=1 ...\n";
 
     ColorThresholds th;
@@ -591,7 +759,28 @@ int main() {
 
     bool busyWaitStartLow = false;
 
+    // ✅ 시각화 창
+    namedWindow("VIEW", WINDOW_NORMAL);
+    namedWindow("MASK(ROI)", WINDOW_NORMAL);
+
     while (true) {
+        // 평상시에도 프레임 읽어서 ROI/컨투어 박스 시각화
+        Mat live;
+        cap >> live;
+        if (!live.empty()) {
+            Mat vis, maskVis;
+            DrawRoiAndLargestContourBox(live, roi, vis, maskVis);
+
+            imshow("VIEW", vis);
+            if (!maskVis.empty()) imshow("MASK(ROI)", maskVis);
+
+            int key = waitKey(1);
+            if (key == 27) {
+                cout << "[EXIT] ESC pressed\n";
+                break;
+            }
+        }
+
         // reconnect if needed
         if (!ctx) {
             while (!ctx) {
@@ -603,6 +792,10 @@ int main() {
                 }
             }
             cout << "[MODBUS] reconnected\n";
+            // 안전 OFF
+            WriteCoil(ctx, COIL_TOP, false);
+            WriteCoil(ctx, COIL_BASE, false);
+            WriteCoil(ctx, COIL_NONE, false);
             busyWaitStartLow = false;
         }
 
@@ -613,7 +806,7 @@ int main() {
             continue;
         }
 
-        // START=1 유지 동안 중복측정 방지: 0으로 내려올 때까지 대기
+        // START=1 유지 동안 중복측정 방지
         if (busyWaitStartLow) {
             if (!start) {
                 busyWaitStartLow = false;
@@ -626,13 +819,22 @@ int main() {
         if (start) {
             cout << "[TRIG] START=1 -> MEASURE NOW\n";
 
-            bool ok = DoMeasureNow(cap, roi, mmPerPx, th, rCount, gCount, bCount, nCount);
+            string label, type;
+            bool ok = DoMeasureNow(cap, roi, mmPerPx, th, rCount, gCount, bCount, nCount, label, type);
 
-            // PLC가 START를 0으로 내릴 때까지 대기 모드
             busyWaitStartLow = true;
 
             if (!ok) {
                 cout << "[MEASURE] FAIL (no update to total.json)\n";
+                // 실패면 NONE 펄스 보내고 싶으면 아래 주석 해제
+                // if (!SendResultPulse(ctx, "NONE")) { cerr << "[MODBUS] send pulse failed\n"; MarkDisconnected(ctx); }
+            }
+            else {
+                cout << "[SEND] type=" << type << " -> coil pulse\n";
+                if (!SendResultPulse(ctx, type)) {
+                    cerr << "[MODBUS] send pulse failed: " << modbus_strerror(errno) << " -> reconnect\n";
+                    MarkDisconnected(ctx);
+                }
             }
         }
 
@@ -641,10 +843,14 @@ int main() {
 
     // cleanup
     if (ctx) {
+        WriteCoil(ctx, COIL_TOP, false);
+        WriteCoil(ctx, COIL_BASE, false);
+        WriteCoil(ctx, COIL_NONE, false);
         modbus_close(ctx);
         modbus_free(ctx);
         ctx = nullptr;
     }
     cap.release();
+    destroyAllWindows();
     return 0;
 }

@@ -49,7 +49,10 @@ static int  CAM_H = 720;
 static const string CAPTURE_DIR = "./Colorcaptures";
 static const string TOTAL_JSON = "./total.json";
 
-// Object ROI detection tuning
+// ✅ ROI (고정) : 사용자가 요청한 값
+static const Rect ROI_FIXED(475, 50, 345, 1000);
+
+// Object ROI detection tuning (원본 그대로 두되, 이번 로직에서는 "고정 ROI만" 사용)
 static double MIN_CONTOUR_AREA = 2000.0;
 static int ROI_PAD = 10;
 
@@ -175,7 +178,6 @@ static bool ReadAllText(const string& path, string& out)
 
 static bool ExtractQuotedValueAt(const string& s, size_t keyPos, string& outVal)
 {
-    // keyPos는 "color" 같은 키가 시작되는 위치라고 가정
     size_t colon = s.find(':', keyPos);
     if (colon == string::npos) return false;
 
@@ -213,11 +215,8 @@ static bool ExtractIntValueAfterKey(const string& s, size_t keyPos, int& outInt)
 
 static int GetNextCountFromTotalJson(const string& path, const string& color)
 {
-    // total.json에 누적된 "count" 중 같은 color의 최대값 찾아서 +1
-    // (외부 JSON 라이브러리 없이, 문자열 스캔 방식)
-
     string s;
-    if (!ReadAllText(path, s)) return 1; // 파일 없으면 1부터
+    if (!ReadAllText(path, s)) return 1;
 
     int maxCount = 0;
     size_t pos = 0;
@@ -232,8 +231,6 @@ static int GetNextCountFromTotalJson(const string& path, const string& color)
             continue;
         }
 
-        // 같은 오브젝트 블록 안에서 "count"를 찾기 위해
-        // colorKey 이후 일정 구간(예: 다음 '}'까지)에서 count 탐색
         size_t objEnd = s.find('}', colorKey);
         if (objEnd == string::npos) objEnd = min(s.size(), colorKey + 400);
 
@@ -261,7 +258,7 @@ static string MakeLabel(const string& color, int count)
     else if (color == "BLUE") prefix = 'b';
     else prefix = 'n';
 
-    return string(1, prefix) + to_string(count); // 예: b1, r3, g10
+    return string(1, prefix) + to_string(count);
 }
 
 // =====================
@@ -301,49 +298,6 @@ static int CountMaskPixels(const Mat& mask) {
 }
 
 // =====================
-// Object ROI detection (그대로)
-// =====================
-static bool FindObjectROI(const Mat& bgr, Rect& outRoi)
-{
-    Mat gray;
-    cvtColor(bgr, gray, COLOR_BGR2GRAY);
-    GaussianBlur(gray, gray, Size(5, 5), 0);
-
-    Mat edges;
-    Canny(gray, edges, 50, 150);
-
-    Mat k = getStructuringElement(MORPH_RECT, Size(5, 5));
-    morphologyEx(edges, edges, MORPH_CLOSE, k, Point(-1, -1), 2);
-    morphologyEx(edges, edges, MORPH_DILATE, k, Point(-1, -1), 1);
-
-    vector<vector<Point>> contours;
-    findContours(edges, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-
-    int best = -1;
-    double bestArea = 0.0;
-    for (int i = 0; i < (int)contours.size(); i++) {
-        double a = contourArea(contours[i]);
-        if (a > bestArea) { bestArea = a; best = i; }
-    }
-
-    if (best < 0) return false;
-    if (bestArea < MIN_CONTOUR_AREA) return false;
-
-    Rect br = boundingRect(contours[best]);
-    br.x -= ROI_PAD;
-    br.y -= ROI_PAD;
-    br.width += ROI_PAD * 2;
-    br.height += ROI_PAD * 2;
-
-    Rect imgRect(0, 0, bgr.cols, bgr.rows);
-    br = br & imgRect;
-    if (br.width <= 0 || br.height <= 0) return false;
-
-    outRoi = br;
-    return true;
-}
-
-// =====================
 // Image save (✅ B안: color_<label>.jpg)
 // =====================
 static string SaveColorCroppedJpg_ByLabel(
@@ -354,8 +308,6 @@ static string SaveColorCroppedJpg_ByLabel(
     std::error_code ec;
     filesystem::create_directories(CAPTURE_DIR, ec);
 
-    // ✅ B안: label만으로 파일명 고정 (timestamp 없음)
-    // 예: Colorcaptures/color_b12.jpg
     ostringstream fn;
     fn << "color_" << label << ".jpg";
     filesystem::path outPath = filesystem::path(CAPTURE_DIR) / fn.str();
@@ -389,7 +341,7 @@ static string SaveColorCroppedJpg_ByLabel(
 }
 
 // =====================
-// Color classification (그대로)
+// Color classification (ROI에서만)
 // =====================
 static string ClassifyColorROI(const Mat& roiBgr, const ColorThresholds& th,
     int& outRpix, int& outGpix, int& outBpix)
@@ -412,18 +364,9 @@ static string ClassifyColorROI(const Mat& roiBgr, const ColorThresholds& th,
     int bestPix = 0;
     string color = "NONE";
 
-    if (rPix > bestPix && rPix > gPix && rPix > bPix) {
-        bestPix = rPix;
-        color = "RED";
-    }
-    else if (gPix > bestPix && gPix > rPix && gPix > bPix) {
-        bestPix = gPix;
-        color = "GREEN";
-    }
-    else if (bPix > bestPix && bPix > rPix && bPix > gPix) {
-        bestPix = bPix;
-        color = "BLUE";
-    }
+    if (rPix > bestPix && rPix > gPix && rPix > bPix) { bestPix = rPix; color = "RED"; }
+    else if (gPix > bestPix && gPix > rPix && gPix > bPix) { bestPix = gPix; color = "GREEN"; }
+    else if (bPix > bestPix && bPix > rPix && bPix > gPix) { bestPix = bPix; color = "BLUE"; }
 
     int roiPixels = roiBgr.rows * roiBgr.cols;
     double ratio = (roiPixels > 0) ? (double)bestPix / (double)roiPixels : 0.0;
@@ -468,7 +411,6 @@ static bool ReadCoil(modbus_t* ctx, int addr, bool& outVal)
 
 static bool SendColorPulse(modbus_t* ctx, const string& color)
 {
-    // 먼저 모두 OFF
     if (!WriteCoil(ctx, COIL_GREEN, false)) return false;
     if (!WriteCoil(ctx, COIL_BLUE, false)) return false;
     if (!WriteCoil(ctx, COIL_RED, false)) return false;
@@ -479,11 +421,8 @@ static bool SendColorPulse(modbus_t* ctx, const string& color)
     else if (color == "BLUE") target = COIL_BLUE;
     else if (color == "RED")  target = COIL_RED;
 
-    // ON
     if (!WriteCoil(ctx, target, true)) return false;
     this_thread::sleep_for(chrono::milliseconds(PULSE_MS));
-
-    // OFF
     if (!WriteCoil(ctx, target, false)) return false;
 
     return true;
@@ -512,6 +451,16 @@ static void MarkDisconnected(modbus_t*& ctx, long long& nextReconnectMs)
 }
 
 // =====================
+// UI helper
+// =====================
+static void DrawTextLine(Mat& img, const string& text, int lineIndex, Scalar color = Scalar(0, 255, 0))
+{
+    int y = 25 + lineIndex * 25;
+    putText(img, text, Point(10, y), FONT_HERSHEY_SIMPLEX, 0.7, Scalar(0, 0, 0), 3, LINE_AA);
+    putText(img, text, Point(10, y), FONT_HERSHEY_SIMPLEX, 0.7, color, 1, LINE_AA);
+}
+
+// =====================
 // MAIN
 // =====================
 int main()
@@ -526,15 +475,24 @@ int main()
         << " N=" << COIL_NONE
         << " (pulse=" << PULSE_MS << "ms)\n";
     cout << "[JSON] " << TOTAL_JSON << " (single file)\n";
-    cout << "[IMG]  " << CAPTURE_DIR << "/color_<label>.jpg\n\n";
+    cout << "[IMG]  " << CAPTURE_DIR << "/color_<label>.jpg\n";
+    cout << "[ROI]  fixed=(" << ROI_FIXED.x << "," << ROI_FIXED.y << ","
+        << ROI_FIXED.width << "," << ROI_FIXED.height << ")\n\n";
 
     std::error_code ec;
     filesystem::create_directories(CAPTURE_DIR, ec);
 
+    // ✅ total.json 없으면 새로 생성 (확실히)
     if (!EnsureJsonArrayFile(TOTAL_JSON)) {
-        cerr << "EnsureJsonArrayFile failed: " << TOTAL_JSON << "\n";
+        cerr << "[FATAL] Cannot create " << TOTAL_JSON
+            << " (cwd=" << filesystem::current_path().string() << ")\n";
         return -1;
     }
+    if (!filesystem::exists(TOTAL_JSON)) {
+        cerr << "[FATAL] total.json still not found after creation attempt.\n";
+        return -1;
+    }
+    cout << "[JSON] Ready: " << TOTAL_JSON << "\n\n";
 
     VideoCapture cap;
     if (USE_DSHOW) cap.open(DEVICE_INDEX, CAP_DSHOW);
@@ -549,7 +507,6 @@ int main()
     cap.set(CAP_PROP_FRAME_HEIGHT, CAM_H);
     cout << "[CAMERA] Opened (device " << DEVICE_INDEX << ")\n";
 
-    // Modbus 연결
     modbus_t* ctx = ConnectModbus(PLC_IP, PLC_PORT);
     long long nextReconnectMs = 0;
 
@@ -559,7 +516,6 @@ int main()
     }
     else {
         cout << "[MODBUS] Connected\n";
-        // 안전 OFF
         WriteCoil(ctx, COIL_GREEN, false);
         WriteCoil(ctx, COIL_BLUE, false);
         WriteCoil(ctx, COIL_RED, false);
@@ -571,6 +527,19 @@ int main()
     bool prevStart = false;
     bool busyWaitStartLow = false;
 
+    // 시각화용 마지막 결과
+    string lastColor = "NONE";
+    string lastLabel = "";
+    int lastCount = 0;
+    string lastImgPath = "";
+    int lastRPix = 0, lastGPix = 0, lastBPix = 0;
+    long long lastTrigMs = 0;
+
+    namedWindow("VIEW", WINDOW_NORMAL);
+    resizeWindow("VIEW", 1280, 720);
+    namedWindow("ROI_CROP", WINDOW_NORMAL);
+    resizeWindow("ROI_CROP", 700, 700);
+
     cout << "[READY] Waiting for trigger...\n\n";
 
     while (true) {
@@ -579,6 +548,9 @@ int main()
             this_thread::sleep_for(chrono::milliseconds(10));
             continue;
         }
+
+        // 고정 ROI를 화면 크기에 맞춰 클램프
+        Rect roi = ROI_FIXED & Rect(0, 0, frame.cols, frame.rows);
 
         // OFFLINE: 재접속 시도
         if (!ctx) {
@@ -602,7 +574,19 @@ int main()
                 }
             }
 
-            this_thread::sleep_for(chrono::milliseconds(100));
+            // 시각화(오프라인 상태도 보여줌)
+            Mat vis = frame.clone();
+            rectangle(vis, roi, Scalar(0, 0, 255), 2);
+            DrawTextLine(vis, "ROI: (" + to_string(roi.x) + "," + to_string(roi.y) + "," +
+                to_string(roi.width) + "," + to_string(roi.height) + ")", 0, Scalar(0, 255, 255));
+            DrawTextLine(vis, "MODBUS: OFFLINE (reconnecting...)", 1, Scalar(0, 0, 255));
+            DrawTextLine(vis, "Last Color: " + lastColor + " | label=" + lastLabel + " | count=" + to_string(lastCount), 2, Scalar(255, 255, 0));
+            imshow("VIEW", vis);
+
+            int key = waitKey(1);
+            if (key == 27) break;
+
+            this_thread::sleep_for(chrono::milliseconds(50));
             continue;
         }
 
@@ -619,41 +603,36 @@ int main()
 
         // Busy 상태: START가 0으로 돌아올 때까지 대기
         if (busyWaitStartLow) {
-            if (!start) {
-                busyWaitStartLow = false;
-            }
+            if (!start) busyWaitStartLow = false;
         }
 
         // Rising Edge 감지 + IDLE 상태
         if (rising && !busyWaitStartLow) {
             cout << "[TRIGGER] Detected! Processing...\n";
-
-            Rect objRoi;
-            bool found = FindObjectROI(frame, objRoi);
+            lastTrigMs = NowMillis();
 
             string color = "NONE";
             int rPix = 0, gPix = 0, bPix = 0;
-
             string label = "";
             int count = 0;
             string imgPath = "";
 
-            if (found) {
-                Mat roiBgr = frame(objRoi).clone();
+            if (roi.width > 0 && roi.height > 0) {
+                Mat roiBgr = frame(roi).clone();
                 color = ClassifyColorROI(roiBgr, th, rPix, gPix, bPix);
 
-                // ✅ color별 count: total.json에서 읽어서 이어가기 (초기화 X)
                 count = GetNextCountFromTotalJson(TOTAL_JSON, color);
-
-                // ✅ label 생성 (b1/r1/g1/n1...)
                 label = MakeLabel(color, count);
-
-                // ✅ B안: 이미지 파일명 = color_<label>.jpg
                 imgPath = SaveColorCroppedJpg_ByLabel(roiBgr, label, color);
+
+                // ROI_CROP 갱신
+                Mat cropShow = roiBgr.clone();
+                string title = "TRIG! label=" + label + " color=" + color;
+                putText(cropShow, title, Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(0, 0, 0), 3, LINE_AA);
+                putText(cropShow, title, Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(0, 255, 255), 1, LINE_AA);
+                imshow("ROI_CROP", cropShow);
             }
             else {
-                // 객체 자체를 못 찾았을 때도 로그를 남기고 싶으면 아래 유지
-                // (원치 않으면 found==false일 때는 저장 안 하셔도 됩니다)
                 color = "NONE";
                 count = GetNextCountFromTotalJson(TOTAL_JSON, color);
                 label = MakeLabel(color, count);
@@ -662,7 +641,7 @@ int main()
 
             string tsStr = NowTimeString();
 
-            // ✅ total.json 하나만 저장 (time, color, count, label, image)
+            // ✅ total.json 하나만 저장 (원본 형식 그대로)
             {
                 ostringstream rec;
                 rec << "  {\n";
@@ -680,15 +659,66 @@ int main()
                 << " | count=" << count
                 << " | image=" << imgPath << "\n";
 
-            // PLC로 결과 전송 (그대로)
+            // PLC로 결과 전송 (원본 그대로)
             if (!SendColorPulse(ctx, color)) {
                 cerr << "[MODBUS] Pulse send failed\n";
                 MarkDisconnected(ctx, nextReconnectMs);
             }
 
-            // 다음 트리거 대기
+            // 시각화용 저장
+            lastColor = color;
+            lastLabel = label;
+            lastCount = count;
+            lastImgPath = imgPath;
+            lastRPix = rPix; lastGPix = gPix; lastBPix = bPix;
+
             busyWaitStartLow = true;
         }
+
+        // ===== VIEW 시각화(항상) =====
+        Mat vis = frame.clone();
+
+        // ROI 박스(빨강)
+        rectangle(vis, roi, Scalar(0, 0, 255), 2);
+
+        // 상태 텍스트
+        DrawTextLine(vis, "ROI: (" + to_string(roi.x) + "," + to_string(roi.y) + "," +
+            to_string(roi.width) + "," + to_string(roi.height) + ")", 0, Scalar(0, 255, 255));
+
+        DrawTextLine(vis,
+            string("PLC START_COIL=") + to_string(START_COIL) +
+            " | signal=" + (start ? "1" : "0") +
+            " | rising=" + (rising ? "1" : "0") +
+            " | busy=" + (busyWaitStartLow ? "1" : "0"),
+            1,
+            start ? Scalar(0, 255, 0) : Scalar(0, 0, 255));
+
+        DrawTextLine(vis, "Last: label=" + lastLabel + " | color=" + lastColor + " | count=" + to_string(lastCount),
+            2,
+            (lastColor == "RED") ? Scalar(0, 0, 255) :
+            (lastColor == "GREEN") ? Scalar(0, 255, 0) :
+            (lastColor == "BLUE") ? Scalar(255, 0, 0) :
+            Scalar(200, 200, 200));
+
+        DrawTextLine(vis, "Pix(R/G/B)=" + to_string(lastRPix) + "/" + to_string(lastGPix) + "/" + to_string(lastBPix),
+            3, Scalar(255, 255, 0));
+
+        if (lastTrigMs > 0) {
+            long long dt = NowMillis() - lastTrigMs;
+            DrawTextLine(vis, "Last Trigger: " + to_string(dt) + " ms ago", 4, Scalar(255, 255, 0));
+        }
+        else {
+            DrawTextLine(vis, "Last Trigger: (none)", 4, Scalar(200, 200, 200));
+        }
+
+        DrawTextLine(vis, "JSON: " + TOTAL_JSON, 5, Scalar(180, 180, 180));
+        DrawTextLine(vis, "IMG : " + lastImgPath, 6, Scalar(180, 180, 180));
+        DrawTextLine(vis, "ESC to quit", 7, Scalar(180, 180, 180));
+
+        imshow("VIEW", vis);
+
+        int key = waitKey(1);
+        if (key == 27) break;
 
         this_thread::sleep_for(chrono::milliseconds(50));
     }
@@ -706,5 +736,6 @@ int main()
     }
 
     cap.release();
+    destroyAllWindows();
     return 0;
 }
