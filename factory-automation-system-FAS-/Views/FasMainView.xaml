@@ -12,10 +12,21 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="250"/>
         </Grid.ColumnDefinitions>
+
+        <!-- ===========================
+             LEFT AREA
+             =========================== -->
         <Grid Grid.Column="0">
+
+            <!-- =========================================================
+                 MAIN MONITOR
+                 - Viewbox / 배율(Uniform) 유지
+                 ========================================================= -->
             <Grid x:Name="MainMonitorSection" Visibility="Collapsed" Margin="20">
+
                 <Viewbox Stretch="Uniform" StretchDirection="Both"
                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
                     <Grid Width="1420" Height="880" Background="White"
                           SnapsToDevicePixels="True" UseLayoutRounding="True">
 
@@ -26,7 +37,397 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- ================= LEFT (520) ================= -->
-                       
+                        <GroupBox Grid.Column="0" BorderThickness="0"
+                                  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <Canvas Width="520" Height="880" Background="Transparent">
+
+                                <Grid Height="150" Canvas.Left="451" Canvas.Top="10" Width="45">
+                                    <Ellipse Fill="Aqua" Margin="30,0,0,135" />
+                                    <Ellipse Fill="Aqua" Margin="30,135,0,0"/>
+                                    <Rectangle Height="150" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Height="150" Canvas.Left="355" Canvas.Top="10" Width="44" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Ellipse Fill="Aqua" Margin="30,0,0,135" />
+                                    <Ellipse Fill="Aqua" Margin="30,135,0,0"/>
+                                    <Rectangle Height="150" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Height="150" Canvas.Left="252" Canvas.Top="10" Width="45" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Ellipse Fill="Aqua" Margin="30,0,0,135" />
+                                    <Ellipse Fill="Aqua" Margin="30,135,0,0"/>
+                                    <Rectangle Height="150" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Height="150" Canvas.Left="154" Canvas.Top="10" Width="45" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Ellipse Fill="Aqua" Margin="30,0,0,135" />
+                                    <Ellipse Fill="Aqua" Margin="30,135,0,0"/>
+                                    <Rectangle Height="150" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid Height="45" Canvas.Left="370" Canvas.Top="160" Width="126">
+                                    <Ellipse Fill="Aqua" Margin="0,30,111,0" />
+                                    <Ellipse Fill="Aqua" RenderTransformOrigin="0.533,0.633" Margin="111,30,0,0"/>
+                                    <Rectangle Height="30" Width="126" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="45" Canvas.Left="165" Canvas.Top="160" VerticalAlignment="Top">
+                                    <Rectangle Height="30" Width="101" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,30,0,0" />
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="81,30,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="45" Canvas.Left="266" Canvas.Top="160" VerticalAlignment="Top" Width="104">
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,30,0,0" />
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="84,30,0,0"/>
+                                    <Rectangle Height="30" Width="104" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="45" Canvas.Left="59" Canvas.Top="160" VerticalAlignment="Top" Width="107">
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,30,0,0" />
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="86,30,0,0"/>
+                                    <Rectangle Height="30" Width="107" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="298" Canvas.Left="14" Canvas.Top="160" VerticalAlignment="Top" Width="45">
+                                    <Ellipse Height="15" Width="15" Fill="Aqua" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,46,0,0"/>
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,149,0,0"/>
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,214,0,0"/>
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,282,0,0"/>
+                                    <Rectangle Height="298" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="58" Canvas.Top="302" VerticalAlignment="Top" Width="140">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,30,0,0"/>
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="125,30,0,0"/>
+                                    <Rectangle Height="30" Width="140" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="58" Canvas.Top="368" VerticalAlignment="Top" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="146" Canvas.Left="147" Canvas.Top="428" VerticalAlignment="Top" Width="46">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.644,0.646" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,130,0,0"/>
+                                    <Rectangle Height="146" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="250" Canvas.Left="147" Canvas.Top="574" VerticalAlignment="Top" Width="46">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,0,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.479,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="30,234,0,0"/>
+                                    <Rectangle Height="250" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="58" Canvas.Top="428" VerticalAlignment="Top" Width="90">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.644,0.646" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="70,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="198" Canvas.Top="302" VerticalAlignment="Center" Width="90">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.533,0.633" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="72,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="138" Canvas.Left="271" Canvas.Top="302" VerticalAlignment="Top" Width="45">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,122,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,66,0,0"/>
+                                    <Rectangle Height="138" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="315" Canvas.Top="361" VerticalAlignment="Top" Width="90">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="404" Canvas.Top="361" VerticalAlignment="Top" Width="92">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="76,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="315" Canvas.Top="410" VerticalAlignment="Top" Width="90">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="138" Canvas.Left="203" Canvas.Top="368" VerticalAlignment="Center" Width="46">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,122,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,66,0,0"/>
+                                    <Rectangle Height="138" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="138" Canvas.Left="203" Canvas.Top="506" VerticalAlignment="Top" Width="46">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,122,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,66,0,0"/>
+                                    <Rectangle Height="138" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="247" Canvas.Top="536" VerticalAlignment="Center" Width="90">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="336" Canvas.Top="536" VerticalAlignment="Center" Width="92">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="76,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="247" Canvas.Top="608" VerticalAlignment="Center" Width="90">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid Height="46" Canvas.Left="176" Canvas.Top="676" Width="90" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid Height="46" Canvas.Left="264" Canvas.Top="676" Width="92" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="76,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid Height="46" Canvas.Left="176" Canvas.Top="757" Width="90" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                            </Canvas>
+                        </GroupBox>
+
+                        <!-- ================= CENTER (300) ================= -->
+                        <GroupBox Grid.Column="1" BorderThickness="0"
+                                  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <!-- 빈 영역 -->
+                        </GroupBox>
+
+                        <!-- ================= RIGHT (600) ================= -->
+                        <GroupBox Grid.Column="2" BorderThickness="0"
+                                  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <Canvas Width="600" Height="880" Background="Transparent">
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="10" Canvas.Top="357" VerticalAlignment="Top">
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="124" Canvas.Top="311" VerticalAlignment="Top" Width="160" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-16,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="145,-16,0,46"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="46" Canvas.Left="284" Canvas.Top="311" VerticalAlignment="Top" Width="160" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,-16,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="145,-16,0,46"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="46" Canvas.Left="99" Canvas.Top="357" VerticalAlignment="Top" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid Height="150" Canvas.Left="444" Canvas.Top="191" Width="45" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Ellipse Fill="Aqua" Margin="30,0,0,135" />
+                                    <Ellipse Fill="Aqua" Margin="30,135,0,0"/>
+                                    <Rectangle Height="150" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="46" Canvas.Left="10" Canvas.Top="526" VerticalAlignment="Top">
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="100" Canvas.Top="526" VerticalAlignment="Center" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="124" Canvas.Top="475" VerticalAlignment="Center" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="284" Canvas.Top="475" VerticalAlignment="Center" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="444" Canvas.Top="475" VerticalAlignment="Top">
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Top="670" VerticalAlignment="Top">
+                                    <Rectangle Height="30" Width="90" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.729,0.479"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="3,30,0,0"/>
+                                    <Ellipse Height="16" Width="16" Fill="Aqua" RenderTransformOrigin="0.542,0.708"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="74,30,0,0"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Left" Height="46" Canvas.Left="90" Canvas.Top="670" VerticalAlignment="Top" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="46" Canvas.Left="124" Canvas.Top="721" VerticalAlignment="Top" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid HorizontalAlignment="Center" Height="46" Canvas.Left="284" Canvas.Top="721" VerticalAlignment="Top" Width="160">
+                                    <Ellipse Height="16" Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0"/>
+                                    <Ellipse Width="15" Fill="Aqua" RenderTransformOrigin="0.533,0.633"
+                                             HorizontalAlignment="Left" Margin="121,30,0,0"/>
+                                    <Rectangle Height="30" Width="160" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                                </Grid>
+
+                                <Grid Height="150" Canvas.Left="444" Canvas.Top="721" Width="45" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <Ellipse Fill="Aqua" Margin="30,0,0,135" />
+                                    <Ellipse Fill="Aqua" Margin="30,135,0,0"/>
+                                    <Rectangle Height="150" Width="30" Fill="White" Stroke="Black"
+                                               RenderTransformOrigin="12.689,0.469"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                </Grid>
+
+                            </Canvas>
+                        </GroupBox>
 
                     </Grid>
                 </Viewbox>
