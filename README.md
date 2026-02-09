@@ -88,11 +88,10 @@
 
 ---
 
-## ⬇️ 프로젝트 발표 자료
-
 ## ERD
 <img width="511" height="360" alt="2026_1_19_ERD" src="https://github.com/user-attachments/assets/a4f4610a-4bf3-4a13-83ee-601eef9c4526" />
 
+## ⬇️ 프로젝트 발표 자료
 [PPT](https://docs.google.com/presentation/d/1RCwlPaEpzzQsnMo9Wbf_0YfH3aT70IDSX2ZANdCwv0I/edit?slide=id.p1#slide=id.p1)  
 
 ## ⬇️  PLC 레더 주소 엑셀
