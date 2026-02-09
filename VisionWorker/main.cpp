@@ -32,7 +32,7 @@ using namespace std;
 // =====================
 // MODBUS CONFIG
 // =====================
-static const char* PLC_IP = "192.168.0.202";
+static const char* PLC_IP = "192.168.1.202";
 static const int   PLC_PORT = 502;
 
 // PLC -> PC 트리거 코일 (읽기)

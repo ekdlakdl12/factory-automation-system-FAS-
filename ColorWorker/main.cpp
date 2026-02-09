@@ -20,7 +20,7 @@ using namespace std;
 // =====================
 // USER CONFIG
 // =====================
-static const char* PLC_IP = "192.168.0.202";
+static const char* PLC_IP = "192.168.1.202";
 static const int   PLC_PORT = 502;
 
 // PLC -> PC 트리거 코일
@@ -40,7 +40,7 @@ static const int RECONNECT_MIN_MS = 5000;
 static const int RECONNECT_MAX_MS = 10000;
 
 // Camera
-static int  DEVICE_INDEX = 1;
+static int  DEVICE_INDEX = 2;
 static bool USE_DSHOW = true;
 static int  CAM_W = 1280;
 static int  CAM_H = 720;

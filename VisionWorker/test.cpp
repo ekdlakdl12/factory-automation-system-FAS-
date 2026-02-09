@@ -718,7 +718,7 @@ int main() {
             else {
                 cout << "[TEST] MEASURE OK label=" << label << " type=" << type << "\n";
             }
-        }
+        }`
 
         this_thread::sleep_for(chrono::milliseconds(1));
     }
