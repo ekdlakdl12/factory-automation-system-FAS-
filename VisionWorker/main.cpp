@@ -699,7 +699,7 @@ int main() {
         return -1;
     }
 
-    int deviceIndex = 1;
+    int deviceIndex = 2;
 
     // scale.yaml
     double mmPerPx = 0.0;

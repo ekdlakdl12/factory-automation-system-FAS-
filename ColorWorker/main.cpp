@@ -37,10 +37,10 @@ static const int PULSE_MS = 2000; // 코일 ON 유지 시간(ms)
 
 // 재접속 정책
 static const int RECONNECT_MIN_MS = 5000;
-static const int RECONNECT_MAX_MS = 10000;
+static const int RECONNECT_MAX_MS = 10000;  
 
 // Camera
-static int  DEVICE_INDEX = 1;
+static int  DEVICE_INDEX = 2;
 static bool USE_DSHOW = true;
 static int  CAM_W = 1280;
 static int  CAM_H = 720;
@@ -451,16 +451,6 @@ static void MarkDisconnected(modbus_t*& ctx, long long& nextReconnectMs)
 }
 
 // =====================
-// UI helper
-// =====================
-static void DrawTextLine(Mat& img, const string& text, int lineIndex, Scalar color = Scalar(0, 255, 0))
-{
-    int y = 25 + lineIndex * 25;
-    putText(img, text, Point(10, y), FONT_HERSHEY_SIMPLEX, 0.7, Scalar(0, 0, 0), 3, LINE_AA);
-    putText(img, text, Point(10, y), FONT_HERSHEY_SIMPLEX, 0.7, color, 1, LINE_AA);
-}
-
-// =====================
 // MAIN
 // =====================
 int main()
@@ -535,11 +525,6 @@ int main()
     int lastRPix = 0, lastGPix = 0, lastBPix = 0;
     long long lastTrigMs = 0;
 
-    namedWindow("VIEW", WINDOW_NORMAL);
-    resizeWindow("VIEW", 1280, 720);
-    namedWindow("ROI_CROP", WINDOW_NORMAL);
-    resizeWindow("ROI_CROP", 700, 700);
-
     cout << "[READY] Waiting for trigger...\n\n";
 
     while (true) {
@@ -574,18 +559,7 @@ int main()
                 }
             }
 
-            // 시각화(오프라인 상태도 보여줌)
-            Mat vis = frame.clone();
-            rectangle(vis, roi, Scalar(0, 0, 255), 2);
-            DrawTextLine(vis, "ROI: (" + to_string(roi.x) + "," + to_string(roi.y) + "," +
-                to_string(roi.width) + "," + to_string(roi.height) + ")", 0, Scalar(0, 255, 255));
-            DrawTextLine(vis, "MODBUS: OFFLINE (reconnecting...)", 1, Scalar(0, 0, 255));
-            DrawTextLine(vis, "Last Color: " + lastColor + " | label=" + lastLabel + " | count=" + to_string(lastCount), 2, Scalar(255, 255, 0));
-            imshow("VIEW", vis);
-
-            int key = waitKey(1);
-            if (key == 27) break;
-
+            // 시각화 제거: 오프라인일 때는 간단히 대기
             this_thread::sleep_for(chrono::milliseconds(50));
             continue;
         }
@@ -625,12 +599,7 @@ int main()
                 label = MakeLabel(color, count);
                 imgPath = SaveColorCroppedJpg_ByLabel(roiBgr, label, color);
 
-                // ROI_CROP 갱신
-                Mat cropShow = roiBgr.clone();
-                string title = "TRIG! label=" + label + " color=" + color;
-                putText(cropShow, title, Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(0, 0, 0), 3, LINE_AA);
-                putText(cropShow, title, Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(0, 255, 255), 1, LINE_AA);
-                imshow("ROI_CROP", cropShow);
+                // 시각화 제거: ROI_CROP 표시 부분 삭제
             }
             else {
                 color = "NONE";
@@ -665,7 +634,7 @@ int main()
                 MarkDisconnected(ctx, nextReconnectMs);
             }
 
-            // 시각화용 저장
+            // 시각화용 저장(내부 상태 기록)
             lastColor = color;
             lastLabel = label;
             lastCount = count;
@@ -675,51 +644,7 @@ int main()
             busyWaitStartLow = true;
         }
 
-        // ===== VIEW 시각화(항상) =====
-        Mat vis = frame.clone();
-
-        // ROI 박스(빨강)
-        rectangle(vis, roi, Scalar(0, 0, 255), 2);
-
-        // 상태 텍스트
-        DrawTextLine(vis, "ROI: (" + to_string(roi.x) + "," + to_string(roi.y) + "," +
-            to_string(roi.width) + "," + to_string(roi.height) + ")", 0, Scalar(0, 255, 255));
-
-        DrawTextLine(vis,
-            string("PLC START_COIL=") + to_string(START_COIL) +
-            " | signal=" + (start ? "1" : "0") +
-            " | rising=" + (rising ? "1" : "0") +
-            " | busy=" + (busyWaitStartLow ? "1" : "0"),
-            1,
-            start ? Scalar(0, 255, 0) : Scalar(0, 0, 255));
-
-        DrawTextLine(vis, "Last: label=" + lastLabel + " | color=" + lastColor + " | count=" + to_string(lastCount),
-            2,
-            (lastColor == "RED") ? Scalar(0, 0, 255) :
-            (lastColor == "GREEN") ? Scalar(0, 255, 0) :
-            (lastColor == "BLUE") ? Scalar(255, 0, 0) :
-            Scalar(200, 200, 200));
-
-        DrawTextLine(vis, "Pix(R/G/B)=" + to_string(lastRPix) + "/" + to_string(lastGPix) + "/" + to_string(lastBPix),
-            3, Scalar(255, 255, 0));
-
-        if (lastTrigMs > 0) {
-            long long dt = NowMillis() - lastTrigMs;
-            DrawTextLine(vis, "Last Trigger: " + to_string(dt) + " ms ago", 4, Scalar(255, 255, 0));
-        }
-        else {
-            DrawTextLine(vis, "Last Trigger: (none)", 4, Scalar(200, 200, 200));
-        }
-
-        DrawTextLine(vis, "JSON: " + TOTAL_JSON, 5, Scalar(180, 180, 180));
-        DrawTextLine(vis, "IMG : " + lastImgPath, 6, Scalar(180, 180, 180));
-        DrawTextLine(vis, "ESC to quit", 7, Scalar(180, 180, 180));
-
-        imshow("VIEW", vis);
-
-        int key = waitKey(1);
-        if (key == 27) break;
-
+        // 시각화 제거: VIEW 렌더링 및 키 체크 대신 짧게 대기
         this_thread::sleep_for(chrono::milliseconds(50));
     }
 
@@ -736,6 +661,5 @@ int main()
     }
 
     cap.release();
-    destroyAllWindows();
     return 0;
 }
