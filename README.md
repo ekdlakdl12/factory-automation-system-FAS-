@@ -92,7 +92,7 @@
 [PPT](https://docs.google.com/presentation/d/1RCwlPaEpzzQsnMo9Wbf_0YfH3aT70IDSX2ZANdCwv0I/edit?slide=id.p1#slide=id.p1)  
 
 ## ⬇️  PLC 레더 주소 엑셀
-[PLC 레더]([IO List_260202.xlsx](https://github.com/user-attachments/files/25178307/IO.List_260202.xlsx))  
+[PLC 레더](https://github.com/user-attachments/files/25178307/IO.List_260202.xlsx)  
 
 ---
 
