@@ -70,6 +70,23 @@
 
 ---
 
+---
+
+## 🖥 실행 화면
+
+<div align="center">
+  <video src="" width="100%" controls autoplay muted loop>
+    브라우저가 비디오 태그를 지원하지 않습니다.
+  </video>
+
+
+  
+  <p><i>PLC 팩토리IO C# WPF 연동 제어 시연 영상 (64s)</i></p>
+</div>
+
+---
+
+
 ## ⚙️ Environment Settings
 - **Database**: MariaDB 10.11+ (Port: 33060/3306)
 - **Backend Framework**: .NET 8.0 (C#)
