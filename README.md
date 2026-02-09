@@ -89,10 +89,7 @@
 ---
 
 ## ⬇️ 프로젝트 발표 자료
-
 [PPT](https://docs.google.com/presentation/d/1RCwlPaEpzzQsnMo9Wbf_0YfH3aT70IDSX2ZANdCwv0I/edit?slide=id.p1#slide=id.p1)  
-
-프로젝트 수행 결과에 대한 자세한 내용은 아래 프레젠테이션 파일에서 확인하실 수 있습니다.  
 
 ## ⬇️  PLC 레더 주소 엑셀
 [PLC 레더]([IO List_260202.xlsx](https://github.com/user-attachments/files/25178307/IO.List_260202.xlsx))  
