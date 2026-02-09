@@ -94,6 +94,12 @@
 ## ⬇️  PLC 레더 주소 엑셀
 [PLC 레더](https://github.com/user-attachments/files/25178307/IO.List_260202.xlsx)  
 
+## ⬇️  OpenCV 파일
+[OpenCV 파일](https://drive.google.com/file/d/1qpcM1e98IfPNa7O2w33_IxLAAgXCMBUQ/view?usp=sharing)
+
+## ERD
+<img width="511" height="360" alt="2026_1_19_ERD" src="https://github.com/user-attachments/assets/a4f4610a-4bf3-4a13-83ee-601eef9c4526" />
+
 ---
 
 
