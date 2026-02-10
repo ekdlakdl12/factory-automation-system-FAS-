@@ -12,8 +12,8 @@
 - **기간**: 2026.01.13 ~ 2026.02.09 (3주 통합 일정)
 - **핵심 기술 스택**: 
   - **Environment**: Factory I/O, Arduino IDE
-  - **Control**: PLC (LS IS), Arduino (ESP32/Uno)
-  - **Language**: C# (.NET 8.0), C++ (Arduino), Python (OpenCV)
+  - **Control**: PLC (XGI), Arduino Uno
+  - **Language**: C# (.NET 8.0), C (Arduino), C++ (OpenCV)
   - **Database**: MariaDB 10.11 (Architecture 설계 및 CRUD 구현)
   - **Framework**: WPF (MVVM Pattern)
 
@@ -23,8 +23,8 @@
 
 | 담당자 | 역할 | 핵심 업무 및 기여도 |
 | :--- | :---: | :--- |
-| **김진우 (팀장)** | **AMR & Total Process** | PLC 및 하드웨어 전반, 아두이노 온습도/모터 제어, RC카 구현, 전체 프로세스 관리 및 통신 검증 |
-| **최준영** | **DB & Backend** | MariaDB 아키텍처 설계, 백엔드 통신 모듈 개발, 데이터 적재 및 API 구현, 라즈베리파이 |
+| **김진우 (팀장)** | **AMR & Total Process** | PLC 및 하드웨어 전반, WIFI 온습도기(아두이노), RC카 구현, 전체 프로세스 관리 및 통신 검증 |
+| **최준영** | **DB & Backend** | MariaDB 아키텍처 설계, 백엔드 통신 모듈 개발, 데이터 적재 및 API 구현, DB(라즈베리파이) |
 | **양서하** | **WPF UI/UX** | 실시간 모니터링 화면 개발 및 MVVM 기반 데이터 바인딩 설계 |
 | **곽태린·김준형** | **PLC & Factory I/O** | PLC IO 리스트 정의, Factory I/O 시뮬레이션 및 시퀀스 로직 개발 |
 | **윤은식** | **Computer Vision** | OpenCV 기반 치수/모양 판별 및 색상 구별 로직 연동 |
@@ -41,7 +41,7 @@
 - **디지털 트윈**: Factory I/O를 활용해 가상 환경에서 실제 산업 현장과 동일한 라인 시뮬레이션 구축.
 
 ### 🤖 AMR & Hardware Control (김진우)
-- **IoT 환경 센싱**: Arduino(ESP32)를 활용해 공정 내 온습도 데이터를 실시간 수집 및 서버 전송.
+- **IoT 환경 센싱**: Arduino Uno(ESP32)를 활용해 공정 내 온습도 데이터를 실시간 수집 및 서버 전송.
 - **모빌리티 제어**: 물류 이동을 위한 RC카 기반 AMR 시스템 구축 및 작업 상태(Idle/Running) 출력.
 - **통신 검증**: 하드웨어 단의 데이터를 백엔드 서버로 유실 없이 전송하기 위한 핸드셰이킹 로직 적용.
 
@@ -52,7 +52,7 @@
 
 ### 🗄️ Database & Backend (최준영)
 - **데이터 모델링**: 공정 내 입출고, 불량률, 센서 로그를 관리하는 MariaDB 아키텍처 설계.
-- **데이터 정합성**: PLC 어드레스(%MX)와 DB 필드 간의 1:1 매핑 테이블 관리.
+- **데이터 정합성**: PLC 어드레스와 DB 필드 간의 1:1 매핑 테이블 관리.
 - **비동기 트랜잭션**: 대량의 로그 발생 시 시스템 부하를 최소화하기 위한 비동기 데이터 적재 로직 개발.
 
 ### 💻 WPF UI/UX (양서하)
