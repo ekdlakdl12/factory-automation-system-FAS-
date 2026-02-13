@@ -79,7 +79,7 @@
     브라우저가 비디오 태그를 지원하지 않습니다.
   </video>
   
-  <p><i> PLC 팩토리IO C# WPF 연동 제어 시연 영상 </i></p>
+  <p><i> OpenCV단 시연 영상 </i></p>
 </div>
 
 ---
@@ -98,6 +98,9 @@
 ## ⬇️  OpenCV 파일
 [OpenCV 파일](https://drive.google.com/file/d/1qpcM1e98IfPNa7O2w33_IxLAAgXCMBUQ/view?usp=sharing)
 
+
+## ⬇️  팩토리io+PLC/OpenCV/시연 영상
+[영상 파일](https://drive.google.com/file/d/1unTKOEwLzNmhMjlZfwAqyiG_R39Fk3K5/view?usp=sharing)
 ---
 
 
