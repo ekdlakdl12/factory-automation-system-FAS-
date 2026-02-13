@@ -75,11 +75,9 @@
 ## 🖥 실행 화면
 
 <div align="center">
-  <video src="https://drive.google.com/file/d/1unTKOEwLzNmhMjlZfwAqyiG_R39Fk3K5/view?usp=sharing" width="100%" controls autoplay muted loop>
+  <video src="https://github.com/user-attachments/assets/d0e3a8ad-78cd-494e-954f-ab7b463f0df0" width="100%" controls autoplay muted loop>
     브라우저가 비디오 태그를 지원하지 않습니다.
   </video>
-
-
   
   <p><i> PLC 팩토리IO C# WPF 연동 제어 시연 영상 </i></p>
 </div>
