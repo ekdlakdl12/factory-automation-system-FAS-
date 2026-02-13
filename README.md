@@ -75,7 +75,7 @@
 ## 🖥 실행 화면
 
 <div align="center">
-  <video src="" width="100%" controls autoplay muted loop>
+  <video src="https://drive.google.com/file/d/1unTKOEwLzNmhMjlZfwAqyiG_R39Fk3K5/view?usp=sharing" width="100%" controls autoplay muted loop>
     브라우저가 비디오 태그를 지원하지 않습니다.
   </video>
 
