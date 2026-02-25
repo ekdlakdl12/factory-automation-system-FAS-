@@ -5,11 +5,15 @@ VisualStudioVersion = 17.14.36811.4
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "factory-automation-system-FAS-", "factory-automation-system-FAS-\factory-automation-system-FAS-.csproj", "{1A24815E-1047-46B1-B28D-6E9FD9256762}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisionWorker", "VisionWorker\VisionWorker.vcxproj", "{DCC89455-4518-4C5A-BA02-793637CED9B8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C8D5274F-AC00-46C7-1F8D-E88E81087A52}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ColorWorker", "ColorWorker\ColorWorker.vcxproj", "{6BFE3C08-EC6F-42F9-9A5B-C03FDCA791EF}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QRWorker", "QRWorker\QRWorker.vcxproj", "{56707622-3B19-43E5-8638-5F99FF6DA783}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "솔루션 항목", "솔루션 항목", "{2A3A057F-5D22-31FD-628C-DF5EF75AEF1E}"
+	ProjectSection(SolutionItems) = preProject
+		appsettings.json = appsettings.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
