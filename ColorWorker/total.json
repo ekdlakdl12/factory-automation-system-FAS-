@@ -1,0 +1,1325 @@
+[
+  {
+    "time": "2026-02-05 12:47:11.683",
+    "label": "n1",
+    "color": "NONE",
+    "count": 1,
+    "image": "./Colorcaptures/color_n1.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:20.668",
+    "label": "g1",
+    "color": "GREEN",
+    "count": 1,
+    "image": "./Colorcaptures/color_g1.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:25.669",
+    "label": "n2",
+    "color": "NONE",
+    "count": 2,
+    "image": "./Colorcaptures/color_n2.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:32.661",
+    "label": "b1",
+    "color": "BLUE",
+    "count": 1,
+    "image": "./Colorcaptures/color_b1.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:37.654",
+    "label": "n3",
+    "color": "NONE",
+    "count": 3,
+    "image": "./Colorcaptures/color_n3.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:45.650",
+    "label": "r1",
+    "color": "RED",
+    "count": 1,
+    "image": "./Colorcaptures/color_r1.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:49.652",
+    "label": "n4",
+    "color": "NONE",
+    "count": 4,
+    "image": "./Colorcaptures/color_n4.jpg"
+  },
+  {
+    "time": "2026-02-05 12:47:58.745",
+    "label": "g2",
+    "color": "GREEN",
+    "count": 2,
+    "image": "./Colorcaptures/color_g2.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:02.668",
+    "label": "b2",
+    "color": "BLUE",
+    "count": 2,
+    "image": "./Colorcaptures/color_b2.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:10.729",
+    "label": "n5",
+    "color": "NONE",
+    "count": 5,
+    "image": "./Colorcaptures/color_n5.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:15.831",
+    "label": "r2",
+    "color": "RED",
+    "count": 2,
+    "image": "./Colorcaptures/color_r2.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:23.673",
+    "label": "n6",
+    "color": "NONE",
+    "count": 6,
+    "image": "./Colorcaptures/color_n6.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:27.723",
+    "label": "g3",
+    "color": "GREEN",
+    "count": 3,
+    "image": "./Colorcaptures/color_g3.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:36.706",
+    "label": "r3",
+    "color": "RED",
+    "count": 3,
+    "image": "./Colorcaptures/color_r3.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:40.710",
+    "label": "n7",
+    "color": "NONE",
+    "count": 7,
+    "image": "./Colorcaptures/color_n7.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:48.713",
+    "label": "n8",
+    "color": "NONE",
+    "count": 8,
+    "image": "./Colorcaptures/color_n8.jpg"
+  },
+  {
+    "time": "2026-02-05 12:48:53.703",
+    "label": "g4",
+    "color": "GREEN",
+    "count": 4,
+    "image": "./Colorcaptures/color_g4.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:01.702",
+    "label": "b3",
+    "color": "BLUE",
+    "count": 3,
+    "image": "./Colorcaptures/color_b3.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:05.707",
+    "label": "r4",
+    "color": "RED",
+    "count": 4,
+    "image": "./Colorcaptures/color_r4.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:14.698",
+    "label": "g5",
+    "color": "GREEN",
+    "count": 5,
+    "image": "./Colorcaptures/color_g5.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:18.696",
+    "label": "n9",
+    "color": "NONE",
+    "count": 9,
+    "image": "./Colorcaptures/color_n9.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:27.690",
+    "label": "b4",
+    "color": "BLUE",
+    "count": 4,
+    "image": "./Colorcaptures/color_b4.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:31.675",
+    "label": "n10",
+    "color": "NONE",
+    "count": 10,
+    "image": "./Colorcaptures/color_n10.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:39.673",
+    "label": "n11",
+    "color": "NONE",
+    "count": 11,
+    "image": "./Colorcaptures/color_n11.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:43.673",
+    "label": "n12",
+    "color": "NONE",
+    "count": 12,
+    "image": "./Colorcaptures/color_n12.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:52.664",
+    "label": "r5",
+    "color": "RED",
+    "count": 5,
+    "image": "./Colorcaptures/color_r5.jpg"
+  },
+  {
+    "time": "2026-02-05 12:49:57.668",
+    "label": "n13",
+    "color": "NONE",
+    "count": 13,
+    "image": "./Colorcaptures/color_n13.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:04.671",
+    "label": "g6",
+    "color": "GREEN",
+    "count": 6,
+    "image": "./Colorcaptures/color_g6.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:09.657",
+    "label": "n14",
+    "color": "NONE",
+    "count": 14,
+    "image": "./Colorcaptures/color_n14.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:17.658",
+    "label": "b5",
+    "color": "BLUE",
+    "count": 5,
+    "image": "./Colorcaptures/color_b5.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:21.754",
+    "label": "r6",
+    "color": "RED",
+    "count": 6,
+    "image": "./Colorcaptures/color_r6.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:30.747",
+    "label": "n15",
+    "color": "NONE",
+    "count": 15,
+    "image": "./Colorcaptures/color_n15.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:35.743",
+    "label": "b6",
+    "color": "BLUE",
+    "count": 6,
+    "image": "./Colorcaptures/color_b6.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:43.745",
+    "label": "n16",
+    "color": "NONE",
+    "count": 16,
+    "image": "./Colorcaptures/color_n16.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:47.727",
+    "label": "n17",
+    "color": "NONE",
+    "count": 17,
+    "image": "./Colorcaptures/color_n17.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:55.722",
+    "label": "n18",
+    "color": "NONE",
+    "count": 18,
+    "image": "./Colorcaptures/color_n18.jpg"
+  },
+  {
+    "time": "2026-02-05 12:50:59.726",
+    "label": "n19",
+    "color": "NONE",
+    "count": 19,
+    "image": "./Colorcaptures/color_n19.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:08.721",
+    "label": "n20",
+    "color": "NONE",
+    "count": 20,
+    "image": "./Colorcaptures/color_n20.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:12.720",
+    "label": "n21",
+    "color": "NONE",
+    "count": 21,
+    "image": "./Colorcaptures/color_n21.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:20.727",
+    "label": "n22",
+    "color": "NONE",
+    "count": 22,
+    "image": "./Colorcaptures/color_n22.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:25.710",
+    "label": "n23",
+    "color": "NONE",
+    "count": 23,
+    "image": "./Colorcaptures/color_n23.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:33.709",
+    "label": "g7",
+    "color": "GREEN",
+    "count": 7,
+    "image": "./Colorcaptures/color_g7.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:37.695",
+    "label": "n24",
+    "color": "NONE",
+    "count": 24,
+    "image": "./Colorcaptures/color_n24.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:46.683",
+    "label": "n25",
+    "color": "NONE",
+    "count": 25,
+    "image": "./Colorcaptures/color_n25.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:50.702",
+    "label": "b7",
+    "color": "BLUE",
+    "count": 7,
+    "image": "./Colorcaptures/color_b7.jpg"
+  },
+  {
+    "time": "2026-02-05 12:51:59.680",
+    "label": "n26",
+    "color": "NONE",
+    "count": 26,
+    "image": "./Colorcaptures/color_n26.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:03.680",
+    "label": "g8",
+    "color": "GREEN",
+    "count": 8,
+    "image": "./Colorcaptures/color_g8.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:11.678",
+    "label": "r7",
+    "color": "RED",
+    "count": 7,
+    "image": "./Colorcaptures/color_r7.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:15.689",
+    "label": "n27",
+    "color": "NONE",
+    "count": 27,
+    "image": "./Colorcaptures/color_n27.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:24.673",
+    "label": "g9",
+    "color": "GREEN",
+    "count": 9,
+    "image": "./Colorcaptures/color_g9.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:28.667",
+    "label": "n28",
+    "color": "NONE",
+    "count": 28,
+    "image": "./Colorcaptures/color_n28.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:37.663",
+    "label": "n29",
+    "color": "NONE",
+    "count": 29,
+    "image": "./Colorcaptures/color_n29.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:41.663",
+    "label": "r8",
+    "color": "RED",
+    "count": 8,
+    "image": "./Colorcaptures/color_r8.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:49.757",
+    "label": "n30",
+    "color": "NONE",
+    "count": 30,
+    "image": "./Colorcaptures/color_n30.jpg"
+  },
+  {
+    "time": "2026-02-05 12:52:53.669",
+    "label": "n31",
+    "color": "NONE",
+    "count": 31,
+    "image": "./Colorcaptures/color_n31.jpg"
+  },
+  {
+    "time": "2026-02-05 12:53:02.734",
+    "label": "n32",
+    "color": "NONE",
+    "count": 32,
+    "image": "./Colorcaptures/color_n32.jpg"
+  },
+  {
+    "time": "2026-02-05 12:53:06.739",
+    "label": "r9",
+    "color": "RED",
+    "count": 9,
+    "image": "./Colorcaptures/color_r9.jpg"
+  },
+  {
+    "time": "2026-02-05 12:53:15.728",
+    "label": "r10",
+    "color": "RED",
+    "count": 10,
+    "image": "./Colorcaptures/color_r10.jpg"
+  },
+  {
+    "time": "2026-02-05 12:53:20.737",
+    "label": "n33",
+    "color": "NONE",
+    "count": 33,
+    "image": "./Colorcaptures/color_n33.jpg"
+  },
+  {
+    "time": "2026-02-05 12:53:27.769",
+    "label": "n34",
+    "color": "NONE",
+    "count": 34,
+    "image": "./Colorcaptures/color_n34.jpg"
+  },
+  {
+    "time": "2026-02-05 12:53:31.727",
+    "label": "n35",
+    "color": "NONE",
+    "count": 35,
+    "image": "./Colorcaptures/color_n35.jpg"
+  },
+  {
+    "time": "2026-02-06 09:42:55.087",
+    "label": "n36",
+    "color": "NONE",
+    "count": 36,
+    "image": "./Colorcaptures/color_n36.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:36.748",
+    "label": "n37",
+    "color": "NONE",
+    "count": 37,
+    "image": "./Colorcaptures/color_n37.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:37.262",
+    "label": "n38",
+    "color": "NONE",
+    "count": 38,
+    "image": "./Colorcaptures/color_n38.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:37.870",
+    "label": "n39",
+    "color": "NONE",
+    "count": 39,
+    "image": "./Colorcaptures/color_n39.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:38.464",
+    "label": "g10",
+    "color": "GREEN",
+    "count": 10,
+    "image": "./Colorcaptures/color_g10.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:39.071",
+    "label": "g11",
+    "color": "GREEN",
+    "count": 11,
+    "image": "./Colorcaptures/color_g11.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:39.664",
+    "label": "g12",
+    "color": "GREEN",
+    "count": 12,
+    "image": "./Colorcaptures/color_g12.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:40.270",
+    "label": "g13",
+    "color": "GREEN",
+    "count": 13,
+    "image": "./Colorcaptures/color_g13.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:40.864",
+    "label": "g14",
+    "color": "GREEN",
+    "count": 14,
+    "image": "./Colorcaptures/color_g14.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:41.455",
+    "label": "g15",
+    "color": "GREEN",
+    "count": 15,
+    "image": "./Colorcaptures/color_g15.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:41.968",
+    "label": "g16",
+    "color": "GREEN",
+    "count": 16,
+    "image": "./Colorcaptures/color_g16.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:42.559",
+    "label": "g17",
+    "color": "GREEN",
+    "count": 17,
+    "image": "./Colorcaptures/color_g17.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:43.174",
+    "label": "g18",
+    "color": "GREEN",
+    "count": 18,
+    "image": "./Colorcaptures/color_g18.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:43.765",
+    "label": "g19",
+    "color": "GREEN",
+    "count": 19,
+    "image": "./Colorcaptures/color_g19.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:44.372",
+    "label": "g20",
+    "color": "GREEN",
+    "count": 20,
+    "image": "./Colorcaptures/color_g20.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:44.963",
+    "label": "g21",
+    "color": "GREEN",
+    "count": 21,
+    "image": "./Colorcaptures/color_g21.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:45.568",
+    "label": "g22",
+    "color": "GREEN",
+    "count": 22,
+    "image": "./Colorcaptures/color_g22.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:46.191",
+    "label": "g23",
+    "color": "GREEN",
+    "count": 23,
+    "image": "./Colorcaptures/color_g23.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:46.772",
+    "label": "g24",
+    "color": "GREEN",
+    "count": 24,
+    "image": "./Colorcaptures/color_g24.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:47.394",
+    "label": "g25",
+    "color": "GREEN",
+    "count": 25,
+    "image": "./Colorcaptures/color_g25.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:47.957",
+    "label": "g26",
+    "color": "GREEN",
+    "count": 26,
+    "image": "./Colorcaptures/color_g26.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:48.469",
+    "label": "g27",
+    "color": "GREEN",
+    "count": 27,
+    "image": "./Colorcaptures/color_g27.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:49.062",
+    "label": "g28",
+    "color": "GREEN",
+    "count": 28,
+    "image": "./Colorcaptures/color_g28.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:49.699",
+    "label": "g29",
+    "color": "GREEN",
+    "count": 29,
+    "image": "./Colorcaptures/color_g29.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:50.261",
+    "label": "g30",
+    "color": "GREEN",
+    "count": 30,
+    "image": "./Colorcaptures/color_g30.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:50.872",
+    "label": "g31",
+    "color": "GREEN",
+    "count": 31,
+    "image": "./Colorcaptures/color_g31.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:51.462",
+    "label": "g32",
+    "color": "GREEN",
+    "count": 32,
+    "image": "./Colorcaptures/color_g32.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:52.065",
+    "label": "g33",
+    "color": "GREEN",
+    "count": 33,
+    "image": "./Colorcaptures/color_g33.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:52.658",
+    "label": "g34",
+    "color": "GREEN",
+    "count": 34,
+    "image": "./Colorcaptures/color_g34.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:53.248",
+    "label": "g35",
+    "color": "GREEN",
+    "count": 35,
+    "image": "./Colorcaptures/color_g35.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:53.762",
+    "label": "g36",
+    "color": "GREEN",
+    "count": 36,
+    "image": "./Colorcaptures/color_g36.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:54.351",
+    "label": "g37",
+    "color": "GREEN",
+    "count": 37,
+    "image": "./Colorcaptures/color_g37.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:54.960",
+    "label": "g38",
+    "color": "GREEN",
+    "count": 38,
+    "image": "./Colorcaptures/color_g38.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:55.553",
+    "label": "g39",
+    "color": "GREEN",
+    "count": 39,
+    "image": "./Colorcaptures/color_g39.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:56.161",
+    "label": "g40",
+    "color": "GREEN",
+    "count": 40,
+    "image": "./Colorcaptures/color_g40.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:56.784",
+    "label": "g41",
+    "color": "GREEN",
+    "count": 41,
+    "image": "./Colorcaptures/color_g41.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:57.365",
+    "label": "g42",
+    "color": "GREEN",
+    "count": 42,
+    "image": "./Colorcaptures/color_g42.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:57.984",
+    "label": "g43",
+    "color": "GREEN",
+    "count": 43,
+    "image": "./Colorcaptures/color_g43.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:58.566",
+    "label": "g44",
+    "color": "GREEN",
+    "count": 44,
+    "image": "./Colorcaptures/color_g44.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:59.160",
+    "label": "g45",
+    "color": "GREEN",
+    "count": 45,
+    "image": "./Colorcaptures/color_g45.jpg"
+  },
+  {
+    "time": "2026-02-06 15:25:59.749",
+    "label": "g46",
+    "color": "GREEN",
+    "count": 46,
+    "image": "./Colorcaptures/color_g46.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:00.257",
+    "label": "g47",
+    "color": "GREEN",
+    "count": 47,
+    "image": "./Colorcaptures/color_g47.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:00.849",
+    "label": "g48",
+    "color": "GREEN",
+    "count": 48,
+    "image": "./Colorcaptures/color_g48.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:01.464",
+    "label": "g49",
+    "color": "GREEN",
+    "count": 49,
+    "image": "./Colorcaptures/color_g49.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:02.055",
+    "label": "g50",
+    "color": "GREEN",
+    "count": 50,
+    "image": "./Colorcaptures/color_g50.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:02.663",
+    "label": "g51",
+    "color": "GREEN",
+    "count": 51,
+    "image": "./Colorcaptures/color_g51.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:03.257",
+    "label": "g52",
+    "color": "GREEN",
+    "count": 52,
+    "image": "./Colorcaptures/color_g52.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:03.856",
+    "label": "g53",
+    "color": "GREEN",
+    "count": 53,
+    "image": "./Colorcaptures/color_g53.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:04.449",
+    "label": "g54",
+    "color": "GREEN",
+    "count": 54,
+    "image": "./Colorcaptures/color_g54.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:05.040",
+    "label": "g55",
+    "color": "GREEN",
+    "count": 55,
+    "image": "./Colorcaptures/color_g55.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:05.559",
+    "label": "g56",
+    "color": "GREEN",
+    "count": 56,
+    "image": "./Colorcaptures/color_g56.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:06.172",
+    "label": "g57",
+    "color": "GREEN",
+    "count": 57,
+    "image": "./Colorcaptures/color_g57.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:06.758",
+    "label": "g58",
+    "color": "GREEN",
+    "count": 58,
+    "image": "./Colorcaptures/color_g58.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:07.351",
+    "label": "g59",
+    "color": "GREEN",
+    "count": 59,
+    "image": "./Colorcaptures/color_g59.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:07.961",
+    "label": "g60",
+    "color": "GREEN",
+    "count": 60,
+    "image": "./Colorcaptures/color_g60.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:08.551",
+    "label": "g61",
+    "color": "GREEN",
+    "count": 61,
+    "image": "./Colorcaptures/color_g61.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:09.159",
+    "label": "g62",
+    "color": "GREEN",
+    "count": 62,
+    "image": "./Colorcaptures/color_g62.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:09.749",
+    "label": "g63",
+    "color": "GREEN",
+    "count": 63,
+    "image": "./Colorcaptures/color_g63.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:10.357",
+    "label": "g64",
+    "color": "GREEN",
+    "count": 64,
+    "image": "./Colorcaptures/color_g64.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:10.951",
+    "label": "g65",
+    "color": "GREEN",
+    "count": 65,
+    "image": "./Colorcaptures/color_g65.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:11.544",
+    "label": "g66",
+    "color": "GREEN",
+    "count": 66,
+    "image": "./Colorcaptures/color_g66.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:12.055",
+    "label": "g67",
+    "color": "GREEN",
+    "count": 67,
+    "image": "./Colorcaptures/color_g67.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:12.642",
+    "label": "g68",
+    "color": "GREEN",
+    "count": 68,
+    "image": "./Colorcaptures/color_g68.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:13.255",
+    "label": "g69",
+    "color": "GREEN",
+    "count": 69,
+    "image": "./Colorcaptures/color_g69.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:13.873",
+    "label": "g70",
+    "color": "GREEN",
+    "count": 70,
+    "image": "./Colorcaptures/color_g70.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:14.455",
+    "label": "g71",
+    "color": "GREEN",
+    "count": 71,
+    "image": "./Colorcaptures/color_g71.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:15.042",
+    "label": "g72",
+    "color": "GREEN",
+    "count": 72,
+    "image": "./Colorcaptures/color_g72.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:15.651",
+    "label": "g73",
+    "color": "GREEN",
+    "count": 73,
+    "image": "./Colorcaptures/color_g73.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:16.241",
+    "label": "g74",
+    "color": "GREEN",
+    "count": 74,
+    "image": "./Colorcaptures/color_g74.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:16.839",
+    "label": "g75",
+    "color": "GREEN",
+    "count": 75,
+    "image": "./Colorcaptures/color_g75.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:17.352",
+    "label": "g76",
+    "color": "GREEN",
+    "count": 76,
+    "image": "./Colorcaptures/color_g76.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:17.944",
+    "label": "g77",
+    "color": "GREEN",
+    "count": 77,
+    "image": "./Colorcaptures/color_g77.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:18.554",
+    "label": "g78",
+    "color": "GREEN",
+    "count": 78,
+    "image": "./Colorcaptures/color_g78.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:19.157",
+    "label": "g79",
+    "color": "GREEN",
+    "count": 79,
+    "image": "./Colorcaptures/color_g79.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:19.751",
+    "label": "g80",
+    "color": "GREEN",
+    "count": 80,
+    "image": "./Colorcaptures/color_g80.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:20.339",
+    "label": "g81",
+    "color": "GREEN",
+    "count": 81,
+    "image": "./Colorcaptures/color_g81.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:20.950",
+    "label": "g82",
+    "color": "GREEN",
+    "count": 82,
+    "image": "./Colorcaptures/color_g82.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:21.543",
+    "label": "g83",
+    "color": "GREEN",
+    "count": 83,
+    "image": "./Colorcaptures/color_g83.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:22.153",
+    "label": "g84",
+    "color": "GREEN",
+    "count": 84,
+    "image": "./Colorcaptures/color_g84.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:22.742",
+    "label": "g85",
+    "color": "GREEN",
+    "count": 85,
+    "image": "./Colorcaptures/color_g85.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:23.334",
+    "label": "g86",
+    "color": "GREEN",
+    "count": 86,
+    "image": "./Colorcaptures/color_g86.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:23.847",
+    "label": "g87",
+    "color": "GREEN",
+    "count": 87,
+    "image": "./Colorcaptures/color_g87.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:24.440",
+    "label": "b8",
+    "color": "BLUE",
+    "count": 8,
+    "image": "./Colorcaptures/color_b8.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:25.047",
+    "label": "b9",
+    "color": "BLUE",
+    "count": 9,
+    "image": "./Colorcaptures/color_b9.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:25.638",
+    "label": "b10",
+    "color": "BLUE",
+    "count": 10,
+    "image": "./Colorcaptures/color_b10.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:26.246",
+    "label": "b11",
+    "color": "BLUE",
+    "count": 11,
+    "image": "./Colorcaptures/color_b11.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:26.838",
+    "label": "b12",
+    "color": "BLUE",
+    "count": 12,
+    "image": "./Colorcaptures/color_b12.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:27.447",
+    "label": "b13",
+    "color": "BLUE",
+    "count": 13,
+    "image": "./Colorcaptures/color_b13.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:28.034",
+    "label": "b14",
+    "color": "BLUE",
+    "count": 14,
+    "image": "./Colorcaptures/color_b14.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:28.632",
+    "label": "b15",
+    "color": "BLUE",
+    "count": 15,
+    "image": "./Colorcaptures/color_b15.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:29.144",
+    "label": "b16",
+    "color": "BLUE",
+    "count": 16,
+    "image": "./Colorcaptures/color_b16.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:29.737",
+    "label": "b17",
+    "color": "BLUE",
+    "count": 17,
+    "image": "./Colorcaptures/color_b17.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:30.337",
+    "label": "b18",
+    "color": "BLUE",
+    "count": 18,
+    "image": "./Colorcaptures/color_b18.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:30.931",
+    "label": "b19",
+    "color": "BLUE",
+    "count": 19,
+    "image": "./Colorcaptures/color_b19.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:31.539",
+    "label": "b20",
+    "color": "BLUE",
+    "count": 20,
+    "image": "./Colorcaptures/color_b20.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:32.045",
+    "label": "b21",
+    "color": "BLUE",
+    "count": 21,
+    "image": "./Colorcaptures/color_b21.jpg"
+  },
+  {
+    "time": "2026-02-06 15:26:32.632",
+    "label": "b22",
+    "color": "BLUE",
+    "count": 22,
+    "image": "./Colorcaptures/color_b22.jpg"
+  },
+  {
+    "time": "2026-02-06 15:52:22.049",
+    "label": "r11",
+    "color": "RED",
+    "count": 11,
+    "image": "./Colorcaptures/color_r11.jpg"
+  },
+  {
+    "time": "2026-02-06 15:52:32.049",
+    "label": "n40",
+    "color": "NONE",
+    "count": 40,
+    "image": "./Colorcaptures/color_n40.jpg"
+  },
+  {
+    "time": "2026-02-06 15:52:49.030",
+    "label": "b23",
+    "color": "BLUE",
+    "count": 23,
+    "image": "./Colorcaptures/color_b23.jpg"
+  },
+  {
+    "time": "2026-02-06 15:52:57.022",
+    "label": "n41",
+    "color": "NONE",
+    "count": 41,
+    "image": "./Colorcaptures/color_n41.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:00.032",
+    "label": "n42",
+    "color": "NONE",
+    "count": 42,
+    "image": "./Colorcaptures/color_n42.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:09.024",
+    "label": "b24",
+    "color": "BLUE",
+    "count": 24,
+    "image": "./Colorcaptures/color_b24.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:14.020",
+    "label": "n43",
+    "color": "NONE",
+    "count": 43,
+    "image": "./Colorcaptures/color_n43.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:22.014",
+    "label": "b25",
+    "color": "BLUE",
+    "count": 25,
+    "image": "./Colorcaptures/color_b25.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:27.010",
+    "label": "n44",
+    "color": "NONE",
+    "count": 44,
+    "image": "./Colorcaptures/color_n44.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:34.002",
+    "label": "b26",
+    "color": "BLUE",
+    "count": 26,
+    "image": "./Colorcaptures/color_b26.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:38.006",
+    "label": "n45",
+    "color": "NONE",
+    "count": 45,
+    "image": "./Colorcaptures/color_n45.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:46.995",
+    "label": "n46",
+    "color": "NONE",
+    "count": 46,
+    "image": "./Colorcaptures/color_n46.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:52.002",
+    "label": "n47",
+    "color": "NONE",
+    "count": 47,
+    "image": "./Colorcaptures/color_n47.jpg"
+  },
+  {
+    "time": "2026-02-06 15:53:59.984",
+    "label": "n48",
+    "color": "NONE",
+    "count": 48,
+    "image": "./Colorcaptures/color_n48.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:04.999",
+    "label": "n49",
+    "color": "NONE",
+    "count": 49,
+    "image": "./Colorcaptures/color_n49.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:11.984",
+    "label": "n50",
+    "color": "NONE",
+    "count": 50,
+    "image": "./Colorcaptures/color_n50.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:16.002",
+    "label": "b27",
+    "color": "BLUE",
+    "count": 27,
+    "image": "./Colorcaptures/color_b27.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:25.073",
+    "label": "b28",
+    "color": "BLUE",
+    "count": 28,
+    "image": "./Colorcaptures/color_b28.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:30.068",
+    "label": "n51",
+    "color": "NONE",
+    "count": 51,
+    "image": "./Colorcaptures/color_n51.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:38.071",
+    "label": "b29",
+    "color": "BLUE",
+    "count": 29,
+    "image": "./Colorcaptures/color_b29.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:43.066",
+    "label": "b30",
+    "color": "BLUE",
+    "count": 30,
+    "image": "./Colorcaptures/color_b30.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:50.050",
+    "label": "n52",
+    "color": "NONE",
+    "count": 52,
+    "image": "./Colorcaptures/color_n52.jpg"
+  },
+  {
+    "time": "2026-02-06 15:54:54.052",
+    "label": "g88",
+    "color": "GREEN",
+    "count": 88,
+    "image": "./Colorcaptures/color_g88.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:03.048",
+    "label": "g89",
+    "color": "GREEN",
+    "count": 89,
+    "image": "./Colorcaptures/color_g89.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:08.051",
+    "label": "n53",
+    "color": "NONE",
+    "count": 53,
+    "image": "./Colorcaptures/color_n53.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:16.036",
+    "label": "b31",
+    "color": "BLUE",
+    "count": 31,
+    "image": "./Colorcaptures/color_b31.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:21.044",
+    "label": "n54",
+    "color": "NONE",
+    "count": 54,
+    "image": "./Colorcaptures/color_n54.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:28.036",
+    "label": "n55",
+    "color": "NONE",
+    "count": 55,
+    "image": "./Colorcaptures/color_n55.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:32.037",
+    "label": "n56",
+    "color": "NONE",
+    "count": 56,
+    "image": "./Colorcaptures/color_n56.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:41.029",
+    "label": "n57",
+    "color": "NONE",
+    "count": 57,
+    "image": "./Colorcaptures/color_n57.jpg"
+  },
+  {
+    "time": "2026-02-06 15:55:46.019",
+    "label": "n58",
+    "color": "NONE",
+    "count": 58,
+    "image": "./Colorcaptures/color_n58.jpg"
+  }
+]

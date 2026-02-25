@@ -1,0 +1,39 @@
+%YAML:1.0
+---
+image_width: 1920
+image_height: 1080
+board_width: 8
+board_height: 6
+squareSize_mm: 30.
+cameraMatrix: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 1629.2811349921817, 0., 932.75557967204543, 0.,
+       1631.6917096719851, 563.2701463626538, 0., 0., 1. ]
+distCoeffs: !!opencv-matrix
+   rows: 5
+   cols: 1
+   dt: d
+   data: [ -0.17916188001830474, 0.21237502712100328,
+       0.0022544602590620884, -0.00015386317537695334,
+       -0.15351444927374661 ]
+calib_rms: 0.73678842749639595
+reproj_rms_px: 0.7367890348385745
+used_images: 14
+outlier_threshold_px: 1.1484384497417395
+used_files:
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4180.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4181.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4182.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4183.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4184.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4185.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4186.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4187.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4188.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4189.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4194.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4195.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4196.jpeg"
+   - "C:\\Users\\dbsdm\\Desktop\\chessboard\\IMG_4199.jpeg"
